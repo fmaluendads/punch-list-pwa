@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PunchList">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#B5651D">
+<meta name="msapplication-TileColor" content="#0F1112">
+<meta name="format-detection" content="telephone=no">
+<title>Punch List - Sistema de Inspección Offline</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+:root {
+  --copper: #B5651D;
+  --copper-lt: #D4874A;
+  --copper-dk: #7A3E0A;
+  --coal: #0F1112;
+  --slate: #1C2127;
+  --slate-lt: #252C35;
+  --text: #E8E8E8;
+  --text-muted: #9CA3AF;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  background: var(--coal);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  padding-top: var(--safe-top);
+  padding-bottom: calc(70px + var(--safe-bottom));
+}
+.header {
+  background: linear-gradient(135deg, var(--copper-dk), var(--copper));
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header h1 { font-size: 18px; font-weight: 600; }
+.header .status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.header .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+}
+.header .status-dot.offline { background: var(--warning); }
+.tabs {
+  display: flex;
+  background: var(--slate);
+  border-bottom: 1px solid var(--slate-lt);
+  position: sticky;
+  top: 54px;
+  z-index: 99;
+}
+.tab {
+  flex: 1;
+  padding: 14px 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab.active {
+  color: var(--copper-lt);
+  border-bottom-color: var(--copper);
+}
+.tab-content { display: none; padding: 16px; }
+.tab-content.active { display: block; }
+.form-section {
+  background: var(--slate);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.form-section h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--copper-lt);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.form-group { margin-bottom: 14px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.form-group label .required { color: var(--danger); }
+input, select, textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 16px;
+  background: var(--coal);
+  border: 1px solid var(--slate-lt);
+  border-radius: 8px;
+  color: var(--text);
+  -webkit-appearance: none;
+  appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--copper);
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239CA3AF' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+textarea { resize: vertical; min-height: 80px; }
+.char-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 4px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--copper), var(--copper-dk));
+  color: white;
+}
+.btn-primary:active { transform: scale(0.98); }
+.btn-secondary {
+  background: var(--slate-lt);
+  color: var(--text);
+}
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+.btn-sm {
+  padding: 10px 14px;
+  font-size: 13px;
+}
+.btn-row {
+  display: flex;
+  gap: 10px;
+}
+.btn-row .btn { flex: 1; }
+.items-list { margin-top: 16px; }
+.item-card {
+  background: var(--slate);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  border-left: 4px solid var(--copper);
+}
+.item-card.p1 { border-left-color: var(--danger); }
+.item-card.p2 { border-left-color: var(--warning); }
+.item-card.p3 { border-left-color: #3B82F6; }
+.item-card.p4 { border-left-color: #8B5CF6; }
+.item-card.p5 { border-left-color: var(--success); }
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.item-id {
+  font-weight: 700;
+  color: var(--copper-lt);
+  font-size: 14px;
+}
+.item-priority {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--slate-lt);
+}
+.item-desc {
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.item-meta span {
+  background: var(--coal);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--slate-lt);
+}
+.item-actions button {
+  flex: 1;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.item-actions .btn-edit {
+  background: var(--slate-lt);
+  color: var(--text);
+}
+.item-actions .btn-delete {
+  background: rgba(239,68,68,0.2);
+  color: var(--danger);
+}
+.summary-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.summary-item {
+  flex: 1;
+  min-width: 60px;
+  background: var(--slate);
+  padding: 12px 8px;
+  border-radius: 8px;
+  text-align: center;
+}
+.summary-item .count {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--copper-lt);
+}
+.summary-item .label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.config-section {
+  background: var(--slate);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  background: var(--slate);
+}
+.config-header h4 {
+  font-size: 14px;
+  font-weight: 500;
+}
+.config-header .arrow {
+  transition: transform 0.2s;
+  color: var(--text-muted);
+}
+.config-section.open .config-header .arrow {
+  transform: rotate(180deg);
+}
+.config-body {
+  display: none;
+  padding: 0 16px 16px;
+}
+.config-section.open .config-body {
+  display: block;
+}
+.list-manager {
+  background: var(--coal);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+}
+.list-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.list-manager-header h5 {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.list-items {
+  max-height: 200px;
+  overflow-y: auto;
+}
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: var(--slate);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.list-item button {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  padding: 4px;
+}
+.add-item-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.add-item-row input {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+}
+.add-item-row button {
+  padding: 10px 16px;
+  background: var(--copper);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--slate);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 20px;
+}
+.modal h3 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: var(--copper-lt);
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.modal-actions .btn { flex: 1; }
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+.empty-state svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+.empty-state h4 {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--slate);
+  color: var(--text);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 300;
+  opacity: 0;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.toast.success { border-left: 4px solid var(--success); }
+.toast.error { border-left: 4px solid var(--danger); }
+.install-banner {
+  display: none;
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  right: 16px;
+  background: var(--slate);
+  border-radius: 12px;
+  padding: 16px;
+  z-index: 150;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.install-banner.show { display: block; }
+.install-banner h4 {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.install-banner p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.install-banner .btn-row { gap: 8px; }
+@media (min-width: 768px) {
+  body { max-width: 600px; margin: 0 auto; }
+  .form-row { display: flex; gap: 12px; }
+  .form-row .form-group { flex: 1; }
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <h1>⛏️ Punch List</h1>
+  <div class="status">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Online</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="nuevo">➕ Nuevo</button>
+  <button class="tab" data-tab="lista">📋 Lista</button>
+  <button class="tab" data-tab="config">⚙️ Config</button>
+</nav>
+
+<main>
+  <!-- TAB: NUEVO ÍTEM -->
+  <div id="tab-nuevo" class="tab-content active">
+    <form id="itemForm">
+      <div class="form-section">
+        <h3>📍 Datos del Ítem</h3>
+        
+        <div class="form-group">
+          <label>Ubicación <span class="required">*</span></label>
+          <input type="text" id="ubicacion" required placeholder="Ej: Nivel -850, Sector A">
+        </div>
+        
+        <div class="form-group">
+          <label>Descripción Acción Pendiente <span class="required">*</span></label>
+          <textarea id="descripcion" required maxlength="350" placeholder="Describa el hallazgo o acción pendiente..."></textarea>
+          <div class="char-count"><span id="charCount">0</span>/350</div>
+        </div>
+        
+        <div class="form-group">
+          <label>Prioridad <span class="required">*</span></label>
+          <select id="prioridad" required>
+            <option value="">Seleccionar prioridad</option>
+            <option value="P1">P1 - Crítica</option>
+            <option value="P2">P2 - Alta</option>
+            <option value="P3">P3 - Media</option>
+            <option value="P4">P4 - Baja</option>
+            <option value="P5">P5 - Mínima</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Fecha Compromiso de Cierre <span class="required">*</span></label>
+          <input type="date" id="fechaCompromiso" required>
+        </div>
+      </div>
+      
+      <div class="form-section">
+        <h3>🔧 Clasificación</h3>
+        
+        <div class="form-group">
+          <label>Disciplina <span class="required">*</span></label>
+          <select id="disciplina" required>
+            <option value="">Seleccionar disciplina</option>
+            <option value="CIVIL">CIVIL</option>
+            <option value="CAÑERIAS">CAÑERIAS</option>
+            <option value="ESTRUCTURA">ESTRUCTURA</option>
+            <option value="MECANICOS">MECANICOS</option>
+            <option value="MINERIA">MINERIA</option>
+            <option value="INSTRUMENTACION">INSTRUMENTACION</option>
+            <option value="OTRA">OTRA</option>
+            <option value="ELECTRICOS">ELECTRICOS</option>
+            <option value="TOPOGRAFIA">TOPOGRAFIA</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Actividad de Hallazgos <span class="required">*</span></label>
+          <select id="actividad" required disabled>
+            <option value="">Primero seleccione disciplina</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Ítem Actividad de Hallazgos <span class="required">*</span></label>
+          <select id="itemActividad" required disabled>
+            <option value="">Primero seleccione actividad</option>
+          </select>
+        </div>
+      </div>
+      
+      <button type="submit" class="btn btn-primary">💾 Guardar Ítem</button>
+    </form>
+  </div>
+
+  <!-- TAB: LISTA -->
+  <div id="tab-lista" class="tab-content">
+    <div class="summary-bar">
+      <div class="summary-item">
+        <div class="count" id="totalItems">0</div>
+        <div class="label">Total</div>
+      </div>
+      <div class="summary-item">
+        <div class="count" id="p1Count">0</div>
+        <div class="label">P1</div>
+      </div>
+      <div class="summary-item">
+        <div class="count" id="p2Count">0</div>
+        <div class="label">P2</div>
+      </div>
+      <div class="summary-item">
+        <div class="count" id="p3Count">0</div>
+        <div class="label">P3</div>
+      </div>
+      <div class="summary-item">
+        <div class="count" id="p4Count">0</div>
+        <div class="label">P4</div>
+      </div>
+      <div class="summary-item">
+        <div class="count" id="p5Count">0</div>
+        <div class="label">P5</div>
+      </div>
+    </div>
+    
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-sm" onclick="exportCSV()">📥 Exportar CSV</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmClearAll()">🗑️ Limpiar</button>
+    </div>
+    
+    <div class="items-list" id="itemsList"></div>
+  </div>
+
+  <!-- TAB: CONFIGURACIÓN -->
+  <div id="tab-config" class="tab-content">
+    <div class="config-section open">
+      <div class="config-header" onclick="toggleConfig(this)">
+        <h4>📋 Datos del Proyecto</h4>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="config-body">
+        <div class="form-group">
+          <label>N° WBS</label>
+          <input type="text" id="cfg_wbs" placeholder="Ej: WBS-001">
+        </div>
+        <div class="form-group">
+          <label>N° Área</label>
+          <input type="text" id="cfg_area" placeholder="Ej: AREA-01">
+        </div>
+        <div class="form-group">
+          <label>N° TOP</label>
+          <input type="text" id="cfg_top" placeholder="Ej: TOP-001">
+        </div>
+        <div class="form-group">
+          <label>N° Sistema</label>
+          <input type="text" id="cfg_sistema" placeholder="Ej: SIS-001">
+        </div>
+        <div class="form-group">
+          <label>N° Subsistema</label>
+          <input type="text" id="cfg_subsistema" placeholder="Ej: SUB-001">
+        </div>
+      </div>
+    </div>
+    
+    <div class="config-section">
+      <div class="config-header" onclick="toggleConfig(this)">
+        <h4>🏢 Empresa y Contrato</h4>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="config-body">
+        <div class="form-group">
+          <label>Empresa - Contrato</label>
+          <select id="cfg_empresaContrato">
+            <option value="">Seleccionar empresa</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <div class="config-section">
+      <div class="config-header" onclick="toggleConfig(this)">
+        <h4>👤 Responsables</h4>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="config-body">
+        <div class="form-group">
+          <label>Originado Por</label>
+          <select id="cfg_originadoPor">
+            <option value="">Seleccionar especialista</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Resp. Construcción</label>
+          <input type="text" id="cfg_respConstruccion" placeholder="Nombre responsable">
+        </div>
+        <div class="form-group">
+          <label>Ing. Sistema</label>
+          <input type="text" id="cfg_ingSistema" placeholder="Nombre ingeniero">
+        </div>
+      </div>
+    </div>
+    
+    <div class="config-section">
+      <div class="config-header" onclick="toggleConfig(this)">
+        <h4>📅 Fechas y Otros</h4>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="config-body">
+        <div class="form-group">
+          <label>Fecha de Emisión</label>
+          <input type="date" id="cfg_fechaEmision">
+        </div>
+        <div class="form-group">
+          <label>Caminata</label>
+          <select id="cfg_caminata">
+            <option value="CAMINATA 0">CAMINATA 0</option>
+            <option value="CAMINATA 1">CAMINATA 1</option>
+            <option value="CAMINATA 2">CAMINATA 2</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <div class="config-section">
+      <div class="config-header" onclick="toggleConfig(this)">
+        <h4>👥 Administrar Especialistas</h4>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="config-body">
+        <div class="list-manager">
+          <div class="list-manager-header">
+            <h5>Lista de Especialistas (<span id="especialistasCount">0</span>)</h5>
+          </div>
+          <div class="list-items" id="especialistasList"></div>
+          <div class="add-item-row">
+            <input type="text" id="nuevoEspecialista" placeholder="Nombre nuevo especialista">
+            <button type="button" onclick="addEspecialista()">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <button class="btn btn-primary" onclick="saveConfig()" style="margin-top:16px">💾 Guardar Configuración</button>
+  </div>
+</main>
+
+<!-- Modal Confirmación -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <h3 id="modalTitle">Confirmar</h3>
+    <p id="modalMessage">¿Está seguro?</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" id="modalConfirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Edición -->
+<div class="modal-overlay" id="editModalOverlay">
+  <div class="modal" id="editModal">
+    <h3>✏️ Editar Ítem</h3>
+    <form id="editForm">
+      <input type="hidden" id="edit_id">
+      <div class="form-group">
+        <label>Ubicación</label>
+        <input type="text" id="edit_ubicacion" required>
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="edit_descripcion" required maxlength="350"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Prioridad</label>
+        <select id="edit_prioridad" required>
+          <option value="P1">P1 - Crítica</option>
+          <option value="P2">P2 - Alta</option>
+          <option value="P3">P3 - Media</option>
+          <option value="P4">P4 - Baja</option>
+          <option value="P5">P5 - Mínima</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fecha Compromiso</label>
+        <input type="date" id="edit_fechaCompromiso" required>
+      </div>
+      <div class="form-group">
+        <label>Disciplina</label>
+        <select id="edit_disciplina" required>
+          <option value="CIVIL">CIVIL</option>
+          <option value="CAÑERIAS">CAÑERIAS</option>
+          <option value="ESTRUCTURA">ESTRUCTURA</option>
+          <option value="MECANICOS">MECANICOS</option>
+          <option value="MINERIA">MINERIA</option>
+          <option value="INSTRUMENTACION">INSTRUMENTACION</option>
+          <option value="OTRA">OTRA</option>
+          <option value="ELECTRICOS">ELECTRICOS</option>
+          <option value="TOPOGRAFIA">TOPOGRAFIA</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Actividad</label>
+        <select id="edit_actividad" required></select>
+      </div>
+      <div class="form-group">
+        <label>Ítem Actividad</label>
+        <select id="edit_itemActividad" required></select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Banner instalación -->
+<div class="install-banner" id="installBanner">
+  <h4>📲 Instalar App</h4>
+  <p>Instala esta aplicación para acceso rápido y uso offline</p>
+  <div class="btn-row">
+    <button class="btn btn-secondary btn-sm" onclick="dismissInstall()">Ahora no</button>
+    <button class="btn btn-primary btn-sm" onclick="installApp()">Instalar</button>
+  </div>
+</div>
+
+<script>
+// ==================== DATOS EMBEBIDOS ====================
+const DATOS = {
+  empresasContratos: [
+    {"empresa":"ACCIONA-OSSA-PIZZAROTTI","contrato":"4600019711/CC-110"},
+    {"empresa":"ASTALDI","contrato":"4501849911/CC013F"},
+    {"empresa":"BUILDTEK","contrato":"4600020330 / CS-642"},
+    {"empresa":"CODELCO VP","contrato":"CODELCO VP"},
+    {"empresa":"GEOVITA","contrato":"4400262093/CC-111"},
+    {"empresa":"MASTER DRILLING - BESALCO","contrato":"4600019720/CC-112"},
+    {"empresa":"MASTER DRILLING - BESALCO","contrato":"4600027681/CC-113"},
+    {"empresa":"OSSA-PIZZAROTTI","contrato":"4600019615/CC140"},
+    {"empresa":"PRODALAM","contrato":"4501979417"},
+    {"empresa":"SIGDO KOPPERS","contrato":"4501802225/CC-024B"},
+    {"empresa":"TBD","contrato":"TBD"},
+    {"empresa":"ZUBLIN","contrato":"4501634332/CC010"},
+    {"empresa":"ZUBLIN","contrato":"4600026152/CC-100"},
+    {"empresa":"GARDILCIC","contrato":"4600027291/CC-117"},
+    {"empresa":"ACCIONA","contrato":"4600025397/CC-142"},
+    {"empresa":"CEMENTOS BIOBIO","contrato":"4600020156/CS-522"},
+    {"empresa":"COMTECSA","contrato":"460022630/EPC-01"},
+    {"empresa":"FLSMIDTH S.A.","contrato":"4600019882/REQ123A"},
+    {"empresa":"HOWDEN","contrato":"4600019516/REQ143A"},
+    {"empresa":"PROMET","contrato":"4600024338/CS-532"},
+    {"empresa":"PROMET","contrato":"4600028094/CC-135"},
+    {"empresa":"SALFA MONTAJES S.A","contrato":"4600022849/CC144B"},
+    {"empresa":"SIGDO KOPPERS","contrato":"4600025739/CC-123B"},
+    {"empresa":"SIGDO KOPPERS","contrato":"4600023941/CC-125B"},
+    {"empresa":"SIGMA","contrato":"4400257141/CS-639"},
+    {"empresa":"STRABAG-EDILMAC","contrato":"4600021100/CC-141"},
+    {"empresa":"SIGDO KOPPERS","contrato":"4600021921/CS-528"},
+    {"empresa":"ACCIONA-OSSA-PIZZAROTTI","contrato":"4600029422/GCC-002"},
+    {"empresa":"GEOVITA","contrato":"4600029058/GCC-001"},
+    {"empresa":"SIGDO KOPPERS S.A","contrato":"4600029025/CC-101"},
+    {"empresa":"SIGMA S.A","contrato":"4600027602/CS-664"},
+    {"empresa":"CODELCO GOMS","contrato":"CODELCO-GOMS"},
+    {"empresa":"CODELCO GOMS DCH","contrato":"CODELCO-GOMS-DCH"}
+  ],
+  especialistasBase: [
+    "Alberto Chávez Oliva","Aldo Moraga Nuñez","Alejandro Francisco Marchant Silva",
+    "Alejandro Nicolas Ossandon Lazcano","Alex Nicolas Honores Castillo","Alexa Irina Vargas Pino",
+    "Alexis Pacheco Arnaiz","Alvaro Gonzalez Marin","Alvaro Rodrigo Acuña Lagos","ALFREDO SALAZAR",
+    "Ana Maria Villablanca Ferrada","ANDREA SAAVEDRA VILLAFANA","ANUAR JOSE RIVERO COTES",
+    "Arturo Valencia López","Auristela Robles Rivera","Camilo Valenzuela Bustamante",
+    "Carlos Andrés Maldonado Ardiles","Carlos Avendaño Matus","CARLOS AVENDAñO MATUS",
+    "CLAUDIO FREIRE","Claudio Guggiana Gutíerrez","Claudio Valencia Pérez",
+    "Cristian Adolfo Arriagada Aviles","CRISTIAN HERRERA H","CRISTIAN OLIVARES",
+    "Cristian Ramírez Díaz","DANIEL SAEZ","Danko Ravlic García","David Andres Meliman Pinochet",
+    "David Jacob Chulak Tabilo","David Serey Leiva","Diego Alexander Diaz Cueto",
+    "Eduardo Omar Montiel Toledo","Esteban Elias Riquelme Rojas","ELIAS RAMIREZ MARTINEZ",
+    "Fabian Neira Zapata","Fabian Olivares Rojas","Felipe Ordenes Gahona","Fernando Alegria Bascur",
+    "Fernando Manzano Munoz","FRANCISCO CASTILLO","Francisco Javier Gonzalez Albornoz",
+    "FRANCO CASTILLO BASOALTO","Franklin Rodrigo Millao Olivares","Freddy Alexis Yáñez Chávez",
+    "GABRIEL CANIHUANTE","Gaston Arias Cifuentes","Gedeon Ignacio Briones Silva",
+    "GILBERTO MONTEALEGRE VALDIVIA","Guillermo Sagredo Aguilera","GABRIEL CISTERNAS",
+    "Hector Alejandro Diaz Leon","Héctor Enrique Arancibia Álvarez","Héctor Ferrada Timmermann",
+    "Horacio Soto Rey","Hugo Alfredo Fuentes Zúñiga","Ignacio Andres Yanez Leon","JAIME MANRIQUEZ",
+    "Javier Sebastian Urriola Palma","Jhon Diaz Pascal","Jimmy Adams Caces","Johan Bastian Solis Mora",
+    "JONATHAN MELLA","Jorge Eduardo Nilo Farias","Jorge Elias Diaz Salinas","Jorge Enrique Orellana Vidal",
+    "JORGE GUERRA","JOSE FIGUEROA","Jose Ricardo Pacheco Morales","José Santander Sandoval",
+    "Juan Carlos Jury Figueroa","JUAN MORALES NAVARRO","JUAN PUMARINO","Julio Cesar Aguilar Correa",
+    "Lino Pernigotti Meyer","Luis Hernandez Toledo","Luis Pizarro Suarez","LUIS RODRIGO ROJO BRICEñO",
+    "LUIS SOTO","Marco Antonio Torres Moraga","MAURICIO RIQUELME RIQUELME","Mauricio Zurita",
+    "Miguel Enrique Ahumada Chea","MIGUEL MOLINA","Myriam Inés Herrera Pérez",
+    "Nicolas Esteban Marchant Silva","Omar Andres Valenzuela Lopez","Oscar Ignacio Venegas Munoz",
+    "PATRICIA CONTRERAS","Pablo Jaque Aguilar","Pablo Javier Rodriguez Torres","PATRICIO PIZARRO",
+    "Pedro Antonio Zapata Seguel","Pedro Pablo Fernandez Fernandez","Rafael Contreras Guajardo",
+    "Rodolfo Hernan Antilef Duran","Rodrigo Ignacio Venegas Orlandini","Rodrigo Iribarren Carvajal",
+    "Ruben Robles Monroy","Ruben Segundo Poblete Uren","SCARLETT FRANCO","Sergio Araya Rojo",
+    "Yerko Antonio Vergara Ramirez","CODELCO GOMS C3 (AGD)","FRANCISCO HERMAN VERNAL CAPETILLO",
+    "LUIS ANDRES LOPEZ REYES","ALVARO GONZALEZ MARIN","LAUTARO BENAVIDES","FABIAN POBLETE"
+  ],
+  hallazgos: {"TOPOGRAFIA":{"POR CLASIFICAR":["POR CLASIFICAR"],"Homologación PRE2024":["Homologaci n PRE2024"]},"OTRA":{"SIST. MONITOREO DE MUROS":["DESPEJAR MONOLITO","FALTA ACCESO / MEJORAR ACCESO","FALTA INSTALACI N DE MONOLITO","FALTA INSTALACI N DE SE AL TICA","FALTA TAG DE IDENTIFICACI N","SE ALIZAR PIEZ METRO"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["LIMPIEZA Y ASEO","OTROS"],"MONTAJE DE EQUIPO":["FALTA TOUCH UP"],"MITIGACIÓN Y CONTROL HIROLÓGICO":["FALTA C MARA DE REGISTRO","FALTA CONEXI N DE BOMBA A TDF","FALTA INSTALACI N DE SE AL TICA","FALTA INSTALAR PLC EN TDF","FALTA NORMALIZAR CONDUIT","FALTA REGULARIZAR LARGO DE PERNOS EN POSTES","FALTA TOUCH UP"],"INSPECCIÓN DE FÁBRICA":["FALTA ROTULACI N","INCUMPLIMIENTO DE RESISTENCIA HORMIG N"],"Homologación PRE2024":["Homologaci n PRE2024"]},"MINERIA":{"TRONADURA":["SOBRE EXCAVACION","SUBEXCAVACION"],"TOPOGRAFÍA":["FALTA MARCACION DE CABLES","FALTA MARCACION DE GRADIENTE","FALTA MARCACION DE PARADAS","FALTA MARCACION DE PK","FALTA PLANCHA A TECHO"],"PROYECCION SHOTCRETE":["ASENTAMIENTO DE CONO FUERA DE TOLERANCIA","CONDICIONES DE HUMEDAD INSUFICIENTE EN LA SUPERFICIE","FALTA BARBACANA","FALTA SHOTCRETE A SECCION COMPLETA","FALTA SHOTCRETE EN TRAMOS","FALTA SHOTCRETE EN TRAMOS O SECTORES","OQUEDAD DE SHOTCRETE","SHOTCRETE CON GRIETAS","SHOTCRETE CON NIDOS","SHOTCRETE DANADO","SHOTCRETE SOPLADO","TAPADO DE LINEA"],"POR CLASIFICAR":["POR CLASIFICAR"],"PERFORACION DIAGRAMA DE DISPARO":["SOBRE EXCAVACION Y/O SUBEXCAVACION"],"PERFORACION DE FORTIFICACION":["FALTA MALLA","FALTA MARCO","FALTA PERNO","FALTA PLANCHUELA","PATTER DE PARADAS NO CUMPLE CON DISENO"],"OTROS":["FALTA LIMPIEZA DE PATAS","FALTA MARCACION DE PARADAS","FALTA PERFILADO DE PISO","FALTA RETIRAR RISES","GRADIENTE NO CUMPLE DISENO","OTROS","PRESENCIA DE MARINA (RETIRO Y REVISAR FORTIFICACION)","RETIRAR MATERIALES DE CONSTRUCCION"],"MARCOS NORUEGOS":["CABLES Y/O PERNOS LARGOS","FALTA RELLENO DE HORMIGON","FALTA REMATE DE SHOTCRETE","FALTA TRASLAPE DE MALLA","NIDOS DE SHOTCRETE","PERNOS CON ANGULO INCORRECTO (SIN PERPENDICULARIDAD)"],"MARCACION DE FORTIFICACION":["PATTER DE PARADAS NO CUMPLE CON DISENO"],"Homologación PRE2024":["Homologaci n PRE2024"],"GENERAL":["LIMPIEZA DE RISES"],"EXCAVACION":["CIERRE DE BANCOS CON PRETIL DE SEGURIDAD","DESPEJAR Y LIMPIEZA DE PISO","FALTA CONTRAFOSO","FALTA SANEAMIENTO Y ACU ADURA SECTOR FRACTURADO","REPARACI N Y SANEAMIENTO DE PISO","SANEAMIENTO DE TALUD","SOBRE EXCAVACION","SUBEXCAVACION"],"DESARROLLO VERTICAL":["GRILLETES INSTALADOS","PERNOS CON SEPARACION DESDE CONTORNO","PIOLA AFIRMADA EN PERNOS HELICOIDALES","PIOLA EN FORMA DE ESTRELLA","TRASLAPE DE MALLA DESPU S DE LA PLANCHUELA"],"COLOCACION Y LECHADO DE PERNOS":["AFLORAMIENTO DE AGUA EN PERNO NO GALVANIZADO","FALTA APRIETE DE TUERCAS","FALTA PERNO","FORTIFICACION INCOMPLETA DE PERNOS","LECHADA INCOMPLETA","PATTER DE PARADAS NO CUMPLE CON DISENO","PERNO CORTADO","PERNO CORTADO (PRIMEROS Y  LTIMOS)","PERNO CORTO","PERNO DOBLADO","PERNO INCLINADO (SIN PERPENDICULARIDAD)","PERNO LARGO","PERNO SIN PLANCHUELA","PERNO SIN TUERCA","PLANCHUELA INVERTIDA","PLANCHUELA MAL POSICIONADA","PLANCHUELA Y/O TUERCA BAJO MALLA"],"COLOCACION Y LECHADO DE CABLES":["CABLE SIN CUNA, BARRIL Y PLANCHUELA","CABLES CORTOS","CABLES LARGOS","FALTA DESTRENZADO DE CABLE","FALTA LECHADO DE CABLE","FALTA TENSADO DE CABLES","FALTAN CABLES"],"COLOCACION Y ACONDICIONAMIENTO DE MALLA":["DEFICIENTE TRASLAPE DE MALLA","FORTIFICACION INCOMPLETA DE MALLA","MALLA ABIERTA","MALLA CARGADA","MALLA DANADA","MALLA MAL AFIANZADA Y/O SIN ADOSE","MALLA SIN INSTALAR","MALLA SIN INSTALAR A PISO"],"CARGUÍO":["SOBRE EXCAVACION Y/O SUBEXCAVACION"],"ACUNADURA":["ACUNADURA DEFICIENTE"]},"MECANICOS":{"UNIONES SOLDADAS":["DESALINEAMIENTO","FALTA CALIFICACION DE PROCEDIMIENTO DE SOLDADURA","FALTA CALIFICACION DE SOLDADOR","FALTA DE SOLDADURA","INCUMPLIMIENTO DE ESPECIFICACION DE SOLDADURA","INDICACIONES EN UNION SOLDADA","REPARACIONES INADECUADA"],"UNIONES APERNADAS":["APRIETE O TORQUE EXCESIVO","FALTA INSTALAR PERNOS / TUERCAS / GOLILLAS","FALTA TORQUE / APRIETE","MATERIAL NO CUMPLE CON ESPECIFICACIONES","PERFORACION IRREGULAR","PERNO CORTO","PERNO DESVIADO / DEFORMADO / CON DANO"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["OTROS"],"MONTAJE DE EQUIPO":["DIFERENCIA O IRREGULARIDAD TOPOGRAFICA (NIVELACION, ALINEACION, ETC.)","EQUIPO GOLPEADO O DANADO","FALTA ALINEAMIENTO MECANICO","FALTA MORTERO AUTONIVELANTE","FALTA TOUCH UP / PINTURA"],"Homologación PRE2024":["Homologaci n PRE2024"],"ALMACENAMIENTO EN BODEGA":["IMPERFECCIONES DE EQUIPO","INADECUADA PRESERVACION DE SUMINISTROS"]},"INSTRUMENTACION":{"SIST. MONITOREO DE MUROS":["DESHABILITAR ESTACIONAMIENTO","DESPEJAR MONOLITO","FALTA ACCESO / MEJORAR ACCESO","FALTA ATERRIZAMIENTO ESTRUCTURA","FALTA ENLACE GATEWAY","FALTA ENSAYO","FALTA ESTRUCTURA METALICA / TORRETA INSTRUMENTACION","FALTA INSTALACI N DE MONOLITO","FALTA INSTALACI N DE SE AL TICA","FALTA INSTALACI N TRANSMISOR Y SENSOR","FALTA REALIZAR MUFA","FALTA TAG DE IDENTIFICACI N","FALTA TAPA DE INSTRUMENTO","FALTA VERIFICAR NIVEL DE AGUA","HABILITACION DE POZO","SE ALIZAR PIEZ METRO / PLACAS"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["ORDEN Y LIMPIEZA","OTROS"],"MONTAJE DE EQUIPO":["EQUIPO GOLPEADO O DANADO","EQUIPO NO CUMPLE CON ESPECIFICACIONES","FALTA ALINEAMIENTO","FALTA MONTAJE","FALTA PLANO EN EQUIPO O GABINETE","FALTA SENALETICA DE SEGURIDAD","FALTA SUMINISTRO","FALTA TAG","FALTA TORQUE / APRIETE","FALTA TOUCH UP / PINTURA"],"MITIGACIÓN Y CONTROL HIROLÓGICO":["FALTA INSTALACI N DE MAN METRO"],"Homologación PRE2024":["Homologaci n PRE2024"],"CONEXION A TIERRA INSTRUMENTOS/TABLEROS":["CONEXIONADO DEFICIENTE","FALTA CHICOTE","FALTA CONEXION","MATERIAL NO CUMPLE CON ESPECIFICACIONES"],"CANALIZACION":["CANALIZACION PENDIENTE","FALTA ALINEAMIENTO","FALTA APRIETE DE CONECTORES/ABRAZADERAS","FALTA APRIETE DE TUERCAS/PRENSAS","FALTA GROUT EN SOPORTES","FALTA SELLADO","FALTA TAG","FALTA TOUCH UP / PINTURA","FALTAN SOPORTES DE ESCALERILLAS","MATERIAL DANADO","MATERIAL NO CUMPLE CON ESPECIFICACIONES","PERNO NO CORRESPONDE ESPECIFICACION","SOBRE APRIETE DE CONECTORES/ABRAZADERAS","SOBRE APRIETE DE TUERCAS","SOPORTES DE ESCALERILLAS INESTABLES"],"CABLEADO Y CONEXIONADO":["CABLE DANADO","FALTA APRIETE DE CONEXIONADO","FALTA CONEXIONADO","FALTA FUSION FIBRA OPTICA","FALTA MUFA","FALTA ORDENAMIENTO DE TENDIDO","FALTA SOPORTACION","FALTA TAG","FALTA TENDIDO","FALTA TERMOCONTRAER MARCAS/PUNTILLAS","INTERFERENCIA EN CABLEADO","MATERIAL NO CUMPLE CON ESPECIFICACIONES","MUFA CON DEFECTOS VISUALES","NO SE RESPETA PROCESO DE CONFECCION DE MUFA","RADIO DE CURVATURA INCORRECTO","TENDIDO INCORRECTO"]},"ESTRUCTURA":{"UNIONES SOLDADAS":["DESALINEAMIENTO","FALTA CALIFICACION DE PROCEDIMIENTO DE SOLDADURA","FALTA CALIFICACION DE SOLDADOR","FALTA DE SOLDADURA","INCUMPLIMIENTO DE ESPECIFICACION DE SOLDADURA","INDICACIONES EN UNION SOLDADA","REPARACIONES INADECUADA"],"UNIONES APERNADAS":["APRIETE O TORQUE EXCESIVO","FALTA INSTALAR PERNOS / TUERCAS / GOLILLAS","FALTA TORQUE / APRIETE","MATERIAL NO CUMPLE CON ESPECIFICACIONES","PERFORACION IRREGULAR","PERNO CORTO","PERNO DESVIADO / DEFORMADO / CON DANO"],"SISTEMA CAPTACIÓN DE AGUAS":["FALTA BARANDA","FALTA MONTAJE BOMBA","FALTA MONTAJE DE VALULA","FALTA MONTAJE EQUIPO","FALTA SOPORTACI N LINEA / EQUIPO","FALTA TORQUE","FALTAN GOLILLAS EN FIJACIONES DE POSTES"],"SIST. EVACUACIÓN DE AGUAS":["FALTA BARANDA"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["OTROS"],"MONTAJE ESTRUCTURA":["AUSENCIA O FALTA ELEMENTO","DIFERENCIA O IRREGULARIDAD TOPOGRAFICA (NIVELACION, ALINEACION, ETC.)","DIMENSIONES FUERA DE DISENO","ESTRUCTURA CON GOLPE O DANO","FALTA MORTERO AUTONIVELANTE","FALTA SOLDADURA","FALTA TOUCH UP / PINTURA","INCUMPLIMIENTO DE ESQUEMA DE PINTURA","INTERFERENCIA","MATERIAL NO CUMPLE CON ESPECIFICACION","MODIFICACION O CAMBIO DE DISENO NO AUTORIZADO"],"MITIGACIÓN Y CONTROL HIROLÓGICO":["FALTAN GOLILLAS EN FIJACIONES DE POSTES"],"Homologación PRE2024":["Homologaci n PRE2024"],"CONSTRUCCIÓN DE MURO":["FALTA BARANDA"],"ALMACENAMIENTO EN BODEGA":["IMPERFECCIONES DEL MATERIAL.","INADECUADA PRESERVACION DE SUMINISTROS"]},"ELECTRICOS":{"SIST. EVACUACIÓN DE AGUAS":["FALTA CABLEADO"],"SIST. ELÉCTRICOS SISTEMA RECIRCULACIÓN":["CONEXIONADO DE PARARRAYOS","FALTA BARRA A TIERRA, INTERIOR C MARA","FALTA CABLEADO","FALTA CABLES A TIERRA EN ESTRUCTURA","FALTA CABLES A TIERRA EN FLUJ METRO","FALTA CAJA DE CONEXI N","FALTA CONEXI N A PUENTE","FALTA CONEXI N LINEA MEDIA TENSI N","FALTA INSTALACI N DE CRUCETA","FALTA INSTALACI N DE SE AL TICA","FALTA INSTALACI N DE SOPORTACI N","FALTA INSTALACI N DE TIRANTES","FALTA PROTECCI N EL CTRICA","FALTA TENDIDO DE CABLE","FALTA TIE IN","REGULARIZAR ACEITE DEL TRANSFORMADOR","REGULARIZAR CONEXIONADO A TIERRA","REGULARIZAR NIVEL DE ACEITE DE TRANSFORMADOR"],"SIST. ELÉCTRICOS MEDIA TENSIÓN":["CONEXIONADO DE PARARRAYOS","FALTA CONEXI N A PUENTE","FALTA CONEXI N LINEA MEDIA TENSI N","FALTA INSTALACI N DE CRUCETA","FALTA INSTALACI N DE SE AL TICA","FALTA INSTALACI N DE TIRANTES","FALTA PROTECCI N EL CTRICA","FALTA TENDIDO DE CABLE","FALTA TIE IN","REGULARIZAR ACEITE DEL TRANSFORMADOR","REGULARIZAR CONEXIONADO A TIERRA","REGULARIZAR NIVEL DE ACEITE DE TRANSFORMADOR","REMATE DE OPGW"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["LIMPIEZA Y ASEO","OTROS"],"MONTAJE DE EQUIPO":["EQUIPO GOLPEADO O DANADO","EQUIPO NO CUMPLE CON ESPECIFICACIONES","FALTA ALINEAMIENTO","FALTA MONTAJE","FALTA PLANO EN EQUIPO O GABINETE","FALTA SENALETICA DE SEGURIDAD","FALTA SUMINISTRO","FALTA TAG","FALTA TORQUE / APRIETE","FALTA TOUCH UP"],"MITIGACIÓN Y CONTROL HIROLÓGICO":["FALTA BARRA A TIERRA, INTERIOR C MARA","FALTA CABLES A TIERRA EN FLUJ METRO"],"MALLA PUESTA A TIERRA":["FALTA CALIFICACION DE ESPECIALISTAS","FALTA CHICOTE","FALTA DE BARRA COLECTORA DE TIERRA","FALTA DE CONEXIONADO","INSTALACION DE ADITIVO DE MEJORAMIENTO DEFICIENTE","MALLA DANADA","MOLDE TERMOFUSION FUERA DE VIDA  TIL","PERNOS NO CORRESPONDE ESPECIFICACION","SOLDADURA EXOTÉRMICA DEFECTUOSA"],"Homologación PRE2024":["Homologaci n PRE2024"],"CANALIZACIONES":["CANALIZACION PENDIENTE","FALTA ALINEAMIENTO","FALTA APRIETE DE CONECTORES/ABRAZADERAS","FALTA APRIETE DE TUERCAS/PRENSAS","FALTA GROUT EN SOPORTES","FALTA SELLADO","FALTA TAG","FALTA TOUCH UP / PINTURA","FALTAN SOPORTES DE ESCALERILLAS","MATERIAL DANADO","MATERIAL NO CUMPLE CON ESPECIFICACIONES","PERNO NO CORRESPONDE ESPECIFICACION","SOBRE APRIETE DE CONECTORES/ABRAZADERAS","SOBRE APRIETE DE TUERCAS","SOPORTES DE ESCALERILLAS INESTABLES"],"CAMARA ELECTRICA":["DRENAJE DEFECTUOSO","FALTA BARRA DISTRIBUCION EN CAMARA","FALTA CAMARA DE REGISTRO","FALTA DRENAJE","FALTA PINTURA EN TAPA Y BORDE DE CAMARA","FALTA TAG","FALTAN ESCALINES ACCESO CAMARA","PERNO NO CORRESPONDE ESPECIFICACION","SELLOS DE ACOMETIDAS DEFICIENTE"],"CABLEADO Y CONEXIONADO":["CABLE DANADO","FALTA APRIETE DE CONEXIONADO","FALTA CONEXIONADO","FALTA DE CONEXIONADO","FALTA MUFA","FALTA ORDENAMIENTO DE TENDIDO","FALTA SOPORTACION","FALTA TAG","FALTA TENDIDO","FALTA TERMOCONTRAER MARCAS/PUNTILLAS","INTERFERENCIA EN CABLEADO","MATERIAL NO CUMPLE CON ESPECIFICACIONES","MUFA CON DEFECTOS VISUALES","NO SE RESPETA PROCESO DE CONFECCION DE MUFA","RADIO DE CURVATURA INCORRECTO","TENDIDO INCORRECTO"]},"CIVIL":{"VACIADO DE HORMIGON":["ASENTAMIENTO DE CONO FUERA DE TOLERANCIA","EXCESO DE VIBRADO","FALTA DE TRATAMIENTO JUNTAS","FUGAS DE LECHADA","HORMIGON NO CORRESPONDE ESPECIFICACION","NO SE CONTROLA TEMPERATURA","NO SE RESPETAN TIEMPOS DE ESPERA","NO SE TOMAN MUESTRAS","SE AGREGAN ADITIVOS NO APROBADOS","SEGREGACIÓN DEL HORMIGÓN","TIEMPO EXCESIVO DE TRANSPORTE","VACIADO DISCONTINUO"],"SIST. RECIRCULACIÓN":["FALTA GROUT EN PILARES","FALTA GROUT EN POSTES","FALTA PINTADO","FALTA SELLO","FALTA TAPA DE C MARA"],"SELLO FUNDACION":["DENSIDAD BAJO REQUISITO","FALTA REALIZAR CORTE Y/O SELLO","NO SE CUMPLE COTA","NO SE TOMA DENSIDAD"],"RELLENO COMPACTADO":["DENSIDADES NO CUMPLEN REQUISITOS","MATERIAL INCORRECTO","NO SE CUMPLE CON ESPESOR DE CAPAS","NO SE RESPETAN COTA","NO SE TOMA DENSIDAD"],"PREVIO A HORMIGON MASIVO":["FALTA SISTEMA DE ENFRIAMIENTO DE N CLEO","FALTAN DUCTOS DE ENFRIAMIENTO","FALTAN TERMOCUPLAS INSTALADAS","TERMOCUPLA INOPERATIVA"],"POST HORMIGONADO MASIVO":["FALTA MEDICION DE TEMPERATURA","FALTAN MEDIDAS DE CONTROL DE TEMPERATURA EXTERNA (MANTAS)","FALTAN MEDIDAS DE CONTROL DE TEMPERATURA INTERNA (ENFRIAMIENTO)","FISURAS O GRIETAS T RMICAS","SOBREPASA GRADIENTE TERMICA","SOBREPASA TEMPERATURA DEL NUCLEO","TIEMPO INSUFICIENTE DE MEDICION DE TEMPERATURA","TIEMPO INSUFICIENTE DE MEDIDAS DE CONTROL"],"POST HORMIGONADO":["ACABADO SUPERFICIAL INADECUADO","DESPRENDIMIENTO O DAÑOS EN LOS BORDES","DIMENSIONES FINALES NO CUMPLEN TOLERANCIAS","EFLORESCENCIA","FALTA DE JUNTAS DE DILATACION","FALTA DE SELLO EN CAJAS Y PAVIMENTO","FALTA RETIRAR MOLDAJE","FISURAS O GRIETAS","INCORRECTO CURADO","NIDOS U OQUEDADES","POROSIDAD EXCESIVA","RESISTENCIA INSUFICIENTE"],"POR CLASIFICAR":["POR CLASIFICAR"],"PAVIMENTOS":["CORTES Y SELLOS NO REALIZADOS O DEFECTUOSOS","DEFECTO EN BARRAS DE TRASPASO DE CARGA","DEFICIENTE TERMINACION SUPERFICIAL","DESNIVEL","FALTA JUNTA DE CONTRACCION / DILATACION","FALTA TRATAMIENTO JUNTAS DE CONSTRUCCION","FALTAN BARRAS DE TRASPASO DE CARGA","FISURAS O GRIETAS","TERMINACION INCOMPLETA CAJA-PAVIMENTO (ROCA A LA VISTA)"],"OTROS":["OTROS"],"MURO DE CONFINAMIENTO":["ENCUENTRO IRREGULAR","FALTA CONSTRUCCION DE MOCHETA","FALTA MALLA INTERNA (POR SOBREEXCAVACION)","FALTA MURO DE PROTECCION","FALTA RESTITUCION DE MURO SEG N DISENO","MURO DANADO","PERNO LARGO","REMATE DE HORMIGON DEFICIENTE"],"MITIGACIÓN Y CONTROL HIROLÓGICO":["FALTA GROUT EN POSTES"],"MARCO ESTRUCTURAL (PEX Y IE)":["EXCESO DE MALLA","FALTA GOUSSET","FALTA TORQUE EN TUERCAS","MALLA DANADA EN BOVEDA","PILAR DE ENCUENTRO DANADO"],"INSTALACIÓN DE FAENA":["FALTA GROUT EN PILARES","FALTA PINTADO","FALTA SELLO","FALTA TAPA DE C MARA"],"Homologación PRE2024":["Homologaci n PRE2024"],"GENERAL":["LIMPIEZA DE RISES","SECUENCIA CONSTRUCTIVA INCORRECTA"],"EXCAVACION":["DESVIACION GEOMETR A","SOBREEXCAVACIÓN O SUBEXCAVACIÓN"],"EMPLANTILLADO":["ACABADO SUPERFICIAL INADECUADO","CURADO DEFICIENTE","DESVIACION GEOMETR A","ESPESOR INSUFICIENTE","NO SE CUMPLE COTA EMPLANTILLADO","PRESENCIA DE MATERIALES CONTAMINANTES","SUPERFICIE DESNIVELADA"],"CONSTRUCCIÓN DE MURO":["CAMBIAR TAPA DE C MARA","FALTA BALIZADO","FALTA INSTALACI N DE SE AL TICA","FALTA PERFILAR TALUD","FALTA RELLENO","NORMALIZAR RELLENOS","ORDEN, LIMPIEZA Y ASEO GENERAL","PRETIL INCOMPLETO","REPARAR EMBOQUILLADO"],"ARMADURA Y MOLDAJE":["ANCLAJES FUERA DE POSICIÓN","ARMADURA CONTAMINADA","ARMADURA NO CUMPLE DIMENSIONES ESPECIFICADAS","CALIDAD DE ACERO NO CORRESPONDE","COLOCACIÓN INCORRECTA DE ESTRIBOS","DEFORMACIÓN DEL MOLDAJE","DIMENSIONES INCORRECTAS DEL MOLDAJE","FALTA AFIANZAR MOLDAJE","FALTA AFIANZAR PERNOS DE ANCLAJE PARA ESTRUCTURA","FALTA DE ELEMENTOS DE REFUERZO ADICIONALES","FALTA DESMOLDANTE","FALTA DESMOLDAR","FALTAN PERNOS DE ANCLAJE PARA ESTRUCTURA","MOLDAJE CONTAMINADO","MOLDAJE DESALINEADO","MOLDAJE NO CUMPLE DIMENSIONES","PERNOS DE ANCLAJE PARA ESTRUCTURA FUERA DE POSICION","RECUBRIMIENTO INSUFICIENTE O EXCESIVO","RETIRO ANTICIPADO DEL MOLDAJE","SEPARACIÓN DESIGUAL ENTRE BARRAS","TRASLAPOS Y AMARRAS DEFICIENTES","UBICACIÓN INCORRECTA DE REFUERZOS","USO DE MOLDAJES EN MAL ESTADO"]},"CAÑERIAS":{"UNIONES TIPO VICTAULIC":["MONTAJE DEFICIENTE DE UNION"],"UNIONES SOLDADAS CANERÍA":["DESALINEAMIENTO","FALTA CALIFICACION DE PROCEDIMIENTO DE SOLDADURA","FALTA CALIFICACION DE SOLDADOR","FALTA DE SOLDADURA","INCUMPLIMIENTO DE ESPECIFICACION DE SOLDADURA","INDICACIONES EN UNION SOLDADA","REPARACIONES INADECUADA"],"UNIONES APERNADAS CANERÍA":["APRIETE O TORQUE EXCESIVO","FALTA INSTALAR PERNOS / TUERCAS / GOLILLAS","FALTA TORQUE / APRIETE","MATERIAL NO CUMPLE CON ESPECIFICACIONES","PERNO CORTO","PERNO DESVIADO / DEFORMADO / CON DANO"],"TERMOFUSION":["DEFECTOS EN UNION","DESALINEAMIENTO","FALTA CALIFICACION DE PROCEDIMIENTO DE SOLDADURA","FALTA CALIFICACION DE SOLDADOR","INCUMPLIMIENTO DE ESPECIFICACION DE SOLDADURA"],"SIST. RECIRCULACIÓN":["FALTA ACCESO / MEJORAR ACCESO","FALTA BALIZADO","FALTA CAMELL N","FALTA CONEXI N","FALTA DESCIMBRE DE MOLDAJE","FALTA DESPUNTE DE AMARRAS PL STICAS","FALTA FABRICACI N Y/O MONTAJE DE L NEA","FALTA INDICAR SENTIDO DE FLUJO","FALTA INSTALACI N DE INSTRUMENTACI N","FALTA INSTALACI N DE SE AL TICA","FALTA MARCAJE L NEAS DE HDPE","FALTA PROTECCI N","FALTA RELLENO","FALTA SELLO IGN FUGO","FALTA TIE IN","FALTA TORQUE","FALTA TOUCH UP","MEJORAR IDENTIFICACI N Y/O SE AL TICA","MEJORAR MANGUERA HIDR ULICA","NORMALIZAR PROTECCI N DE MANGUERA","ORDEN, LIMPIEZA Y ASEO GENERAL","PENDIENTE INSTALACI N \"PR\""],"SIST. EVACUACIÓN DE AGUAS":["FALTA ACCESO / MEJORAR ACCESO","FALTA BALIZADO","FALTA CAMELL N","FALTA CONEXI N","FALTA DESCIMBRE DE MOLDAJE","FALTA DESPUNTE DE AMARRAS PL STICAS","FALTA INDICAR SENTIDO DE FLUJO","FALTA INSTALACI N DE INSTRUMENTACI N","FALTA INSTALACI N DE SE AL TICA","FALTA RELLENO","FALTA SELLO IGN FUGO","FALTA TIE IN","FALTA TOUCH UP","ORDEN, LIMPIEZA Y ASEO GENERAL"],"PRUEBA HIDROSTATICA":["AUSENCIA O FALTA ELEMENTOS (MANOMETRO, PALETA, VENTEO, ETC.)","FUGA / FILTRACION EN UNIONES","PERDIDA DE PRESION","PRUEBA MAL EJECUTADA"],"PRUEBA DE SERVICIO":["AUSENCIA O FALTA ELEMENTOS (MANOMETRO, PALETA, VENTEO, ETC.)","ELEMENTO TAPADO O RESTRICCION DE FLUJO.","FUGA / FILTRACION EN UNIONES","PERDIDA DE PRESION"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["OTROS"],"MONTAJE LÍNEA":["FALTA INDICAR SENTIDO DE FLUJO","FALTA MARCAJE L NEAS DE HDPE","FALTA TOUCH UP","PENDIENTE INSTALACI N \"PR\"","RETIRO DE LECHADA DE HORMIG N - POZO"],"MONTAJE DE SOPORTES":["DIFERENCIA O IRREGULARIDAD TOPOGRAFICA (NIVELACION, ALINEACION, ETC.)","ELEMENTO GOLPEADO O DANADO.","FALTA INSTALAR PERNOS / TUERCAS / GOLILLAS / CADENA","FALTA SOPORTE","FALTA TOUCH UP / PINTURA","INCUMPLIMIENTO DE ESQUEMA DE PINTURA","MATERIAL NO CUMPLE CON ESPECIFICACIONES"],"MONTAJE DE ELEMENTOS":["AUSENCIA O FALTA DE VALVULA, FILTRO, MANOMETRO, OTROS.","MONTAJE INADECUADO DE ELEMENTO"],"MONTAJE DE CANERÍA":["DIFERENCIA O IRREGULARIDAD TOPOGRAFICA (NIVELACION, ALINEACION, ETC.)","ELEMENTO GOLPEADO O DANADO.","FALTA TOUCH UP / PINTURA","INCUMPLIMIENTO DE ESQUEMA DE PINTURA","MATERIAL NO CUMPLE CON ESPECIFICACIONES","MODIFICACION O CAMBIO DE DISENO NO AUTORIZADO"],"Homologación PRE2024":["Homologaci n PRE2024"],"CONDUCCIÓN DE RELAVES":["FALTA FABRICACI N Y/O MONTAJE DE L NEA","FALTA PROTECCI N","FALTA RELLENO","FALTA TOUCH UP","MEJORAR IDENTIFICACI N Y/O SE AL TICA","MEJORAR MANGUERA HIDR ULICA","NORMALIZAR PROTECCI N DE MANGUERA"],"ALMACENAMIENTO EN BODEGA":["IMPERFECCIONES EN SUMINISTRO","INADECUADA PRESERVACION DE SUMINISTROS"]}}
+};
+
+// ==================== INDEXEDDB ====================
+const DB_NAME = 'PunchListDB';
+const DB_VERSION = 2;
+let db;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => { db = request.result; resolve(db); };
+    request.onupgradeneeded = (e) => {
+      const database = e.target.result;
+      if (!database.objectStoreNames.contains('items')) {
+        database.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
+      }
+      if (!database.objectStoreNames.contains('config')) {
+        database.createObjectStore('config', { keyPath: 'key' });
+      }
+      if (!database.objectStoreNames.contains('especialistas')) {
+        database.createObjectStore('especialistas', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+  });
+}
+
+async function getItems() {
+  const tx = db.transaction('items', 'readonly');
+  const store = tx.objectStore('items');
+  return new Promise((resolve, reject) => {
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function addItem(item) {
+  const tx = db.transaction('items', 'readwrite');
+  const store = tx.objectStore('items');
+  return new Promise((resolve, reject) => {
+    const request = store.add(item);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function updateItem(item) {
+  const tx = db.transaction('items', 'readwrite');
+  const store = tx.objectStore('items');
+  return new Promise((resolve, reject) => {
+    const request = store.put(item);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function deleteItem(id) {
+  const tx = db.transaction('items', 'readwrite');
+  const store = tx.objectStore('items');
+  return new Promise((resolve, reject) => {
+    const request = store.delete(id);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function clearItems() {
+  const tx = db.transaction('items', 'readwrite');
+  const store = tx.objectStore('items');
+  return new Promise((resolve, reject) => {
+    const request = store.clear();
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function getConfig(key) {
+  const tx = db.transaction('config', 'readonly');
+  const store = tx.objectStore('config');
+  return new Promise((resolve, reject) => {
+    const request = store.get(key);
+    request.onsuccess = () => resolve(request.result?.value);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function setConfig(key, value) {
+  const tx = db.transaction('config', 'readwrite');
+  const store = tx.objectStore('config');
+  return new Promise((resolve, reject) => {
+    const request = store.put({ key, value });
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function getEspecialistas() {
+  const custom = await getConfig('customEspecialistas') || [];
+  return [...DATOS.especialistasBase, ...custom].sort((a,b) => a.localeCompare(b));
+}
+
+async function addCustomEspecialista(nombre) {
+  const custom = await getConfig('customEspecialistas') || [];
+  if (!custom.includes(nombre) && !DATOS.especialistasBase.includes(nombre)) {
+    custom.push(nombre);
+    await setConfig('customEspecialistas', custom);
+  }
+}
+
+async function removeCustomEspecialista(nombre) {
+  let custom = await getConfig('customEspecialistas') || [];
+  custom = custom.filter(n => n !== nombre);
+  await setConfig('customEspecialistas', custom);
+}
+
+// ==================== UI HELPERS ====================
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = 'toast ' + type + ' show';
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function toggleConfig(header) {
+  header.parentElement.classList.toggle('open');
+}
+
+// ==================== TABS ====================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'lista') renderItems();
+  });
+});
+
+// ==================== DESPLEGABLES DEPENDIENTES ====================
+const disciplinaSelect = document.getElementById('disciplina');
+const actividadSelect = document.getElementById('actividad');
+const itemActividadSelect = document.getElementById('itemActividad');
+
+disciplinaSelect.addEventListener('change', () => {
+  const disc = disciplinaSelect.value;
+  actividadSelect.innerHTML = '<option value="">Seleccionar actividad</option>';
+  itemActividadSelect.innerHTML = '<option value="">Seleccionar clasificación</option>';
+  itemActividadSelect.disabled = true;
+  
+  if (disc && DATOS.hallazgos[disc]) {
+    actividadSelect.disabled = false;
+    Object.keys(DATOS.hallazgos[disc]).sort().forEach(act => {
+      actividadSelect.innerHTML += `<option value="${act}">${act}</option>`;
+    });
+  } else {
+    actividadSelect.disabled = true;
+  }
+});
+
+actividadSelect.addEventListener('change', () => {
+  const disc = disciplinaSelect.value;
+  const act = actividadSelect.value;
+  itemActividadSelect.innerHTML = '<option value="">Seleccionar clasificación</option>';
+  
+  if (disc && act && DATOS.hallazgos[disc] && DATOS.hallazgos[disc][act]) {
+    itemActividadSelect.disabled = false;
+    DATOS.hallazgos[disc][act].sort().forEach(item => {
+      itemActividadSelect.innerHTML += `<option value="${item}">${item}</option>`;
+    });
+  } else {
+    itemActividadSelect.disabled = true;
+  }
+});
+
+// ==================== FORMULARIO NUEVO ITEM ====================
+const descripcionInput = document.getElementById('descripcion');
+const charCount = document.getElementById('charCount');
+descripcionInput.addEventListener('input', () => {
+  charCount.textContent = descripcionInput.value.length;
+});
+
+document.getElementById('itemForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const config = {
+    wbs: await getConfig('wbs') || '',
+    area: await getConfig('area') || '',
+    top: await getConfig('top') || '',
+    sistema: await getConfig('sistema') || '',
+    subsistema: await getConfig('subsistema') || '',
+    empresaContrato: await getConfig('empresaContrato') || '',
+    originadoPor: await getConfig('originadoPor') || '',
+    respConstruccion: await getConfig('respConstruccion') || '',
+    ingSistema: await getConfig('ingSistema') || '',
+    fechaEmision: await getConfig('fechaEmision') || '',
+    caminata: await getConfig('caminata') || 'CAMINATA 0'
+  };
+  
+  const item = {
+    ubicacion: document.getElementById('ubicacion').value,
+    descripcion: document.getElementById('descripcion').value,
+    prioridad: document.getElementById('prioridad').value,
+    fechaCompromiso: document.getElementById('fechaCompromiso').value,
+    disciplina: document.getElementById('disciplina').value,
+    actividad: document.getElementById('actividad').value,
+    itemActividad: document.getElementById('itemActividad').value,
+    config: config,
+    createdAt: new Date().toISOString()
+  };
+  
+  await addItem(item);
+  showToast('Ítem guardado correctamente');
+  e.target.reset();
+  charCount.textContent = '0';
+  actividadSelect.innerHTML = '<option value="">Primero seleccione disciplina</option>';
+  actividadSelect.disabled = true;
+  itemActividadSelect.innerHTML = '<option value="">Primero seleccione actividad</option>';
+  itemActividadSelect.disabled = true;
+});
+
+// ==================== RENDERIZAR LISTA ====================
+async function renderItems() {
+  const items = await getItems();
+  const container = document.getElementById('itemsList');
+  
+  // Actualizar contadores
+  document.getElementById('totalItems').textContent = items.length;
+  document.getElementById('p1Count').textContent = items.filter(i => i.prioridad === 'P1').length;
+  document.getElementById('p2Count').textContent = items.filter(i => i.prioridad === 'P2').length;
+  document.getElementById('p3Count').textContent = items.filter(i => i.prioridad === 'P3').length;
+  document.getElementById('p4Count').textContent = items.filter(i => i.prioridad === 'P4').length;
+  document.getElementById('p5Count').textContent = items.filter(i => i.prioridad === 'P5').length;
+  
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <h4>Sin ítems registrados</h4>
+        <p>Crea tu primer ítem en la pestaña "Nuevo"</p>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = items.map(item => `
+    <div class="item-card ${item.prioridad.toLowerCase()}">
+      <div class="item-header">
+        <span class="item-id">#${item.id}</span>
+        <span class="item-priority">${item.prioridad}</span>
+      </div>
+      <div class="item-desc">${item.descripcion}</div>
+      <div class="item-meta">
+        <span>📍 ${item.ubicacion}</span>
+        <span>🔧 ${item.disciplina}</span>
+        <span>📅 ${item.fechaCompromiso}</span>
+      </div>
+      <div class="item-actions">
+        <button class="btn-edit" onclick="editItem(${item.id})">✏️ Editar</button>
+        <button class="btn-delete" onclick="confirmDelete(${item.id})">🗑️ Eliminar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ==================== MODAL ELIMINAR ====================
+let deleteTargetId = null;
+
+function confirmDelete(id) {
+  deleteTargetId = id;
+  document.getElementById('modalTitle').textContent = 'Eliminar Ítem';
+  document.getElementById('modalMessage').textContent = '¿Está seguro de eliminar este ítem? Esta acción no se puede deshacer.';
+  document.getElementById('modalConfirm').textContent = 'Eliminar';
+  document.getElementById('modalConfirm').onclick = async () => {
+    await deleteItem(deleteTargetId);
+    closeModal();
+    renderItems();
+    showToast('Ítem eliminado');
+  };
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function confirmClearAll() {
+  document.getElementById('modalTitle').textContent = 'Limpiar Todo';
+  document.getElementById('modalMessage').textContent = '¿Está seguro de eliminar TODOS los ítems? Esta acción no se puede deshacer.';
+  document.getElementById('modalConfirm').textContent = 'Limpiar Todo';
+  document.getElementById('modalConfirm').onclick = async () => {
+    await clearItems();
+    closeModal();
+    renderItems();
+    showToast('Todos los ítems eliminados');
+  };
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+// ==================== MODAL EDITAR ====================
+async function editItem(id) {
+  const items = await getItems();
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  
+  document.getElementById('edit_id').value = item.id;
+  document.getElementById('edit_ubicacion').value = item.ubicacion;
+  document.getElementById('edit_descripcion').value = item.descripcion;
+  document.getElementById('edit_prioridad').value = item.prioridad;
+  document.getElementById('edit_fechaCompromiso').value = item.fechaCompromiso;
+  document.getElementById('edit_disciplina').value = item.disciplina;
+  
+  // Cargar actividades
+  const editActividadSelect = document.getElementById('edit_actividad');
+  editActividadSelect.innerHTML = '';
+  if (DATOS.hallazgos[item.disciplina]) {
+    Object.keys(DATOS.hallazgos[item.disciplina]).sort().forEach(act => {
+      editActividadSelect.innerHTML += `<option value="${act}" ${act === item.actividad ? 'selected' : ''}>${act}</option>`;
+    });
+  }
+  
+  // Cargar clasificaciones
+  const editItemActividadSelect = document.getElementById('edit_itemActividad');
+  editItemActividadSelect.innerHTML = '';
+  if (DATOS.hallazgos[item.disciplina] && DATOS.hallazgos[item.disciplina][item.actividad]) {
+    DATOS.hallazgos[item.disciplina][item.actividad].sort().forEach(clasif => {
+      editItemActividadSelect.innerHTML += `<option value="${clasif}" ${clasif === item.itemActividad ? 'selected' : ''}>${clasif}</option>`;
+    });
+  }
+  
+  document.getElementById('editModalOverlay').classList.add('active');
+}
+
+document.getElementById('edit_disciplina').addEventListener('change', function() {
+  const disc = this.value;
+  const editActividadSelect = document.getElementById('edit_actividad');
+  const editItemActividadSelect = document.getElementById('edit_itemActividad');
+  
+  editActividadSelect.innerHTML = '';
+  editItemActividadSelect.innerHTML = '';
+  
+  if (DATOS.hallazgos[disc]) {
+    Object.keys(DATOS.hallazgos[disc]).sort().forEach(act => {
+      editActividadSelect.innerHTML += `<option value="${act}">${act}</option>`;
+    });
+  }
+});
+
+document.getElementById('edit_actividad').addEventListener('change', function() {
+  const disc = document.getElementById('edit_disciplina').value;
+  const act = this.value;
+  const editItemActividadSelect = document.getElementById('edit_itemActividad');
+  
+  editItemActividadSelect.innerHTML = '';
+  
+  if (DATOS.hallazgos[disc] && DATOS.hallazgos[disc][act]) {
+    DATOS.hallazgos[disc][act].sort().forEach(clasif => {
+      editItemActividadSelect.innerHTML += `<option value="${clasif}">${clasif}</option>`;
+    });
+  }
+});
+
+document.getElementById('editForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const items = await getItems();
+  const id = parseInt(document.getElementById('edit_id').value);
+  const item = items.find(i => i.id === id);
+  
+  item.ubicacion = document.getElementById('edit_ubicacion').value;
+  item.descripcion = document.getElementById('edit_descripcion').value;
+  item.prioridad = document.getElementById('edit_prioridad').value;
+  item.fechaCompromiso = document.getElementById('edit_fechaCompromiso').value;
+  item.disciplina = document.getElementById('edit_disciplina').value;
+  item.actividad = document.getElementById('edit_actividad').value;
+  item.itemActividad = document.getElementById('edit_itemActividad').value;
+  
+  await updateItem(item);
+  closeEditModal();
+  renderItems();
+  showToast('Ítem actualizado');
+});
+
+function closeEditModal() {
+  document.getElementById('editModalOverlay').classList.remove('active');
+}
+
+// ==================== EXPORTAR CSV ====================
+async function exportCSV() {
+  const items = await getItems();
+  if (items.length === 0) {
+    showToast('No hay ítems para exportar', 'error');
+    return;
+  }
+  
+  // Headers según Entregable.xlsx (20 columnas)
+  const headers = [
+    'ID', 'N° WBS', 'N°AREA', 'N° TOP', 'N°SISTEMA', 'N° SUBSISTEMA',
+    'EMPRESA CONTRATISTA', 'N°CONTRATO', 'UBICACION', 'ORIGINADO POR',
+    'RESP. CONSTRUCCION', 'ING. SISTEMA', 'FECHA DE EMISION',
+    'DESCRIPCION ACCION PENDIENTE', 'PRIORIDADES', 'FECHA DE COMPROMISO DE CIERRE',
+    'CAMINATA', 'DISC.', 'ACTIVIDAD DE HALLAZGOS', 'ITEM ACTIVIDAD DE HALLAZGOS'
+  ];
+  
+  const prioridadMap = { 'P1': 1, 'P2': 2, 'P3': 3, 'P4': 4, 'P5': 5 };
+  
+  const rows = items.map(item => {
+    const cfg = item.config || {};
+    // Separar empresa y contrato
+    let empresa = '', contrato = '';
+    if (cfg.empresaContrato) {
+      const ec = DATOS.empresasContratos.find(e => `${e.empresa} - ${e.contrato}` === cfg.empresaContrato);
+      if (ec) {
+        empresa = ec.empresa;
+        contrato = ec.contrato;
+      } else {
+        empresa = cfg.empresaContrato;
+      }
+    }
+    
+    return [
+      item.id,
+      cfg.wbs || '',
+      cfg.area || '',
+      cfg.top || '',
+      cfg.sistema || '',
+      cfg.subsistema || '',
+      empresa,
+      contrato,
+      item.ubicacion,
+      cfg.originadoPor || '',
+      cfg.respConstruccion || '',
+      cfg.ingSistema || '',
+      cfg.fechaEmision || '',
+      item.descripcion,
+      prioridadMap[item.prioridad] || '',
+      item.fechaCompromiso,
+      cfg.caminata || '',
+      item.disciplina,
+      item.actividad,
+      item.itemActividad
+    ];
+  });
+  
+  // Generar CSV con BOM para Excel
+  const csvContent = '\uFEFF' + [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `punch_list_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  
+  showToast(`Exportados ${items.length} ítems`);
+}
+
+// ==================== CONFIGURACIÓN ====================
+async function loadConfig() {
+  // Cargar valores guardados
+  document.getElementById('cfg_wbs').value = await getConfig('wbs') || '';
+  document.getElementById('cfg_area').value = await getConfig('area') || '';
+  document.getElementById('cfg_top').value = await getConfig('top') || '';
+  document.getElementById('cfg_sistema').value = await getConfig('sistema') || '';
+  document.getElementById('cfg_subsistema').value = await getConfig('subsistema') || '';
+  document.getElementById('cfg_respConstruccion').value = await getConfig('respConstruccion') || '';
+  document.getElementById('cfg_ingSistema').value = await getConfig('ingSistema') || '';
+  document.getElementById('cfg_fechaEmision').value = await getConfig('fechaEmision') || '';
+  document.getElementById('cfg_caminata').value = await getConfig('caminata') || 'CAMINATA 0';
+  
+  // Cargar desplegables
+  const empresaSelect = document.getElementById('cfg_empresaContrato');
+  empresaSelect.innerHTML = '<option value="">Seleccionar empresa</option>';
+  DATOS.empresasContratos.forEach(ec => {
+    const val = `${ec.empresa} - ${ec.contrato}`;
+    empresaSelect.innerHTML += `<option value="${val}">${val}</option>`;
+  });
+  empresaSelect.value = await getConfig('empresaContrato') || '';
+  
+  // Cargar especialistas
+  await loadEspecialistas();
+}
+
+async function loadEspecialistas() {
+  const especialistas = await getEspecialistas();
+  const select = document.getElementById('cfg_originadoPor');
+  select.innerHTML = '<option value="">Seleccionar especialista</option>';
+  especialistas.forEach(e => {
+    select.innerHTML += `<option value="${e}">${e}</option>`;
+  });
+  select.value = await getConfig('originadoPor') || '';
+  
+  // Lista para administrar
+  const list = document.getElementById('especialistasList');
+  const custom = await getConfig('customEspecialistas') || [];
+  document.getElementById('especialistasCount').textContent = especialistas.length;
+  
+  list.innerHTML = custom.map(e => `
+    <div class="list-item">
+      <span>${e}</span>
+      <button onclick="removeEspecialistaUI('${e.replace(/'/g, "\\'")}')">✕</button>
+    </div>
+  `).join('');
+  
+  if (custom.length === 0) {
+    list.innerHTML = '<p style="font-size:12px;color:var(--text-muted);padding:8px;">No hay especialistas personalizados</p>';
+  }
+}
+
+async function addEspecialista() {
+  const input = document.getElementById('nuevoEspecialista');
+  const nombre = input.value.trim();
+  if (nombre) {
+    await addCustomEspecialista(nombre);
+    input.value = '';
+    await loadEspecialistas();
+    showToast('Especialista agregado');
+  }
+}
+
+async function removeEspecialistaUI(nombre) {
+  await removeCustomEspecialista(nombre);
+  await loadEspecialistas();
+  showToast('Especialista eliminado');
+}
+
+async function saveConfig() {
+  await setConfig('wbs', document.getElementById('cfg_wbs').value);
+  await setConfig('area', document.getElementById('cfg_area').value);
+  await setConfig('top', document.getElementById('cfg_top').value);
+  await setConfig('sistema', document.getElementById('cfg_sistema').value);
+  await setConfig('subsistema', document.getElementById('cfg_subsistema').value);
+  await setConfig('empresaContrato', document.getElementById('cfg_empresaContrato').value);
+  await setConfig('originadoPor', document.getElementById('cfg_originadoPor').value);
+  await setConfig('respConstruccion', document.getElementById('cfg_respConstruccion').value);
+  await setConfig('ingSistema', document.getElementById('cfg_ingSistema').value);
+  await setConfig('fechaEmision', document.getElementById('cfg_fechaEmision').value);
+  await setConfig('caminata', document.getElementById('cfg_caminata').value);
+  
+  showToast('Configuración guardada');
+}
+
+// ==================== PWA / SERVICE WORKER ====================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+
+// Estado de conexión
+function updateOnlineStatus() {
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  if (navigator.onLine) {
+    dot.classList.remove('offline');
+    text.textContent = 'Online';
+  } else {
+    dot.classList.add('offline');
+    text.textContent = 'Offline';
+  }
+}
+
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+// Banner de instalación
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('installBanner').classList.remove('show');
+    });
+  }
+}
+
+function dismissInstall() {
+  document.getElementById('installBanner').classList.remove('show');
+}
+
+// ==================== INICIALIZACIÓN ====================
+openDB().then(() => {
+  loadConfig();
+  updateOnlineStatus();
+});
+</script>
+</body>
+</html>
