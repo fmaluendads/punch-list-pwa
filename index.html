@@ -520,16 +520,23 @@ textarea { resize: vertical; min-height: 80px; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
+  padding: 12px;
   background: var(--coal);
   border-radius: 6px;
   margin-bottom: 8px;
   cursor: pointer;
+  -webkit-tap-highlight-color: rgba(181,101,29,0.15);
+  touch-action: manipulation;
+  min-height: 48px;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .item-checkbox input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
   accent-color: var(--copper);
+  pointer-events: none;
 }
 .item-checkbox-info {
   flex: 1;
@@ -618,6 +625,7 @@ textarea { resize: vertical; min-height: 80px; }
 }
 .toast.success { border-left: 4px solid var(--success); }
 .toast.error { border-left: 4px solid var(--danger); }
+.toast.warn { border-left: 4px solid var(--warning); }
 .fullscreen-image {
   display: none;
   position: fixed;
@@ -650,6 +658,256 @@ textarea { resize: vertical; min-height: 80px; }
   font-size: 20px;
   cursor: pointer;
 }
+/* WBS Context Banner */
+.wbs-context-banner {
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border: 1px solid transparent;
+}
+.wbs-context-banner.wbs-context-ok {
+  background: rgba(34,197,94,0.08);
+  border-color: rgba(34,197,94,0.25);
+}
+.wbs-context-banner.wbs-context-empty {
+  background: rgba(245,158,11,0.1);
+  border-color: rgba(245,158,11,0.3);
+}
+.wbs-context-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wbs-context-icon { font-size: 18px; flex-shrink: 0; }
+.wbs-context-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wbs-context-text span:first-child {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wbs-context-text span:last-child {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Item card WBS meta */
+.item-wbs-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* WBS warning toast */
+.wbs-warn {
+  background: rgba(245,158,11,0.15);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--warning);
+  margin-bottom: 12px;
+  display: none;
+}
+.wbs-warn.visible { display: block; }
+/* WBS Search Modal */
+.wbs-search-modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 300;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 16px) 16px 16px;
+}
+.wbs-search-modal.active { display: flex; }
+.wbs-search-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.wbs-search-header h4 {
+  flex: 1;
+  font-size: 15px;
+  color: var(--copper-lt);
+}
+.wbs-search-header button {
+  background: var(--slate-lt);
+  border: none;
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.wbs-search-input-wrap {
+  position: relative;
+  margin-bottom: 10px;
+}
+.wbs-search-input-wrap input {
+  width: 100%;
+  padding: 14px 44px 14px 14px;
+  font-size: 16px;
+  background: var(--slate);
+  border: 2px solid var(--copper);
+  border-radius: 10px;
+  color: var(--text);
+}
+.wbs-search-input-wrap input:focus { outline: none; }
+.wbs-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+  display: none;
+}
+.wbs-search-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+  margin-bottom: 8px;
+}
+.wbs-search-list {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--slate);
+  border-radius: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+.wbs-search-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--slate-lt);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.wbs-search-item:last-child { border-bottom: none; }
+.wbs-search-item:active { background: var(--slate-lt); }
+.wbs-item-id {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--copper-lt);
+  margin-bottom: 2px;
+}
+.wbs-item-name {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.wbs-item-empresa {
+  font-size: 10px;
+  color: var(--copper);
+  margin-top: 3px;
+}
+.wbs-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+/* Derived read-only fields */
+.derived-fields {
+  background: var(--coal);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 4px;
+}
+.derived-fields .derived-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--slate-lt);
+  gap: 8px;
+}
+.derived-fields .derived-row:last-child { border-bottom: none; }
+.derived-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  min-width: 80px;
+}
+.derived-value {
+  font-size: 12px;
+  color: var(--text);
+  text-align: right;
+  word-break: break-all;
+}
+.derived-value.empty { color: var(--text-muted); font-style: italic; }
+.wbs-select-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--slate-lt);
+  border: 2px dashed var(--slate-lt);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.wbs-select-btn:hover { border-color: var(--copper); }
+.wbs-select-btn.selected {
+  border-style: solid;
+  border-color: var(--copper);
+  background: var(--coal);
+}
+.wbs-select-btn .wbs-btn-label { flex: 1; }
+.wbs-select-btn .wbs-btn-id {
+  font-weight: 700;
+  color: var(--copper-lt);
+  font-size: 14px;
+}
+.wbs-select-btn .wbs-btn-name {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.wbs-select-btn .wbs-btn-placeholder {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.wbs-select-btn .wbs-arrow { color: var(--text-muted); font-size: 16px; }
+/* Empresa filter chips */
+.empresa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.empresa-chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--slate-lt);
+  background: var(--coal);
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.empresa-chip.active {
+  background: var(--copper);
+  border-color: var(--copper);
+  color: white;
+  font-weight: 600;
+}
 @media (min-width: 768px) {
   body { max-width: 600px; margin: 0 auto; }
   .form-row { display: flex; gap: 12px; }
@@ -676,6 +934,16 @@ textarea { resize: vertical; min-height: 80px; }
 <main>
   <!-- TAB: NUEVO ÍTEM -->
   <div id="tab-nuevo" class="tab-content active">
+    <!-- Banner contexto WBS activo -->
+    <div id="wbsContextBanner" class="wbs-context-banner wbs-context-empty">
+      <div class="wbs-context-inner">
+        <span class="wbs-context-icon">⚠️</span>
+        <div class="wbs-context-text">
+          <span id="wbsContextLine1">Sin SubSistema configurado</span>
+          <span id="wbsContextLine2">Ve a ⚙️ Config para seleccionar el proyecto</span>
+        </div>
+      </div>
+    </div>
     <form id="itemForm">
       <div class="form-section">
         <h3>📍 Datos del Ítem</h3>
@@ -757,7 +1025,7 @@ textarea { resize: vertical; min-height: 80px; }
             </div>
             <img id="photoPreview" style="display:none">
           </div>
-          <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelect(event)">
+          <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoSelect(event)">
           <div class="photo-actions" id="photoActions" style="display:none">
             <button type="button" onclick="document.getElementById('photoInput').click()" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
             <button type="button" onclick="removePhoto()" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
@@ -815,39 +1083,52 @@ textarea { resize: vertical; min-height: 80px; }
       </div>
       <div class="config-body">
         <div class="form-group">
-          <label>N° WBS</label>
-          <input type="text" id="cfg_wbs" placeholder="Ej: WBS-001">
-        </div>
-        <div class="form-group">
-          <label>N° Área</label>
-          <input type="text" id="cfg_area" placeholder="Ej: AREA-01">
-        </div>
-        <div class="form-group">
-          <label>N° TOP</label>
-          <input type="text" id="cfg_top" placeholder="Ej: TOP-001">
-        </div>
-        <div class="form-group">
-          <label>N° Sistema</label>
-          <input type="text" id="cfg_sistema" placeholder="Ej: SIS-001">
-        </div>
-        <div class="form-group">
-          <label>N° Subsistema</label>
-          <input type="text" id="cfg_subsistema" placeholder="Ej: SUB-001">
-        </div>
-      </div>
-    </div>
-    
-    <div class="config-section">
-      <div class="config-header" onclick="toggleConfig(this)">
-        <h4>🏢 Empresa y Contrato (CSV)</h4>
-        <span class="arrow">▼</span>
-      </div>
-      <div class="config-body">
-        <div class="form-group">
-          <label>Empresa - Contrato</label>
-          <select id="cfg_empresaContrato">
+          <label>Empresa Contratista <span class="required">*</span></label>
+          <select id="cfg_empresaWbs" onchange="onEmpresaWbsChange()">
             <option value="">Seleccionar empresa</option>
+            <option value="GARDILCIC">GARDILCIC</option>
+            <option value="GEOVITA">GEOVITA</option>
+            <option value="SIGDO KOPPERS S.A">SIGDO KOPPERS S.A</option>
+            <option value="ZUBLIN">ZUBLIN</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label>N° SubSistema <span class="required">*</span></label>
+          <button type="button" class="wbs-select-btn" id="wbsSelectBtn" onclick="openWBSSearch()">
+            <div class="wbs-btn-label">
+              <div class="wbs-btn-placeholder" id="wbsBtnPlaceholder">Seleccionar SubSistema...</div>
+              <div id="wbsBtnSelected" style="display:none">
+                <div class="wbs-btn-id" id="wbsBtnId"></div>
+                <div class="wbs-btn-name" id="wbsBtnName"></div>
+              </div>
+            </div>
+            <span class="wbs-arrow">›</span>
+          </button>
+        </div>
+        <div class="form-group">
+          <label style="margin-bottom:8px;">Campos Derivados <span style="font-size:10px;color:var(--text-muted)">(solo lectura)</span></label>
+          <div class="derived-fields">
+            <div class="derived-row">
+              <span class="derived-label">N° Contrato</span>
+              <span class="derived-value" id="derived_contrato"><span class="empty">—</span></span>
+            </div>
+            <div class="derived-row">
+              <span class="derived-label">N° Sistema</span>
+              <span class="derived-value" id="derived_sistema"><span class="empty">—</span></span>
+            </div>
+            <div class="derived-row">
+              <span class="derived-label">N° TOP</span>
+              <span class="derived-value" id="derived_top"><span class="empty">—</span></span>
+            </div>
+            <div class="derived-row">
+              <span class="derived-label">N° Área</span>
+              <span class="derived-value" id="derived_area"><span class="empty">—</span></span>
+            </div>
+            <div class="derived-row">
+              <span class="derived-label">N° WBS</span>
+              <span class="derived-value" id="derived_wbs"><span class="empty">—</span></span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -866,11 +1147,15 @@ textarea { resize: vertical; min-height: 80px; }
         </div>
         <div class="form-group">
           <label>Resp. Construcción</label>
-          <input type="text" id="cfg_respConstruccion" placeholder="Nombre responsable">
+          <select id="cfg_respConstruccion">
+            <option value="">Seleccionar responsable</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Ing. Sistema</label>
-          <input type="text" id="cfg_ingSistema" placeholder="Nombre ingeniero">
+          <select id="cfg_ingSistema">
+            <option value="">Seleccionar ingeniero</option>
+          </select>
         </div>
       </div>
     </div>
@@ -891,6 +1176,7 @@ textarea { resize: vertical; min-height: 80px; }
             <option value="CAMINATA 0">CAMINATA 0</option>
             <option value="CAMINATA 1">CAMINATA 1</option>
             <option value="CAMINATA 2">CAMINATA 2</option>
+            <option value="CAMINATA 3">CAMINATA 3</option>
           </select>
         </div>
       </div>
@@ -957,10 +1243,10 @@ textarea { resize: vertical; min-height: 80px; }
         <select id="ic_nivel">
           <option value="">Seleccionar nivel</option>
           <option value="PRODUCCIÓN">PRODUCCIÓN</option>
+          <option value="ACARREO">ACARREO</option>
           <option value="HUNDIMIENTO">HUNDIMIENTO</option>
-          <option value="TRANSPORTE">TRANSPORTE</option>
-          <option value="VENTILACIÓN">VENTILACIÓN</option>
-          <option value="SUPERFICIE">SUPERFICIE</option>
+          <option value="EXTRACCIÓN">EXTRACCIÓN</option>
+          <option value="INYECCIÓN">INYECCIÓN</option>
         </select>
       </div>
       
@@ -1062,7 +1348,7 @@ textarea { resize: vertical; min-height: 80px; }
           </div>
           <img id="editPhotoPreview" style="display:none">
         </div>
-        <input type="file" id="editPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="handleEditPhotoSelect(event)">
+        <input type="file" id="editPhotoInput" accept="image/*" style="display:none" onchange="handleEditPhotoSelect(event)">
         <div class="photo-actions" id="editPhotoActions" style="display:none">
           <button type="button" onclick="document.getElementById('editPhotoInput').click()" style="background:var(--slate-lt);color:var(--text)">📷</button>
           <button type="button" onclick="removeEditPhoto()" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️</button>
@@ -1082,82 +1368,39 @@ textarea { resize: vertical; min-height: 80px; }
   <img id="fullscreenImg" src="">
 </div>
 
+<!-- WBS Search Modal -->
+<div class="wbs-search-modal" id="wbsSearchModal">
+  <div class="wbs-search-header">
+    <h4>🔍 Seleccionar SubSistema</h4>
+    <button onclick="closeWBSSearch()">✕ Cerrar</button>
+  </div>
+  <div class="empresa-chips" id="wbsEmpresaChips"></div>
+  <div class="wbs-search-input-wrap">
+    <input type="text" id="wbsSearchInput" placeholder="Buscar por código o nombre..." 
+           oninput="filterWBSList()" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="wbs-search-clear" id="wbsSearchClear" onclick="clearWBSSearch()">✕</button>
+  </div>
+  <div class="wbs-search-count" id="wbsSearchCount"></div>
+  <div class="wbs-search-list" id="wbsSearchList"></div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
 // ==================== DATOS EMBEBIDOS ====================
-const DATOS = {
-  empresasContratos: [
-    {"empresa":"ACCIONA-OSSA-PIZZAROTTI","contrato":"4600019711/CC-110"},
-    {"empresa":"ASTALDI","contrato":"4501849911/CC013F"},
-    {"empresa":"BUILDTEK","contrato":"4600020330 / CS-642"},
-    {"empresa":"CODELCO VP","contrato":"CODELCO VP"},
-    {"empresa":"GEOVITA","contrato":"4400262093/CC-111"},
-    {"empresa":"MASTER DRILLING - BESALCO","contrato":"4600019720/CC-112"},
-    {"empresa":"MASTER DRILLING - BESALCO","contrato":"4600027681/CC-113"},
-    {"empresa":"OSSA-PIZZAROTTI","contrato":"4600019615/CC140"},
-    {"empresa":"PRODALAM","contrato":"4501979417"},
-    {"empresa":"SIGDO KOPPERS","contrato":"4501802225/CC-024B"},
-    {"empresa":"TBD","contrato":"TBD"},
-    {"empresa":"ZUBLIN","contrato":"4501634332/CC010"},
-    {"empresa":"ZUBLIN","contrato":"4600026152/CC-100"},
-    {"empresa":"GARDILCIC","contrato":"4600027291/CC-117"},
-    {"empresa":"ACCIONA","contrato":"4600025397/CC-142"},
-    {"empresa":"CEMENTOS BIOBIO","contrato":"4600020156/CS-522"},
-    {"empresa":"COMTECSA","contrato":"460022630/EPC-01"},
-    {"empresa":"FLSMIDTH S.A.","contrato":"4600019882/REQ123A"},
-    {"empresa":"HOWDEN","contrato":"4600019516/REQ143A"},
-    {"empresa":"PROMET","contrato":"4600024338/CS-532"},
-    {"empresa":"PROMET","contrato":"4600028094/CC-135"},
-    {"empresa":"SALFA MONTAJES S.A","contrato":"4600022849/CC144B"},
-    {"empresa":"SIGDO KOPPERS","contrato":"4600025739/CC-123B"},
-    {"empresa":"SIGDO KOPPERS","contrato":"4600023941/CC-125B"},
-    {"empresa":"SIGMA","contrato":"4400257141/CS-639"},
-    {"empresa":"STRABAG-EDILMAC","contrato":"4600021100/CC-141"},
-    {"empresa":"SIGDO KOPPERS","contrato":"4600021921/CS-528"},
-    {"empresa":"ACCIONA-OSSA-PIZZAROTTI","contrato":"4600029422/GCC-002"},
-    {"empresa":"GEOVITA","contrato":"4600029058/GCC-001"},
-    {"empresa":"SIGDO KOPPERS S.A","contrato":"4600029025/CC-101"},
-    {"empresa":"SIGMA S.A","contrato":"4600027602/CS-664"},
-    {"empresa":"CODELCO GOMS","contrato":"CODELCO-GOMS"},
-    {"empresa":"CODELCO GOMS DCH","contrato":"CODELCO-GOMS-DCH"}
-  ],
-  especialistasBase: [
-    "Alberto Chávez Oliva","Aldo Moraga Nuñez","Alejandro Francisco Marchant Silva",
-    "Alejandro Nicolas Ossandon Lazcano","Alex Nicolas Honores Castillo","Alexa Irina Vargas Pino",
-    "Alexis Pacheco Arnaiz","Alvaro Gonzalez Marin","Alvaro Rodrigo Acuña Lagos","ALFREDO SALAZAR",
-    "Ana Maria Villablanca Ferrada","ANDREA SAAVEDRA VILLAFANA","ANUAR JOSE RIVERO COTES",
-    "Arturo Valencia López","Auristela Robles Rivera","Camilo Valenzuela Bustamante",
-    "Carlos Andrés Maldonado Ardiles","Carlos Avendaño Matus","CARLOS AVENDAñO MATUS",
-    "CLAUDIO FREIRE","Claudio Guggiana Gutíerrez","Claudio Valencia Pérez",
-    "Cristian Adolfo Arriagada Aviles","CRISTIAN HERRERA H","CRISTIAN OLIVARES",
-    "Cristian Ramírez Díaz","DANIEL SAEZ","Danko Ravlic García","David Andres Meliman Pinochet",
-    "David Jacob Chulak Tabilo","David Serey Leiva","Diego Alexander Diaz Cueto",
-    "Eduardo Omar Montiel Toledo","Esteban Elias Riquelme Rojas","ELIAS RAMIREZ MARTINEZ",
-    "Fabian Neira Zapata","Fabian Olivares Rojas","Felipe Ordenes Gahona","Fernando Alegria Bascur",
-    "Fernando Manzano Munoz","FRANCISCO CASTILLO","Francisco Javier Gonzalez Albornoz",
-    "FRANCO CASTILLO BASOALTO","Franklin Rodrigo Millao Olivares","Freddy Alexis Yáñez Chávez",
-    "GABRIEL CANIHUANTE","Gaston Arias Cifuentes","Gedeon Ignacio Briones Silva",
-    "GILBERTO MONTEALEGRE VALDIVIA","Guillermo Sagredo Aguilera","GABRIEL CISTERNAS",
-    "Hector Alejandro Diaz Leon","Héctor Enrique Arancibia Álvarez","Héctor Ferrada Timmermann",
-    "Horacio Soto Rey","Hugo Alfredo Fuentes Zúñiga","Ignacio Andres Yanez Leon","JAIME MANRIQUEZ",
-    "Javier Sebastian Urriola Palma","Jhon Diaz Pascal","Jimmy Adams Caces","Johan Bastian Solis Mora",
-    "JONATHAN MELLA","Jorge Eduardo Nilo Farias","Jorge Elias Diaz Salinas","Jorge Enrique Orellana Vidal",
-    "JORGE GUERRA","JOSE FIGUEROA","Jose Ricardo Pacheco Morales","José Santander Sandoval",
-    "Juan Carlos Jury Figueroa","JUAN MORALES NAVARRO","JUAN PUMARINO","Julio Cesar Aguilar Correa",
-    "Lino Pernigotti Meyer","Luis Hernandez Toledo","Luis Pizarro Suarez","LUIS RODRIGO ROJO BRICEñO",
-    "LUIS SOTO","Marco Antonio Torres Moraga","MAURICIO RIQUELME RIQUELME","Mauricio Zurita",
-    "Miguel Enrique Ahumada Chea","MIGUEL MOLINA","Myriam Inés Herrera Pérez",
-    "Nicolas Esteban Marchant Silva","Omar Andres Valenzuela Lopez","Oscar Ignacio Venegas Munoz",
-    "PATRICIA CONTRERAS","Pablo Jaque Aguilar","Pablo Javier Rodriguez Torres","PATRICIO PIZARRO",
-    "Pedro Antonio Zapata Seguel","Pedro Pablo Fernandez Fernandez","Rafael Contreras Guajardo",
-    "Rodolfo Hernan Antilef Duran","Rodrigo Ignacio Venegas Orlandini","Rodrigo Iribarren Carvajal",
-    "Ruben Robles Monroy","Ruben Segundo Poblete Uren","SCARLETT FRANCO","Sergio Araya Rojo",
-    "Yerko Antonio Vergara Ramirez","CODELCO GOMS C3 (AGD)","FRANCISCO HERMAN VERNAL CAPETILLO",
-    "LUIS ANDRES LOPEZ REYES","ALVARO GONZALEZ MARIN","LAUTARO BENAVIDES","FABIAN POBLETE"
-  ],
-  hallazgos: {"TOPOGRAFIA":{"POR CLASIFICAR":["POR CLASIFICAR"],"Homologación PRE2024":["Homologaci n PRE2024"]},"OTRA":{"SIST. MONITOREO DE MUROS":["DESPEJAR MONOLITO","FALTA ACCESO / MEJORAR ACCESO","FALTA INSTALACI N DE MONOLITO","FALTA INSTALACI N DE SE AL TICA","FALTA TAG DE IDENTIFICACI N","SE ALIZAR PIEZ METRO"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["LIMPIEZA Y ASEO","OTROS"],"MONTAJE DE EQUIPO":["FALTA TOUCH UP"],"MITIGACIÓN Y CONTROL HIROLÓGICO":["FALTA C MARA DE REGISTRO","FALTA CONEXI N DE BOMBA A TDF","FALTA INSTALACI N DE SE AL TICA","FALTA INSTALAR PLC EN TDF","FALTA NORMALIZAR CONDUIT","FALTA REGULARIZAR LARGO DE PERNOS EN POSTES","FALTA TOUCH UP"],"INSPECCIÓN DE FÁBRICA":["FALTA ROTULACI N","INCUMPLIMIENTO DE RESISTENCIA HORMIG N"],"Homologación PRE2024":["Homologaci n PRE2024"]},"MINERIA":{"TRONADURA":["SOBRE EXCAVACION","SUBEXCAVACION"],"TOPOGRAFÍA":["FALTA MARCACION DE CABLES","FALTA MARCACION DE GRADIENTE","FALTA MARCACION DE PARADAS","FALTA MARCACION DE PK","FALTA PLANCHA A TECHO"],"PROYECCION SHOTCRETE":["ASENTAMIENTO DE CONO FUERA DE TOLERANCIA","CONDICIONES DE HUMEDAD INSUFICIENTE EN LA SUPERFICIE","FALTA BARBACANA","FALTA SHOTCRETE A SECCION COMPLETA","FALTA SHOTCRETE EN TRAMOS","FALTA SHOTCRETE EN TRAMOS O SECTORES","OQUEDAD DE SHOTCRETE","SHOTCRETE CON GRIETAS","SHOTCRETE CON NIDOS","SHOTCRETE DANADO","SHOTCRETE SOPLADO","TAPADO DE LINEA"],"POR CLASIFICAR":["POR CLASIFICAR"],"PERFORACION DIAGRAMA DE DISPARO":["SOBRE EXCAVACION Y/O SUBEXCAVACION"],"PERFORACION DE FORTIFICACION":["FALTA MALLA","FALTA MARCO","FALTA PERNO","FALTA PLANCHUELA","PATTER DE PARADAS NO CUMPLE CON DISENO"],"OTROS":["FALTA LIMPIEZA DE PATAS","FALTA MARCACION DE PARADAS","FALTA PERFILADO DE PISO","FALTA RETIRAR RISES","GRADIENTE NO CUMPLE DISENO","OTROS","PRESENCIA DE MARINA (RETIRO Y REVISAR FORTIFICACION)","RETIRAR MATERIALES DE CONSTRUCCION"],"MARCOS NORUEGOS":["CABLES Y/O PERNOS LARGOS","FALTA RELLENO DE HORMIGON","FALTA REMATE DE SHOTCRETE","FALTA TRASLAPE DE MALLA","NIDOS DE SHOTCRETE","PERNOS CON ANGULO INCORRECTO (SIN PERPENDICULARIDAD)"],"MARCACION DE FORTIFICACION":["PATTER DE PARADAS NO CUMPLE CON DISENO"],"Homologación PRE2024":["Homologaci n PRE2024"],"GENERAL":["LIMPIEZA DE RISES"],"EXCAVACION":["CIERRE DE BANCOS CON PRETIL DE SEGURIDAD","DESPEJAR Y LIMPIEZA DE PISO","FALTA CONTRAFOSO","FALTA SANEAMIENTO Y ACU ADURA SECTOR FRACTURADO","REPARACI N Y SANEAMIENTO DE PISO","SANEAMIENTO DE TALUD","SOBRE EXCAVACION","SUBEXCAVACION"],"DESARROLLO VERTICAL":["GRILLETES INSTALADOS","PERNOS CON SEPARACION DESDE CONTORNO","PIOLA AFIRMADA EN PERNOS HELICOIDALES","PIOLA EN FORMA DE ESTRELLA","TRASLAPE DE MALLA DESPU S DE LA PLANCHUELA"],"COLOCACION Y LECHADO DE PERNOS":["AFLORAMIENTO DE AGUA EN PERNO NO GALVANIZADO","FALTA APRIETE DE TUERCAS","FALTA PERNO","FORTIFICACION INCOMPLETA DE PERNOS","LECHADA INCOMPLETA","PATTER DE PARADAS NO CUMPLE CON DISENO","PERNO CORTADO","PERNO CORTADO (PRIMEROS Y  LTIMOS)","PERNO CORTO","PERNO DOBLADO","PERNO INCLINADO (SIN PERPENDICULARIDAD)","PERNO LARGO","PERNO SIN PLANCHUELA","PERNO SIN TUERCA","PLANCHUELA INVERTIDA","PLANCHUELA MAL POSICIONADA","PLANCHUELA Y/O TUERCA BAJO MALLA"],"COLOCACION Y LECHADO DE CABLES":["CABLE SIN CUNA, BARRIL Y PLANCHUELA","CABLES CORTOS","CABLES LARGOS","FALTA DESTRENZADO DE CABLE","FALTA LECHADO DE CABLE","FALTA TENSADO DE CABLES","FALTAN CABLES"],"COLOCACION Y ACONDICIONAMIENTO DE MALLA":["DEFICIENTE TRASLAPE DE MALLA","FORTIFICACION INCOMPLETA DE MALLA","MALLA ABIERTA","MALLA CARGADA","MALLA DANADA","MALLA MAL AFIANZADA Y/O SIN ADOSE","MALLA SIN INSTALAR","MALLA SIN INSTALAR A PISO"],"CARGUÍO":["SOBRE EXCAVACION Y/O SUBEXCAVACION"],"ACUNADURA":["ACUNADURA DEFICIENTE"]},"MECANICOS":{"UNIONES SOLDADAS":["DESALINEAMIENTO","FALTA CALIFICACION DE PROCEDIMIENTO DE SOLDADURA","FALTA CALIFICACION DE SOLDADOR","FALTA DE SOLDADURA","INCUMPLIMIENTO DE ESPECIFICACION DE SOLDADURA","INDICACIONES EN UNION SOLDADA","REPARACIONES INADECUADA"],"UNIONES APERNADAS":["APRIETE O TORQUE EXCESIVO","FALTA INSTALAR PERNOS / TUERCAS / GOLILLAS","FALTA TORQUE / APRIETE","MATERIAL NO CUMPLE CON ESPECIFICACIONES","PERFORACION IRREGULAR","PERNO CORTO","PERNO DESVIADO / DEFORMADO / CON DANO"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["OTROS"],"MONTAJE DE EQUIPO":["DIFERENCIA O IRREGULARIDAD TOPOGRAFICA (NIVELACION, ALINEACION, ETC.)","EQUIPO GOLPEADO O DANADO","FALTA ALINEAMIENTO MECANICO","FALTA MORTERO AUTONIVELANTE","FALTA TOUCH UP / PINTURA"],"Homologación PRE2024":["Homologaci n PRE2024"],"ALMACENAMIENTO EN BODEGA":["IMPERFECCIONES DE EQUIPO","INADECUADA PRESERVACION DE SUMINISTROS"]},"INSTRUMENTACION":{"SIST. MONITOREO DE MUROS":["DESHABILITAR ESTACIONAMIENTO","DESPEJAR MONOLITO","FALTA ACCESO / MEJORAR ACCESO","FALTA ATERRIZAMIENTO ESTRUCTURA","FALTA ENLACE GATEWAY","FALTA ENSAYO","FALTA ESTRUCTURA METALICA / TORRETA INSTRUMENTACION","FALTA INSTALACI N DE MONOLITO","FALTA INSTALACI N DE SE AL TICA","FALTA INSTALACI N TRANSMISOR Y SENSOR","FALTA REALIZAR MUFA","FALTA TAG DE IDENTIFICACI N","FALTA TAPA DE INSTRUMENTO","FALTA VERIFICAR NIVEL DE AGUA","HABILITACION DE POZO","SE ALIZAR PIEZ METRO / PLACAS"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["ORDEN Y LIMPIEZA","OTROS"],"MONTAJE DE EQUIPO":["EQUIPO GOLPEADO O DANADO","EQUIPO NO CUMPLE CON ESPECIFICACIONES","FALTA ALINEAMIENTO","FALTA MONTAJE","FALTA PLANO EN EQUIPO O GABINETE","FALTA SENALETICA DE SEGURIDAD","FALTA SUMINISTRO","FALTA TAG","FALTA TORQUE / APRIETE","FALTA TOUCH UP / PINTURA"],"MITIGACIÓN Y CONTROL HIROLÓGICO":["FALTA INSTALACI N DE MAN METRO"],"Homologación PRE2024":["Homologaci n PRE2024"],"CONEXION A TIERRA INSTRUMENTOS/TABLEROS":["CONEXIONADO DEFICIENTE","FALTA CHICOTE","FALTA CONEXION","MATERIAL NO CUMPLE CON ESPECIFICACIONES"],"CANALIZACION":["CANALIZACION PENDIENTE","FALTA ALINEAMIENTO","FALTA APRIETE DE CONECTORES/ABRAZADERAS","FALTA APRIETE DE TUERCAS/PRENSAS","FALTA GROUT EN SOPORTES","FALTA SELLADO","FALTA TAG","FALTA TOUCH UP / PINTURA","FALTAN SOPORTES DE ESCALERILLAS","MATERIAL DANADO","MATERIAL NO CUMPLE CON ESPECIFICACIONES","PERNO NO CORRESPONDE ESPECIFICACION","SOBRE APRIETE DE CONECTORES/ABRAZADERAS","SOBRE APRIETE DE TUERCAS","SOPORTES DE ESCALERILLAS INESTABLES"],"CABLEADO Y CONEXIONADO":["CABLE DANADO","FALTA APRIETE DE CONEXIONADO","FALTA CONEXIONADO","FALTA FUSION FIBRA OPTICA","FALTA MUFA","FALTA ORDENAMIENTO DE TENDIDO","FALTA SOPORTACION","FALTA TAG","FALTA TENDIDO","FALTA TERMOCONTRAER MARCAS/PUNTILLAS","INTERFERENCIA EN CABLEADO","MATERIAL NO CUMPLE CON ESPECIFICACIONES","MUFA CON DEFECTOS VISUALES","NO SE RESPETA PROCESO DE CONFECCION DE MUFA","RADIO DE CURVATURA INCORRECTO","TENDIDO INCORRECTO"]},"ESTRUCTURA":{"UNIONES SOLDADAS":["DESALINEAMIENTO","FALTA CALIFICACION DE PROCEDIMIENTO DE SOLDADURA","FALTA CALIFICACION DE SOLDADOR","FALTA DE SOLDADURA","INCUMPLIMIENTO DE ESPECIFICACION DE SOLDADURA","INDICACIONES EN UNION SOLDADA","REPARACIONES INADECUADA"],"UNIONES APERNADAS":["APRIETE O TORQUE EXCESIVO","FALTA INSTALAR PERNOS / TUERCAS / GOLILLAS","FALTA TORQUE / APRIETE","MATERIAL NO CUMPLE CON ESPECIFICACIONES","PERFORACION IRREGULAR","PERNO CORTO","PERNO DESVIADO / DEFORMADO / CON DANO"],"SISTEMA CAPTACIÓN DE AGUAS":["FALTA BARANDA","FALTA MONTAJE BOMBA","FALTA MONTAJE DE VALULA","FALTA MONTAJE EQUIPO","FALTA SOPORTACI N LINEA / EQUIPO","FALTA TORQUE","FALTAN GOLILLAS EN FIJACIONES DE POSTES"],"SIST. EVACUACIÓN DE AGUAS":["FALTA BARANDA"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["OTROS"],"MONTAJE ESTRUCTURA":["AUSENCIA O FALTA ELEMENTO","DIFERENCIA O IRREGULARIDAD TOPOGRAFICA (NIVELACION, ALINEACION, ETC.)","DIMENSIONES FUERA DE DISENO","ESTRUCTURA CON GOLPE O DANO","FALTA MORTERO AUTONIVELANTE","FALTA SOLDADURA","FALTA TOUCH UP / PINTURA","INCUMPLIMIENTO DE ESQUEMA DE PINTURA","INTERFERENCIA","MATERIAL NO CUMPLE CON ESPECIFICACION","MODIFICACION O CAMBIO DE DISENO NO AUTORIZADO"],"MITIGACIÓN Y CONTROL HIROLÓGICO":["FALTAN GOLILLAS EN FIJACIONES DE POSTES"],"Homologación PRE2024":["Homologaci n PRE2024"],"CONSTRUCCIÓN DE MURO":["FALTA BARANDA"],"ALMACENAMIENTO EN BODEGA":["IMPERFECCIONES DEL MATERIAL.","INADECUADA PRESERVACION DE SUMINISTROS"]},"ELECTRICOS":{"SIST. EVACUACIÓN DE AGUAS":["FALTA CABLEADO"],"SIST. ELÉCTRICOS SISTEMA RECIRCULACIÓN":["CONEXIONADO DE PARARRAYOS","FALTA BARRA A TIERRA, INTERIOR C MARA","FALTA CABLEADO","FALTA CABLES A TIERRA EN ESTRUCTURA","FALTA CABLES A TIERRA EN FLUJ METRO","FALTA CAJA DE CONEXI N","FALTA CONEXI N A PUENTE","FALTA CONEXI N LINEA MEDIA TENSI N","FALTA INSTALACI N DE CRUCETA","FALTA INSTALACI N DE SE AL TICA","FALTA INSTALACI N DE SOPORTACI N","FALTA INSTALACI N DE TIRANTES","FALTA PROTECCI N EL CTRICA","FALTA TENDIDO DE CABLE","FALTA TIE IN","REGULARIZAR ACEITE DEL TRANSFORMADOR","REGULARIZAR CONEXIONADO A TIERRA","REGULARIZAR NIVEL DE ACEITE DE TRANSFORMADOR"],"SIST. ELÉCTRICOS MEDIA TENSIÓN":["CONEXIONADO DE PARARRAYOS","FALTA CONEXI N A PUENTE","FALTA CONEXI N LINEA MEDIA TENSI N","FALTA INSTALACI N DE CRUCETA","FALTA INSTALACI N DE SE AL TICA","FALTA INSTALACI N DE TIRANTES","FALTA PROTECCI N EL CTRICA","FALTA TENDIDO DE CABLE","FALTA TIE IN","REGULARIZAR ACEITE DEL TRANSFORMADOR","REGULARIZAR CONEXIONADO A TIERRA","REGULARIZAR NIVEL DE ACEITE DE TRANSFORMADOR","REMATE DE OPGW"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["LIMPIEZA Y ASEO","OTROS"],"MONTAJE DE EQUIPO":["EQUIPO GOLPEADO O DANADO","EQUIPO NO CUMPLE CON ESPECIFICACIONES","FALTA ALINEAMIENTO","FALTA MONTAJE","FALTA PLANO EN EQUIPO O GABINETE","FALTA SENALETICA DE SEGURIDAD","FALTA SUMINISTRO","FALTA TAG","FALTA TORQUE / APRIETE","FALTA TOUCH UP"],"MITIGACIÓN Y CONTROL HIROLÓGICO":["FALTA BARRA A TIERRA, INTERIOR C MARA","FALTA CABLES A TIERRA EN FLUJ METRO"],"MALLA PUESTA A TIERRA":["FALTA CALIFICACION DE ESPECIALISTAS","FALTA CHICOTE","FALTA DE BARRA COLECTORA DE TIERRA","FALTA DE CONEXIONADO","INSTALACION DE ADITIVO DE MEJORAMIENTO DEFICIENTE","MALLA DANADA","MOLDE TERMOFUSION FUERA DE VIDA  TIL","PERNOS NO CORRESPONDE ESPECIFICACION","SOLDADURA EXOTÉRMICA DEFECTUOSA"],"Homologación PRE2024":["Homologaci n PRE2024"],"CANALIZACIONES":["CANALIZACION PENDIENTE","FALTA ALINEAMIENTO","FALTA APRIETE DE CONECTORES/ABRAZADERAS","FALTA APRIETE DE TUERCAS/PRENSAS","FALTA GROUT EN SOPORTES","FALTA SELLADO","FALTA TAG","FALTA TOUCH UP / PINTURA","FALTAN SOPORTES DE ESCALERILLAS","MATERIAL DANADO","MATERIAL NO CUMPLE CON ESPECIFICACIONES","PERNO NO CORRESPONDE ESPECIFICACION","SOBRE APRIETE DE CONECTORES/ABRAZADERAS","SOBRE APRIETE DE TUERCAS","SOPORTES DE ESCALERILLAS INESTABLES"],"CAMARA ELECTRICA":["DRENAJE DEFECTUOSO","FALTA BARRA DISTRIBUCION EN CAMARA","FALTA CAMARA DE REGISTRO","FALTA DRENAJE","FALTA PINTURA EN TAPA Y BORDE DE CAMARA","FALTA TAG","FALTAN ESCALINES ACCESO CAMARA","PERNO NO CORRESPONDE ESPECIFICACION","SELLOS DE ACOMETIDAS DEFICIENTE"],"CABLEADO Y CONEXIONADO":["CABLE DANADO","FALTA APRIETE DE CONEXIONADO","FALTA CONEXIONADO","FALTA DE CONEXIONADO","FALTA MUFA","FALTA ORDENAMIENTO DE TENDIDO","FALTA SOPORTACION","FALTA TAG","FALTA TENDIDO","FALTA TERMOCONTRAER MARCAS/PUNTILLAS","INTERFERENCIA EN CABLEADO","MATERIAL NO CUMPLE CON ESPECIFICACIONES","MUFA CON DEFECTOS VISUALES","NO SE RESPETA PROCESO DE CONFECCION DE MUFA","RADIO DE CURVATURA INCORRECTO","TENDIDO INCORRECTO"]},"CIVIL":{"VACIADO DE HORMIGON":["ASENTAMIENTO DE CONO FUERA DE TOLERANCIA","EXCESO DE VIBRADO","FALTA DE TRATAMIENTO JUNTAS","FUGAS DE LECHADA","HORMIGON NO CORRESPONDE ESPECIFICACION","NO SE CONTROLA TEMPERATURA","NO SE RESPETAN TIEMPOS DE ESPERA","NO SE TOMAN MUESTRAS","SE AGREGAN ADITIVOS NO APROBADOS","SEGREGACIÓN DEL HORMIGÓN","TIEMPO EXCESIVO DE TRANSPORTE","VACIADO DISCONTINUO"],"SIST. RECIRCULACIÓN":["FALTA GROUT EN PILARES","FALTA GROUT EN POSTES","FALTA PINTADO","FALTA SELLO","FALTA TAPA DE C MARA"],"SELLO FUNDACION":["DENSIDAD BAJO REQUISITO","FALTA REALIZAR CORTE Y/O SELLO","NO SE CUMPLE COTA","NO SE TOMA DENSIDAD"],"RELLENO COMPACTADO":["DENSIDADES NO CUMPLEN REQUISITOS","MATERIAL INCORRECTO","NO SE CUMPLE CON ESPESOR DE CAPAS","NO SE RESPETAN COTA","NO SE TOMA DENSIDAD"],"PREVIO A HORMIGON MASIVO":["FALTA SISTEMA DE ENFRIAMIENTO DE N CLEO","FALTAN DUCTOS DE ENFRIAMIENTO","FALTAN TERMOCUPLAS INSTALADAS","TERMOCUPLA INOPERATIVA"],"POST HORMIGONADO MASIVO":["FALTA MEDICION DE TEMPERATURA","FALTAN MEDIDAS DE CONTROL DE TEMPERATURA EXTERNA (MANTAS)","FALTAN MEDIDAS DE CONTROL DE TEMPERATURA INTERNA (ENFRIAMIENTO)","FISURAS O GRIETAS T RMICAS","SOBREPASA GRADIENTE TERMICA","SOBREPASA TEMPERATURA DEL NUCLEO","TIEMPO INSUFICIENTE DE MEDICION DE TEMPERATURA","TIEMPO INSUFICIENTE DE MEDIDAS DE CONTROL"],"POST HORMIGONADO":["ACABADO SUPERFICIAL INADECUADO","DESPRENDIMIENTO O DAÑOS EN LOS BORDES","DIMENSIONES FINALES NO CUMPLEN TOLERANCIAS","EFLORESCENCIA","FALTA DE JUNTAS DE DILATACION","FALTA DE SELLO EN CAJAS Y PAVIMENTO","FALTA RETIRAR MOLDAJE","FISURAS O GRIETAS","INCORRECTO CURADO","NIDOS U OQUEDADES","POROSIDAD EXCESIVA","RESISTENCIA INSUFICIENTE"],"POR CLASIFICAR":["POR CLASIFICAR"],"PAVIMENTOS":["CORTES Y SELLOS NO REALIZADOS O DEFECTUOSOS","DEFECTO EN BARRAS DE TRASPASO DE CARGA","DEFICIENTE TERMINACION SUPERFICIAL","DESNIVEL","FALTA JUNTA DE CONTRACCION / DILATACION","FALTA TRATAMIENTO JUNTAS DE CONSTRUCCION","FALTAN BARRAS DE TRASPASO DE CARGA","FISURAS O GRIETAS","TERMINACION INCOMPLETA CAJA-PAVIMENTO (ROCA A LA VISTA)"],"OTROS":["OTROS"],"MURO DE CONFINAMIENTO":["ENCUENTRO IRREGULAR","FALTA CONSTRUCCION DE MOCHETA","FALTA MALLA INTERNA (POR SOBREEXCAVACION)","FALTA MURO DE PROTECCION","FALTA RESTITUCION DE MURO SEG N DISENO","MURO DANADO","PERNO LARGO","REMATE DE HORMIGON DEFICIENTE"],"MITIGACIÓN Y CONTROL HIROLÓGICO":["FALTA GROUT EN POSTES"],"MARCO ESTRUCTURAL (PEX Y IE)":["EXCESO DE MALLA","FALTA GOUSSET","FALTA TORQUE EN TUERCAS","MALLA DANADA EN BOVEDA","PILAR DE ENCUENTRO DANADO"],"INSTALACIÓN DE FAENA":["FALTA GROUT EN PILARES","FALTA PINTADO","FALTA SELLO","FALTA TAPA DE C MARA"],"Homologación PRE2024":["Homologaci n PRE2024"],"GENERAL":["LIMPIEZA DE RISES","SECUENCIA CONSTRUCTIVA INCORRECTA"],"EXCAVACION":["DESVIACION GEOMETR A","SOBREEXCAVACIÓN O SUBEXCAVACIÓN"],"EMPLANTILLADO":["ACABADO SUPERFICIAL INADECUADO","CURADO DEFICIENTE","DESVIACION GEOMETR A","ESPESOR INSUFICIENTE","NO SE CUMPLE COTA EMPLANTILLADO","PRESENCIA DE MATERIALES CONTAMINANTES","SUPERFICIE DESNIVELADA"],"CONSTRUCCIÓN DE MURO":["CAMBIAR TAPA DE C MARA","FALTA BALIZADO","FALTA INSTALACI N DE SE AL TICA","FALTA PERFILAR TALUD","FALTA RELLENO","NORMALIZAR RELLENOS","ORDEN, LIMPIEZA Y ASEO GENERAL","PRETIL INCOMPLETO","REPARAR EMBOQUILLADO"],"ARMADURA Y MOLDAJE":["ANCLAJES FUERA DE POSICIÓN","ARMADURA CONTAMINADA","ARMADURA NO CUMPLE DIMENSIONES ESPECIFICADAS","CALIDAD DE ACERO NO CORRESPONDE","COLOCACIÓN INCORRECTA DE ESTRIBOS","DEFORMACIÓN DEL MOLDAJE","DIMENSIONES INCORRECTAS DEL MOLDAJE","FALTA AFIANZAR MOLDAJE","FALTA AFIANZAR PERNOS DE ANCLAJE PARA ESTRUCTURA","FALTA DE ELEMENTOS DE REFUERZO ADICIONALES","FALTA DESMOLDANTE","FALTA DESMOLDAR","FALTAN PERNOS DE ANCLAJE PARA ESTRUCTURA","MOLDAJE CONTAMINADO","MOLDAJE DESALINEADO","MOLDAJE NO CUMPLE DIMENSIONES","PERNOS DE ANCLAJE PARA ESTRUCTURA FUERA DE POSICION","RECUBRIMIENTO INSUFICIENTE O EXCESIVO","RETIRO ANTICIPADO DEL MOLDAJE","SEPARACIÓN DESIGUAL ENTRE BARRAS","TRASLAPOS Y AMARRAS DEFICIENTES","UBICACIÓN INCORRECTA DE REFUERZOS","USO DE MOLDAJES EN MAL ESTADO"]},"CAÑERIAS":{"UNIONES TIPO VICTAULIC":["MONTAJE DEFICIENTE DE UNION"],"UNIONES SOLDADAS CANERÍA":["DESALINEAMIENTO","FALTA CALIFICACION DE PROCEDIMIENTO DE SOLDADURA","FALTA CALIFICACION DE SOLDADOR","FALTA DE SOLDADURA","INCUMPLIMIENTO DE ESPECIFICACION DE SOLDADURA","INDICACIONES EN UNION SOLDADA","REPARACIONES INADECUADA"],"UNIONES APERNADAS CANERÍA":["APRIETE O TORQUE EXCESIVO","FALTA INSTALAR PERNOS / TUERCAS / GOLILLAS","FALTA TORQUE / APRIETE","MATERIAL NO CUMPLE CON ESPECIFICACIONES","PERNO CORTO","PERNO DESVIADO / DEFORMADO / CON DANO"],"TERMOFUSION":["DEFECTOS EN UNION","DESALINEAMIENTO","FALTA CALIFICACION DE PROCEDIMIENTO DE SOLDADURA","FALTA CALIFICACION DE SOLDADOR","INCUMPLIMIENTO DE ESPECIFICACION DE SOLDADURA"],"SIST. RECIRCULACIÓN":["FALTA ACCESO / MEJORAR ACCESO","FALTA BALIZADO","FALTA CAMELL N","FALTA CONEXI N","FALTA DESCIMBRE DE MOLDAJE","FALTA DESPUNTE DE AMARRAS PL STICAS","FALTA FABRICACI N Y/O MONTAJE DE L NEA","FALTA INDICAR SENTIDO DE FLUJO","FALTA INSTALACI N DE INSTRUMENTACI N","FALTA INSTALACI N DE SE AL TICA","FALTA MARCAJE L NEAS DE HDPE","FALTA PROTECCI N","FALTA RELLENO","FALTA SELLO IGN FUGO","FALTA TIE IN","FALTA TORQUE","FALTA TOUCH UP","MEJORAR IDENTIFICACI N Y/O SE AL TICA","MEJORAR MANGUERA HIDR ULICA","NORMALIZAR PROTECCI N DE MANGUERA","ORDEN, LIMPIEZA Y ASEO GENERAL","PENDIENTE INSTALACI N \"PR\""],"SIST. EVACUACIÓN DE AGUAS":["FALTA ACCESO / MEJORAR ACCESO","FALTA BALIZADO","FALTA CAMELL N","FALTA CONEXI N","FALTA DESCIMBRE DE MOLDAJE","FALTA DESPUNTE DE AMARRAS PL STICAS","FALTA INDICAR SENTIDO DE FLUJO","FALTA INSTALACI N DE INSTRUMENTACI N","FALTA INSTALACI N DE SE AL TICA","FALTA RELLENO","FALTA SELLO IGN FUGO","FALTA TIE IN","FALTA TOUCH UP","ORDEN, LIMPIEZA Y ASEO GENERAL"],"PRUEBA HIDROSTATICA":["AUSENCIA O FALTA ELEMENTOS (MANOMETRO, PALETA, VENTEO, ETC.)","FUGA / FILTRACION EN UNIONES","PERDIDA DE PRESION","PRUEBA MAL EJECUTADA"],"PRUEBA DE SERVICIO":["AUSENCIA O FALTA ELEMENTOS (MANOMETRO, PALETA, VENTEO, ETC.)","ELEMENTO TAPADO O RESTRICCION DE FLUJO.","FUGA / FILTRACION EN UNIONES","PERDIDA DE PRESION"],"POR CLASIFICAR":["POR CLASIFICAR"],"OTROS":["OTROS"],"MONTAJE LÍNEA":["FALTA INDICAR SENTIDO DE FLUJO","FALTA MARCAJE L NEAS DE HDPE","FALTA TOUCH UP","PENDIENTE INSTALACI N \"PR\"","RETIRO DE LECHADA DE HORMIG N - POZO"],"MONTAJE DE SOPORTES":["DIFERENCIA O IRREGULARIDAD TOPOGRAFICA (NIVELACION, ALINEACION, ETC.)","ELEMENTO GOLPEADO O DANADO.","FALTA INSTALAR PERNOS / TUERCAS / GOLILLAS / CADENA","FALTA SOPORTE","FALTA TOUCH UP / PINTURA","INCUMPLIMIENTO DE ESQUEMA DE PINTURA","MATERIAL NO CUMPLE CON ESPECIFICACIONES"],"MONTAJE DE ELEMENTOS":["AUSENCIA O FALTA DE VALVULA, FILTRO, MANOMETRO, OTROS.","MONTAJE INADECUADO DE ELEMENTO"],"MONTAJE DE CANERÍA":["DIFERENCIA O IRREGULARIDAD TOPOGRAFICA (NIVELACION, ALINEACION, ETC.)","ELEMENTO GOLPEADO O DANADO.","FALTA TOUCH UP / PINTURA","INCUMPLIMIENTO DE ESQUEMA DE PINTURA","MATERIAL NO CUMPLE CON ESPECIFICACIONES","MODIFICACION O CAMBIO DE DISENO NO AUTORIZADO"],"Homologación PRE2024":["Homologaci n PRE2024"],"CONDUCCIÓN DE RELAVES":["FALTA FABRICACI N Y/O MONTAJE DE L NEA","FALTA PROTECCI N","FALTA RELLENO","FALTA TOUCH UP","MEJORAR IDENTIFICACI N Y/O SE AL TICA","MEJORAR MANGUERA HIDR ULICA","NORMALIZAR PROTECCI N DE MANGUERA"],"ALMACENAMIENTO EN BODEGA":["IMPERFECCIONES EN SUMINISTRO","INADECUADA PRESERVACION DE SUMINISTROS"]}}
+let DATOS = {
+  wbsData: [], empresasContratos: [], especialistasBase: [],
+  hallazgos: {}, responsablesConstruccion: [], ingenierosSistema: []
+};
+
+async function loadDatos() {
+  try {
+    const r = await fetch('./data.json');
+    if (r.ok) DATOS = await r.json();
+  } catch(e) {
+    console.warn('data.json no disponible, usando cache offline:', e);
+  }
 };
 
 // ==================== VARIABLES GLOBALES ====================
@@ -1433,13 +1676,19 @@ document.getElementById('itemForm').addEventListener('submit', async (e) => {
     top: await getConfig('top') || '',
     sistema: await getConfig('sistema') || '',
     subsistema: await getConfig('subsistema') || '',
-    empresaContrato: await getConfig('empresaContrato') || '',
+    empresa: await getConfig('empresa') || '',
+    contrato: await getConfig('contrato') || '',
     originadoPor: await getConfig('originadoPor') || '',
     respConstruccion: await getConfig('respConstruccion') || '',
     ingSistema: await getConfig('ingSistema') || '',
     fechaEmision: await getConfig('fechaEmision') || '',
     caminata: await getConfig('caminata') || 'CAMINATA 0'
   };
+
+  // ⑤ Validación: avisar si WBS no está configurado
+  if (!config.subsistema) {
+    showToast('⚠️ SubSistema no configurado — ítem guardado sin WBS', 'warn');
+  }
   
   const item = {
     ubicacion: document.getElementById('ubicacion').value,
@@ -1490,7 +1739,12 @@ async function renderItems() {
     return;
   }
   
-  container.innerHTML = items.map(item => `
+  container.innerHTML = items.map(item => {
+    const cfg = item.config || {};
+    const wbsMeta = (cfg.empresa || cfg.subsistema)
+      ? `<div class="item-wbs-meta">🏢 ${cfg.empresa || '—'} &nbsp;|&nbsp; 📦 ${cfg.subsistema || '—'}</div>`
+      : '';
+    return `
     <div class="item-card ${item.prioridad.toLowerCase()}">
       <div class="item-header">
         <span class="item-id">#${item.id}</span>
@@ -1506,12 +1760,13 @@ async function renderItems() {
         <span>🔧 ${item.disciplina}</span>
         <span>📅 ${item.fechaCompromiso}</span>
       </div>
+      ${wbsMeta}
       <div class="item-actions">
         <button class="btn-edit" onclick="editItem(${item.id})">✏️ Editar</button>
         <button class="btn-delete" onclick="confirmDelete(${item.id})">🗑️ Eliminar</button>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 // ==================== MODAL ELIMINAR ====================
@@ -1670,14 +1925,16 @@ async function exportCSV() {
   const rows = items.map(item => {
     const cfg = item.config || {};
     let empresa = '', contrato = '';
-    if (cfg.empresaContrato) {
+    
+    // New format: empresa and contrato stored directly from WBS
+    if (cfg.empresa) {
+      empresa = cfg.empresa;
+      contrato = cfg.contrato || '';
+    } else if (cfg.empresaContrato) {
+      // Backward compatibility: old format used empresaContrato key
       const ec = DATOS.empresasContratos.find(e => `${e.empresa} - ${e.contrato}` === cfg.empresaContrato);
-      if (ec) {
-        empresa = ec.empresa;
-        contrato = ec.contrato;
-      } else {
-        empresa = cfg.empresaContrato;
-      }
+      if (ec) { empresa = ec.empresa; contrato = ec.contrato; }
+      else { empresa = cfg.empresaContrato; }
     }
     
     return [
@@ -1712,7 +1969,12 @@ async function exportCSV() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `punch_list_${new Date().toISOString().split('T')[0]}.csv`;
+  // Nombre descriptivo: fecha + empresa + subsistema
+  const firstCfg = items[0].config || {};
+  const empresaSlug = (firstCfg.empresa || 'SIN-EMPRESA').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20);
+  const ssSlug = (firstCfg.subsistema || 'SIN-SS').replace(/[^a-zA-Z0-9\-]/g, '_').substring(0, 20);
+  const dateStr = new Date().toISOString().split('T')[0];
+  link.download = `punch_list_${dateStr}_${empresaSlug}_${ssSlug}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -1723,11 +1985,17 @@ async function exportCSV() {
 
 // ==================== CONFIGURACIÓN ====================
 async function loadConfig() {
-  document.getElementById('cfg_wbs').value = await getConfig('wbs') || '';
-  document.getElementById('cfg_area').value = await getConfig('area') || '';
-  document.getElementById('cfg_top').value = await getConfig('top') || '';
-  document.getElementById('cfg_sistema').value = await getConfig('sistema') || '';
-  document.getElementById('cfg_subsistema').value = await getConfig('subsistema') || '';
+  // WBS fields
+  const savedEmpresa = await getConfig('empresa') || '';
+  const savedSubsistemaId = await getConfig('subsistema') || '';
+  
+  document.getElementById('cfg_empresaWbs').value = savedEmpresa;
+  
+  if (savedSubsistemaId) {
+    const rec = DATOS.wbsData.find(r => r.ss_id === savedSubsistemaId);
+    if (rec) applyWBSRecord(rec, false);
+  }
+  
   document.getElementById('cfg_respConstruccion').value = await getConfig('respConstruccion') || '';
   document.getElementById('cfg_ingSistema').value = await getConfig('ingSistema') || '';
   document.getElementById('cfg_fechaEmision').value = await getConfig('fechaEmision') || '';
@@ -1743,15 +2011,6 @@ async function loadConfig() {
     document.getElementById('toggleNoCumple').classList.add('active');
   }
   
-  // Cargar desplegables
-  const empresaSelect = document.getElementById('cfg_empresaContrato');
-  empresaSelect.innerHTML = '<option value="">Seleccionar empresa</option>';
-  DATOS.empresasContratos.forEach(ec => {
-    const val = `${ec.empresa} - ${ec.contrato}`;
-    empresaSelect.innerHTML += `<option value="${val}">${val}</option>`;
-  });
-  empresaSelect.value = await getConfig('empresaContrato') || '';
-  
   await loadEspecialistas();
 }
 
@@ -1763,7 +2022,32 @@ async function loadEspecialistas() {
     select.innerHTML += `<option value="${e}">${e}</option>`;
   });
   select.value = await getConfig('originadoPor') || '';
-  
+
+  // Poblar selects de Resp. Construcción e Ing. Sistema desde data.json
+  const savedResp = await getConfig('respConstruccion') || '';
+  const savedIng = await getConfig('ingSistema') || '';
+
+  const selResp = document.getElementById('cfg_respConstruccion');
+  const selIng = document.getElementById('cfg_ingSistema');
+  selResp.innerHTML = '<option value="">Seleccionar responsable</option>';
+  selIng.innerHTML = '<option value="">Seleccionar ingeniero</option>';
+
+  const respList = DATOS.responsablesConstruccion || [];
+  const ingList = DATOS.ingenierosSistema || [];
+
+  respList.forEach(n => selResp.innerHTML += `<option value="${n}">${n}</option>`);
+  ingList.forEach(n => selIng.innerHTML += `<option value="${n}">${n}</option>`);
+
+  // Si el valor guardado no está en la lista, agregarlo dinámicamente
+  if (savedResp && !respList.includes(savedResp)) {
+    selResp.innerHTML += `<option value="${savedResp}">${savedResp}</option>`;
+  }
+  if (savedIng && !ingList.includes(savedIng)) {
+    selIng.innerHTML += `<option value="${savedIng}">${savedIng}</option>`;
+  }
+  selResp.value = savedResp;
+  selIng.value = savedIng;
+
   const list = document.getElementById('especialistasList');
   const custom = await getConfig('customEspecialistas') || [];
   document.getElementById('especialistasCount').textContent = custom.length;
@@ -1808,12 +2092,9 @@ function setResultadoIC(valor) {
 }
 
 async function saveConfig() {
-  await setConfig('wbs', document.getElementById('cfg_wbs').value);
-  await setConfig('area', document.getElementById('cfg_area').value);
-  await setConfig('top', document.getElementById('cfg_top').value);
-  await setConfig('sistema', document.getElementById('cfg_sistema').value);
-  await setConfig('subsistema', document.getElementById('cfg_subsistema').value);
-  await setConfig('empresaContrato', document.getElementById('cfg_empresaContrato').value);
+  // WBS fields are saved when selecting subsistema (applyWBSRecord)
+  // but re-save empresa in case only empresa changed
+  await setConfig('empresa', document.getElementById('cfg_empresaWbs').value);
   await setConfig('originadoPor', document.getElementById('cfg_originadoPor').value);
   await setConfig('respConstruccion', document.getElementById('cfg_respConstruccion').value);
   await setConfig('ingSistema', document.getElementById('cfg_ingSistema').value);
@@ -1830,6 +2111,177 @@ async function saveConfig() {
   showToast('Configuración guardada');
 }
 
+// ==================== WBS CONTEXT BANNER ====================
+async function updateWBSContextBanner() {
+  const banner = document.getElementById('wbsContextBanner');
+  if (!banner) return;
+  const subsistema = await getConfig('subsistema') || '';
+  const empresa = await getConfig('empresa') || '';
+  const contrato = await getConfig('contrato') || '';
+  const line1 = document.getElementById('wbsContextLine1');
+  const line2 = document.getElementById('wbsContextLine2');
+  if (subsistema && empresa) {
+    banner.className = 'wbs-context-banner wbs-context-ok';
+    document.querySelector('.wbs-context-icon').textContent = '✅';
+    line1.textContent = subsistema + (empresa ? '  ·  ' + empresa : '');
+    line2.textContent = contrato || 'Sin contrato';
+  } else {
+    banner.className = 'wbs-context-banner wbs-context-empty';
+    document.querySelector('.wbs-context-icon').textContent = '⚠️';
+    line1.textContent = 'Sin SubSistema configurado';
+    line2.textContent = 'Ve a ⚙️ Config para seleccionar el proyecto';
+  }
+}
+
+// ==================== WBS SEARCH ====================
+let _wbsActiveEmpresa = '';
+let _selectedWBSRecord = null;
+
+function onEmpresaWbsChange() {
+  const empresa = document.getElementById('cfg_empresaWbs').value;
+  _wbsActiveEmpresa = empresa;
+  // Clear subsistema selection if empresa changed and doesn't match
+  if (_selectedWBSRecord && _selectedWBSRecord.empresa !== empresa) {
+    _selectedWBSRecord = null;
+    resetWBSButton();
+    resetDerivedFields();
+  }
+}
+
+function resetWBSButton() {
+  document.getElementById('wbsBtnPlaceholder').style.display = '';
+  document.getElementById('wbsBtnSelected').style.display = 'none';
+  document.getElementById('wbsSelectBtn').classList.remove('selected');
+}
+
+function resetDerivedFields() {
+  ['contrato','sistema','top','area','wbs'].forEach(k => {
+    document.getElementById('derived_' + k).innerHTML = '<span class="empty">—</span>';
+  });
+}
+
+function applyWBSRecord(rec, save = true) {
+  _selectedWBSRecord = rec;
+  _wbsActiveEmpresa = rec.empresa;
+  
+  // Update select
+  document.getElementById('cfg_empresaWbs').value = rec.empresa;
+  
+  // Update button UI
+  document.getElementById('wbsBtnPlaceholder').style.display = 'none';
+  document.getElementById('wbsBtnSelected').style.display = 'block';
+  document.getElementById('wbsBtnId').textContent = rec.ss_id;
+  document.getElementById('wbsBtnName').textContent = rec.ss_name;
+  document.getElementById('wbsSelectBtn').classList.add('selected');
+  
+  // Update derived fields
+  document.getElementById('derived_contrato').textContent = rec.contrato;
+  document.getElementById('derived_sistema').textContent = rec.si_id;
+  document.getElementById('derived_top').textContent = rec.t_id;
+  document.getElementById('derived_area').textContent = rec.a_id;
+  document.getElementById('derived_wbs').textContent = rec.w_id;
+  
+  // Persist immediately so items created after this reflect new WBS
+  if (save) {
+    setConfig('empresa', rec.empresa);
+    setConfig('contrato', rec.contrato);
+    setConfig('subsistema', rec.ss_id);
+    setConfig('sistema', rec.si_id);
+    setConfig('top', rec.t_id);
+    setConfig('area', rec.a_id);
+    setConfig('wbs', rec.w_id);
+    updateWBSContextBanner();
+  }
+}
+
+function openWBSSearch() {
+  const modal = document.getElementById('wbsSearchModal');
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  
+  // Set active empresa filter
+  _wbsActiveEmpresa = document.getElementById('cfg_empresaWbs').value;
+  
+  // Build empresa chips
+  const empresas = [...new Set(DATOS.wbsData.map(r => r.empresa))].sort();
+  const chipsEl = document.getElementById('wbsEmpresaChips');
+  chipsEl.innerHTML = '<span class="empresa-chip' + (!_wbsActiveEmpresa ? ' active' : '') + '" onclick="setWBSEmpresaFilter(\'\')">Todas</span>' +
+    empresas.map(e => 
+      `<span class="empresa-chip${_wbsActiveEmpresa === e ? ' active' : ''}" onclick="setWBSEmpresaFilter('${e}')">${e}</span>`
+    ).join('');
+  
+  const input = document.getElementById('wbsSearchInput');
+  input.value = '';
+  document.getElementById('wbsSearchClear').style.display = 'none';
+  filterWBSList();
+  
+  setTimeout(() => input.focus(), 100);
+}
+
+function closeWBSSearch() {
+  document.getElementById('wbsSearchModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function setWBSEmpresaFilter(empresa) {
+  _wbsActiveEmpresa = empresa;
+  document.querySelectorAll('.empresa-chip').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  filterWBSList();
+}
+
+function clearWBSSearch() {
+  const input = document.getElementById('wbsSearchInput');
+  input.value = '';
+  document.getElementById('wbsSearchClear').style.display = 'none';
+  filterWBSList();
+  input.focus();
+}
+
+function filterWBSList() {
+  const q = document.getElementById('wbsSearchInput').value.trim().toLowerCase();
+  document.getElementById('wbsSearchClear').style.display = q ? 'block' : 'none';
+  
+  let filtered = DATOS.wbsData;
+  if (_wbsActiveEmpresa) {
+    filtered = filtered.filter(r => r.empresa === _wbsActiveEmpresa);
+  }
+  if (q) {
+    filtered = filtered.filter(r =>
+      r.ss_id.toLowerCase().includes(q) ||
+      r.ss_name.toLowerCase().includes(q) ||
+      r.si_name.toLowerCase().includes(q) ||
+      r.t_name.toLowerCase().includes(q)
+    );
+  }
+  
+  document.getElementById('wbsSearchCount').textContent = `${filtered.length} resultado${filtered.length !== 1 ? 's' : ''}`;
+  
+  const list = document.getElementById('wbsSearchList');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="wbs-empty">Sin resultados para esta búsqueda</div>';
+    return;
+  }
+  
+  list.innerHTML = filtered.map(r =>
+    '<div class="wbs-search-item">' +
+    '<div class="wbs-item-id">' + r.ss_id + '</div>' +
+    '<div class="wbs-item-name">' + r.ss_name + '</div>' +
+    '<div class="wbs-item-empresa">📋 ' + r.si_id + ' · ' + r.empresa + '</div>' +
+    '</div>'
+  ).join('');
+  
+  list.querySelectorAll('.wbs-search-item').forEach((el, i) => {
+    el.addEventListener('click', () => selectWBSItem(filtered[i]));
+  });
+}
+
+function selectWBSItem(rec) {
+  applyWBSRecord(rec, true);
+  closeWBSSearch();
+  showToast('SubSistema seleccionado');
+}
+
 // ==================== INFORME / PDF ====================
 async function renderItemSelector() {
   const items = await getItems();
@@ -1841,13 +2293,13 @@ async function renderItemSelector() {
   }
   
   container.innerHTML = items.map(item => `
-    <label class="item-checkbox">
-      <input type="checkbox" value="${item.id}" checked>
+    <div class="item-checkbox" onclick="this.querySelector('input').click(); event.stopPropagation();">
+      <input type="checkbox" value="${item.id}" checked onclick="event.stopPropagation()">
       <div class="item-checkbox-info">
         <div class="id">#${item.id} - ${item.prioridad} ${item.foto ? '📷' : ''}</div>
         <div class="desc">${item.descripcion.substring(0, 60)}${item.descripcion.length > 60 ? '...' : ''}</div>
       </div>
-    </label>
+    </div>
   `).join('');
 }
 
@@ -1901,9 +2353,15 @@ async function generatePDF() {
   const originadoPor = cfg.originadoPor || '';
   
   let empresa = '', contrato = '';
-  if (cfg.empresaContrato) {
+  // Nuevo formato: empresa y contrato directo del WBS
+  if (cfg.empresa) {
+    empresa = cfg.empresa;
+    contrato = cfg.contrato || '';
+  } else if (cfg.empresaContrato) {
+    // Compatibilidad formato anterior
     const ec = DATOS.empresasContratos.find(e => `${e.empresa} - ${e.contrato}` === cfg.empresaContrato);
     if (ec) {
+      empresa = ec.empresa;
       contrato = ec.contrato;
     }
   }
@@ -2037,6 +2495,13 @@ body { font-family: Arial, sans-serif; font-size: 10pt; color: #333; }
   printWindow.document.write(htmlContent);
   printWindow.document.close();
   
+  // Agregar botón cerrar para iOS donde window.close() a veces falla
+  const closeBtn = printWindow.document.createElement('button');
+  closeBtn.textContent = '✕ Cerrar y volver a la app';
+  closeBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;padding:10px 16px;background:#B5651D;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.3)';
+  closeBtn.onclick = function() { window.close(); };
+  printWindow.document.body.appendChild(closeBtn);
+  
   setTimeout(() => {
     printWindow.print();
   }, 500);
@@ -2065,9 +2530,10 @@ window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
 // ==================== INICIALIZACIÓN ====================
-openDB().then(() => {
+loadDatos().then(() => openDB()).then(() => {
   loadConfig();
   updateOnlineStatus();
+  updateWBSContextBanner();
 });
 </script>
 </body>
