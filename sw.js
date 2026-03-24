@@ -1,4 +1,4 @@
-const CACHE_NAME = 'punch-list-v6';
+const CACHE_NAME = 'punch-list-v7';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -30,4 +30,3 @@ self.addEventListener('fetch', event => {
     caches.match(event.request).then(cached => cached || fetch(event.request))
   );
 });
-

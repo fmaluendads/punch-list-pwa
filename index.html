@@ -1196,13 +1196,6 @@ textarea { resize: vertical; min-height: 80px; }
           <label>Plano Referencial <span class="ic-badge">IC</span> <span class="required">*</span></label>
           <input type="text" id="cfg_planoReferencial" placeholder="Ej: ND20S04-I2-220000-200MI-00023 REV.0">
         </div>
-        <div class="form-group">
-          <label>Resultado Inspección <span class="ic-badge">IC</span> <span class="required">*</span></label>
-          <div class="toggle-group">
-            <button type="button" class="toggle-option success" id="toggleCumple" onclick="setResultadoIC('cumple')">✓ CUMPLE</button>
-            <button type="button" class="toggle-option danger" id="toggleNoCumple" onclick="setResultadoIC('nocumple')">✗ NO CUMPLE</button>
-          </div>
-        </div>
       </div>
     </div>
     
@@ -1226,6 +1219,7 @@ textarea { resize: vertical; min-height: 80px; }
     </div>
     
     <button class="btn btn-primary" onclick="saveConfig()" style="margin-top:16px">💾 Guardar Configuración</button>
+    <button class="btn btn-secondary" onclick="confirmarRestablecerNumeracion()" style="margin-top:8px;background:rgba(245,158,11,0.15);border:1px solid var(--warning);color:var(--warning)">🔄 Restablecer Numeración desde #1</button>
   </div>
 
   <!-- TAB: INFORME -->
@@ -1249,6 +1243,22 @@ textarea { resize: vertical; min-height: 80px; }
           <option value="INYECCIÓN">INYECCIÓN</option>
         </select>
       </div>
+
+      <div class="form-group">
+        <label>Disciplina <span class="ic-badge">IC</span> <span class="required">*</span></label>
+        <select id="ic_disciplina">
+          <option value="">Seleccionar disciplina</option>
+          <option value="CIVIL">CIVIL</option>
+          <option value="CAÑERIAS">CAÑERIAS</option>
+          <option value="ESTRUCTURA">ESTRUCTURA</option>
+          <option value="MECANICOS">MECANICOS</option>
+          <option value="MINERIA">MINERIA</option>
+          <option value="INSTRUMENTACION">INSTRUMENTACION</option>
+          <option value="OTRA">OTRA</option>
+          <option value="ELECTRICOS">ELECTRICOS</option>
+          <option value="TOPOGRAFIA">TOPOGRAFIA</option>
+        </select>
+      </div>
       
       <div class="form-group">
         <label>Objetivo de la Inspección</label>
@@ -1258,6 +1268,14 @@ textarea { resize: vertical; min-height: 80px; }
       <div class="form-group">
         <label>Observaciones Generales</label>
         <textarea id="ic_observaciones" rows="3" placeholder="Observaciones adicionales..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Resultado Inspección <span class="required">*</span></label>
+        <div class="toggle-group">
+          <button type="button" class="toggle-option success" id="ic_toggleCumple" onclick="setResultadoICInforme('cumple')">✓ CUMPLE</button>
+          <button type="button" class="toggle-option danger" id="ic_toggleNoCumple" onclick="setResultadoICInforme('nocumple')">✗ NO CUMPLE</button>
+        </div>
       </div>
     </div>
     
@@ -1690,7 +1708,11 @@ document.getElementById('itemForm').addEventListener('submit', async (e) => {
     showToast('⚠️ SubSistema no configurado — ítem guardado sin WBS', 'warn');
   }
   
+  const nextNum = (await getConfig('nextItemNum')) || 1;
+  await setConfig('nextItemNum', nextNum + 1);
+
   const item = {
+    numero: nextNum,
     ubicacion: document.getElementById('ubicacion').value,
     descripcion: document.getElementById('descripcion').value,
     prioridad: document.getElementById('prioridad').value,
@@ -1747,7 +1769,7 @@ async function renderItems() {
     return `
     <div class="item-card ${item.prioridad.toLowerCase()}">
       <div class="item-header">
-        <span class="item-id">#${item.id}</span>
+        <span class="item-id">#${item.numero || item.id}</span>
         <div class="item-badges">
           ${item.foto ? '<span class="item-photo-badge">📷</span>' : ''}
           <span class="item-priority">${item.prioridad}</span>
@@ -1938,7 +1960,7 @@ async function exportCSV() {
     }
     
     return [
-      item.id,
+      item.numero || item.id,
       cfg.wbs || '',
       cfg.area || '',
       cfg.top || '',
@@ -2004,13 +2026,7 @@ async function loadConfig() {
   // Campos IC
   document.getElementById('cfg_nombreLabor').value = await getConfig('nombreLabor') || '';
   document.getElementById('cfg_planoReferencial').value = await getConfig('planoReferencial') || '';
-  const resultadoIC = await getConfig('resultadoIC') || '';
-  if (resultadoIC === 'cumple') {
-    document.getElementById('toggleCumple').classList.add('active');
-  } else if (resultadoIC === 'nocumple') {
-    document.getElementById('toggleNoCumple').classList.add('active');
-  }
-  
+
   await loadEspecialistas();
 }
 
@@ -2081,14 +2097,26 @@ async function removeEspecialistaUI(nombre) {
   showToast('Especialista eliminado');
 }
 
-function setResultadoIC(valor) {
-  document.getElementById('toggleCumple').classList.remove('active');
-  document.getElementById('toggleNoCumple').classList.remove('active');
+function setResultadoICInforme(valor) {
+  document.getElementById('ic_toggleCumple').classList.remove('active');
+  document.getElementById('ic_toggleNoCumple').classList.remove('active');
   if (valor === 'cumple') {
-    document.getElementById('toggleCumple').classList.add('active');
+    document.getElementById('ic_toggleCumple').classList.add('active');
   } else {
-    document.getElementById('toggleNoCumple').classList.add('active');
+    document.getElementById('ic_toggleNoCumple').classList.add('active');
   }
+}
+
+function confirmarRestablecerNumeracion() {
+  document.getElementById('modalTitle').textContent = 'Restablecer Numeración';
+  document.getElementById('modalMessage').textContent = 'El próximo ítem que se cree comenzará desde #1. Los ítems existentes conservan sus números actuales.';
+  document.getElementById('modalConfirm').textContent = 'Restablecer';
+  document.getElementById('modalConfirm').onclick = async () => {
+    await setConfig('nextItemNum', 1);
+    closeModal();
+    showToast('Numeración restablecida — próximo ítem será #1');
+  };
+  document.getElementById('modalOverlay').classList.add('active');
 }
 
 async function saveConfig() {
@@ -2104,10 +2132,7 @@ async function saveConfig() {
   // Campos IC
   await setConfig('nombreLabor', document.getElementById('cfg_nombreLabor').value);
   await setConfig('planoReferencial', document.getElementById('cfg_planoReferencial').value);
-  const cumpleActive = document.getElementById('toggleCumple').classList.contains('active');
-  const noCumpleActive = document.getElementById('toggleNoCumple').classList.contains('active');
-  await setConfig('resultadoIC', cumpleActive ? 'cumple' : (noCumpleActive ? 'nocumple' : ''));
-  
+
   showToast('Configuración guardada');
 }
 
@@ -2292,21 +2317,27 @@ async function renderItemSelector() {
     return;
   }
   
-  container.innerHTML = items.map(item => `
+  container.innerHTML = items.map(item => {
+    const num = item.numero || item.id;
+    return `
     <div class="item-checkbox" onclick="toggleItemCheck(this)">
-      <input type="checkbox" value="${item.id}" checked>
+      <input type="checkbox" value="${item.id}">
       <div class="item-checkbox-info">
-        <div class="id">#${item.id} - ${item.prioridad} ${item.foto ? '📷' : ''}</div>
+        <div class="id">#${num} - ${item.prioridad} ${item.foto ? '📷' : ''}</div>
         <div class="desc">${item.descripcion.substring(0, 60)}${item.descripcion.length > 60 ? '...' : ''}</div>
       </div>
     </div>
-  `).join('');
+  `}).join('');
+
+  // Forzar checked=true como propiedad JS (no solo atributo HTML)
+  container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = true; });
 }
 
+let _todosSeleccionados = true;
 function toggleAllItems() {
   const checkboxes = document.querySelectorAll('#itemSelectorList input[type="checkbox"]');
-  const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-  checkboxes.forEach(cb => cb.checked = !allChecked);
+  _todosSeleccionados = !_todosSeleccionados;
+  checkboxes.forEach(cb => { cb.checked = _todosSeleccionados; });
 }
 
 function toggleItemCheck(div) {
@@ -2315,186 +2346,199 @@ function toggleItemCheck(div) {
 }
 
 async function generatePDF() {
-  const codigo = document.getElementById('ic_codigo').value;
+  const codigo = document.getElementById('ic_codigo').value.trim();
   const nombreLabor = await getConfig('nombreLabor');
   const planoReferencial = await getConfig('planoReferencial');
-  const resultadoIC = await getConfig('resultadoIC');
-  
-  if (!codigo) {
-    showToast('Ingrese el código del informe', 'error');
-    return;
-  }
-  if (!nombreLabor) {
-    showToast('Configure Nombre Labor en Config', 'error');
-    return;
-  }
-  if (!planoReferencial) {
-    showToast('Configure Plano Referencial en Config', 'error');
-    return;
-  }
-  if (!resultadoIC) {
-    showToast('Configure Resultado (Cumple/No Cumple) en Config', 'error');
-    return;
-  }
-  
+  const disciplinaIC = document.getElementById('ic_disciplina').value;
+
+  const cumpleActive = document.getElementById('ic_toggleCumple').classList.contains('active');
+  const noCumpleActive = document.getElementById('ic_toggleNoCumple').classList.contains('active');
+  const resultadoIC = cumpleActive ? 'cumple' : (noCumpleActive ? 'nocumple' : '');
+
+  if (!codigo) { showToast('Ingrese el código del informe', 'error'); return; }
+  if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
+  if (!planoReferencial) { showToast('Configure Plano Referencial en Config', 'error'); return; }
+  if (!disciplinaIC) { showToast('Seleccione la Disciplina del informe', 'error'); return; }
+  if (!resultadoIC) { showToast('Seleccione el Resultado (Cumple/No Cumple)', 'error'); return; }
+
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
     .map(cb => parseInt(cb.value));
-  
-  if (selectedIds.length === 0) {
-    showToast('Seleccione al menos un ítem', 'error');
-    return;
-  }
-  
+  if (selectedIds.length === 0) { showToast('Seleccione al menos un ítem', 'error'); return; }
+
   const allItems = await getItems();
   const items = allItems.filter(i => selectedIds.includes(i.id));
-  
+
   const nivel = document.getElementById('ic_nivel').value || '';
-  const objetivo = document.getElementById('ic_objetivo').value || 'Realizar inspección a las obras de construcción que se ejecuten en Mina Chuquicamata Subterránea, verificando la conformidad de los estándares establecidos (especificaciones técnicas, planos, normativa vigente, entre otros)';
-  const observaciones = document.getElementById('ic_observaciones').value || '';
-  
+  const objetivo = document.getElementById('ic_objetivo').value ||
+    'Realizar inspección a las obras de construcción que se ejecuten en Mina Chuquicamata Subterránea, verificando la conformidad de los estándares establecidos (especificaciones técnicas, planos, normativa vigente, entre otros)';
+  const observaciones = document.getElementById('ic_observaciones').value ||
+    'Las observaciones encontradas deben ser subsanadas progresivamente durante los avances correspondientes, procurando una utilización eficiente de los recursos disponibles.';
+
   const cfg = items[0]?.config || {};
   const fechaEmision = cfg.fechaEmision || new Date().toISOString().split('T')[0];
   const subsistema = cfg.subsistema || '';
   const originadoPor = cfg.originadoPor || '';
-  
+  const pkReferencia = cfg.nombreLabor || nombreLabor;
+
   let empresa = '', contrato = '';
-  // Nuevo formato: empresa y contrato directo del WBS
   if (cfg.empresa) {
-    empresa = cfg.empresa;
-    contrato = cfg.contrato || '';
+    empresa = cfg.empresa; contrato = cfg.contrato || '';
   } else if (cfg.empresaContrato) {
-    // Compatibilidad formato anterior
     const ec = DATOS.empresasContratos.find(e => `${e.empresa} - ${e.contrato}` === cfg.empresaContrato);
-    if (ec) {
-      empresa = ec.empresa;
-      contrato = ec.contrato;
-    }
+    if (ec) { empresa = ec.empresa; contrato = ec.contrato; }
   }
-  
-  // Generar HTML del PDF
+  // Extraer solo el número de contrato (sin empresa)
+  const contratoDisplay = contrato.split('/').pop() || contrato;
+
+  // Fotos con numeración
+  const itemsConFoto = items.filter(i => i.foto);
+  const fotosHTML = itemsConFoto.length > 0 ? `
+  <div style="page-break-before:auto;">
+    <table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+      <tr>
+        <td style="border:1px solid #333;padding:4px 8px;font-weight:bold;font-size:9pt;text-align:center;background:#f0f0f0;" colspan="2">REGISTRO FOTOGRÁFICO</td>
+      </tr>
+    </table>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+      ${itemsConFoto.map((it, idx) => `
+        <div style="width:46%;text-align:center;position:relative;">
+          <div style="display:inline-block;background:#f5a623;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;font-weight:bold;font-size:10pt;text-align:center;margin-bottom:4px;">${idx + 1}</div>
+          <img src="${it.foto}" style="width:100%;max-height:180px;object-fit:cover;border:1px solid #ccc;display:block;">
+        </div>
+      `).join('')}
+    </div>
+    <div style="font-size:8pt;margin-top:8px;text-align:left;">
+      ${itemsConFoto.map((it, idx) => `<b>Imagen ${idx + 1}</b>, ${it.ubicacion} — ${it.descripcion.substring(0, 80)}`).join('. ')}
+    </div>
+  </div>` : '';
+
+  // Tabla de punch
+  const tablaRows = items.map((it, idx) => {
+    const num = it.numero || it.id;
+    return `<tr>
+      <td style="text-align:center;">${num}</td>
+      <td>${it.ubicacion}</td>
+      <td>${it.descripcion}</td>
+      <td style="text-align:center;">${it.fechaCompromiso}</td>
+      <td>${it.actividad || ''}</td>
+      <td>${it.itemActividad || ''}</td>
+    </tr>`;
+  }).join('');
+
+  const tablaHTML = `
+  <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:8pt;">
+    <thead>
+      <tr style="background:#f0f0f0;font-weight:bold;text-align:center;">
+        <td style="border:1px solid #333;padding:4px;width:5%;">ID</td>
+        <td style="border:1px solid #333;padding:4px;width:14%;">UBICACIÓN</td>
+        <td style="border:1px solid #333;padding:4px;width:28%;">DESCRIPCIÓN</td>
+        <td style="border:1px solid #333;padding:4px;width:12%;">FECHA COMPR. CIERRE</td>
+        <td style="border:1px solid #333;padding:4px;width:20%;">ACTIVIDAD DE HALLAZGOS</td>
+        <td style="border:1px solid #333;padding:4px;width:21%;">CLASIF. DE DESVIACIÓN</td>
+      </tr>
+    </thead>
+    <tbody>
+      ${tablaRows}
+    </tbody>
+  </table>`;
+
   const desarrollo = items.map(i => `• ${i.descripcion}`).join('\n');
-  
-  const htmlContent = `
-<!DOCTYPE html>
+
+  const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <style>
-@page { size: A4; margin: 15mm; }
+@page { size: A4; margin: 12mm 15mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, sans-serif; font-size: 10pt; color: #333; }
-.container { max-width: 100%; }
-.header-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-.header-table td { border: 1px solid #333; padding: 6px 8px; vertical-align: middle; }
-.logo-cell { width: 80px; text-align: center; }
-.logo { width: 60px; height: auto; }
-.title-cell { text-align: center; font-weight: bold; font-size: 14pt; }
-.info-cell { width: 140px; font-size: 9pt; }
-.data-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-.data-table td { border: 1px solid #333; padding: 5px 8px; font-size: 9pt; }
-.section { margin-bottom: 10px; }
-.section-title { font-weight: bold; font-size: 10pt; margin-bottom: 4px; }
+table { border-collapse: collapse; }
+td { vertical-align: middle; }
+.section { margin-bottom: 8px; }
+.section-title { font-weight: bold; font-size: 10pt; margin-bottom: 3px; }
 .section-content { font-size: 9pt; line-height: 1.5; white-space: pre-wrap; }
-.result-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-.result-table td { border: 1px solid #333; padding: 8px; font-size: 10pt; }
-.checkbox { width: 20px; text-align: center; font-weight: bold; }
-.photo-section { margin-top: 15px; text-align: center; }
-.photo-title { font-weight: bold; font-size: 10pt; margin-bottom: 10px; border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 5px; }
-.photo-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.photo-item { max-width: 45%; }
-.photo-item img { max-width: 100%; max-height: 200px; border: 1px solid #ccc; }
-.photo-caption { font-size: 8pt; text-align: center; margin-top: 4px; }
-.footer { margin-top: 20px; font-size: 8pt; text-align: center; border-top: 1px solid #ccc; padding-top: 5px; }
+.footer { margin-top: 12px; font-size: 8pt; text-align: center; border-top: 1px solid #ccc; padding-top: 4px; }
 </style>
 </head>
 <body>
-<div class="container">
-  <table class="header-table">
-    <tr>
-      <td class="logo-cell" rowspan="4">
-        <div style="font-weight:bold;font-size:12pt;">JEJ</div>
-        <div style="font-size:7pt;">INGENIERÍA CONSCIENTE</div>
-      </td>
-      <td class="title-cell" rowspan="4">INSPECCIÓN DE CALIDAD</td>
-      <td class="info-cell">Código: ${codigo}</td>
-    </tr>
-    <tr><td class="info-cell">Rev. 0</td></tr>
-    <tr><td class="info-cell">Fecha: ${fechaEmision}</td></tr>
-    <tr><td class="info-cell">Pág: 1 de 1</td></tr>
-  </table>
 
-  <table class="data-table">
-    <tr>
-      <td><b>CONTRATO:</b> ${contrato}</td>
-      <td><b>FECHA:</b> ${fechaEmision}</td>
-    </tr>
-    <tr>
-      <td><b>N° SUBSISTEMA:</b> ${subsistema}</td>
-      <td><b>PLANO:</b> ${planoReferencial}</td>
-    </tr>
-    <tr>
-      <td><b>NIVEL:</b> ${nivel}</td>
-      <td><b>Nombre Labor:</b> ${nombreLabor}</td>
-    </tr>
-    <tr>
-      <td colspan="2"><b>RESPONSABLE INSPECCIÓN:</b> ${originadoPor}</td>
-    </tr>
-  </table>
+<!-- ENCABEZADO -->
+<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
+  <tr>
+    <td style="border:1px solid #333;width:80px;text-align:center;vertical-align:middle;padding:6px;" rowspan="4">
+      <div style="font-weight:bold;font-size:13pt;color:#1a3a6b;">JEJ</div>
+      <div style="font-size:6pt;color:#555;">INGENIERÍA CONSCIENTE</div>
+    </td>
+    <td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;vertical-align:middle;" rowspan="4">INSPECCIÓN DE CALIDAD</td>
+    <td style="border:1px solid #333;padding:4px 8px;font-size:9pt;width:160px;"><b>Código:</b> ${codigo}</td>
+  </tr>
+  <tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Rev.</b> 1</td></tr>
+  <tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Fecha:</b> ${fechaEmision}</td></tr>
+  <tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Pág:</b> 1 de 1</td></tr>
+</table>
 
-  <div class="section">
-    <div class="section-title">1. OBJETIVO:</div>
-    <div class="section-content">${objetivo}</div>
-  </div>
+<!-- DATOS DEL PROYECTO -->
+<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:9pt;">
+  <tr>
+    <td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>CONTRATO:</b> ${contratoDisplay}</td>
+    <td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>DISCIPLINA:</b> ${disciplinaIC}</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #333;padding:5px 8px;"><b>N° SUBSISTEMA:</b> ${subsistema}</td>
+    <td style="border:1px solid #333;padding:5px 8px;"><b>PLANO:</b> ${planoReferencial}</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #333;padding:5px 8px;"><b>NIVEL:</b> ${nivel ? 'NIVEL ' + nivel : ''}</td>
+    <td style="border:1px solid #333;padding:5px 8px;"><b>LABOR:</b> ${nombreLabor}</td>
+  </tr>
+  <tr>
+    <td style="border:1px solid #333;padding:5px 8px;"><b>RESPONSABLE INSPECCIÓN:</b> ${originadoPor}</td>
+    <td style="border:1px solid #333;padding:5px 8px;min-height:36px;"><b>FIRMA:</b><div style="min-height:28px;"></div></td>
+  </tr>
+</table>
 
-  <div class="section">
-    <div class="section-title">2. REFERENCIAS:</div>
-    <div class="section-content">PLANO: ${planoReferencial}</div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">3. DESARROLLO:</div>
-    <div class="section-content">${desarrollo}</div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">4. RESULTADO:</div>
-    <table class="result-table">
-      <tr>
-        <td>CUMPLE con los estándares</td>
-        <td class="checkbox">${resultadoIC === 'cumple' ? 'X' : ''}</td>
-      </tr>
-      <tr>
-        <td>NO CUMPLE con los estándares</td>
-        <td class="checkbox">${resultadoIC === 'nocumple' ? 'X' : ''}</td>
-      </tr>
-    </table>
-  </div>
-
-  <div class="section">
-    <div class="section-title">5. OBSERVACIONES:</div>
-    <div class="section-content">${observaciones || 'Sin observaciones adicionales.'}</div>
-  </div>
-
-  ${items.some(i => i.foto) ? `
-  <div class="photo-section">
-    <div class="photo-title">REGISTRO FOTOGRÁFICO</div>
-    <div class="photo-grid">
-      ${items.filter(i => i.foto).map(i => `
-        <div class="photo-item">
-          <img src="${i.foto}">
-          <div class="photo-caption">#${i.id} - ${i.ubicacion}</div>
-        </div>
-      `).join('')}
-    </div>
-  </div>
-  ` : ''}
-
-  <div class="footer">${codigo} (${nombreLabor}) Página 1 de 1</div>
+<!-- SECCIONES -->
+<div class="section">
+  <div class="section-title">1. OBJETIVO:</div>
+  <div class="section-content">${objetivo}</div>
 </div>
+
+<div class="section">
+  <div class="section-title">2. REFERENCIAS:</div>
+  <div class="section-content">${planoReferencial}</div>
+</div>
+
+<div class="section">
+  <div class="section-title">3. DESARROLLO:</div>
+  <div class="section-content">${desarrollo}</div>
+</div>
+
+<div class="section">
+  <div class="section-title">4. RESULTADO.</div>
+  <table style="width:60%;border-collapse:collapse;margin:6px 0;font-size:10pt;">
+    <tr>
+      <td style="padding:6px 12px;font-weight:bold;">CUMPLE con los estándares del Proyecto</td>
+      <td style="border:1px solid #333;width:28px;height:28px;text-align:center;font-weight:bold;">${resultadoIC === 'cumple' ? 'X' : ''}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 12px;font-weight:bold;">NO CUMPLE con los estándares del Proyecto</td>
+      <td style="border:1px solid #333;width:28px;height:28px;text-align:center;font-weight:bold;">${resultadoIC === 'nocumple' ? 'X' : ''}</td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">5. OBSERVACIONES</div>
+  <div class="section-content">${observaciones}</div>
+</div>
+
+${fotosHTML}
+${tablaHTML}
+
+<div class="footer">${codigo} (${nombreLabor}) Página 1 de 1</div>
 </body>
-</html>
-  `;
-  
+</html>`;
+
   // Imprimir usando iframe oculto — el usuario nunca sale de la app
   let pdfFrame = document.getElementById('_pdfFrame');
   if (!pdfFrame) {
@@ -2503,14 +2547,9 @@ body { font-family: Arial, sans-serif; font-size: 10pt; color: #333; }
     pdfFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;visibility:hidden';
     document.body.appendChild(pdfFrame);
   }
-
   pdfFrame.onload = () => {
-    setTimeout(() => {
-      pdfFrame.contentWindow.focus();
-      pdfFrame.contentWindow.print();
-    }, 400);
+    setTimeout(() => { pdfFrame.contentWindow.focus(); pdfFrame.contentWindow.print(); }, 400);
   };
-
   pdfFrame.srcdoc = htmlContent;
   showToast('PDF listo - Use "Guardar como PDF" en el diálogo de impresión');
 }
