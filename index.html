@@ -1264,6 +1264,11 @@ textarea { resize: vertical; min-height: 80px; }
         <label>Objetivo de la Inspección</label>
         <textarea id="ic_objetivo" rows="3" placeholder="Realizar inspección a las obras de construcción..."></textarea>
       </div>
+
+      <div class="form-group">
+        <label>Desarrollo <span class="ic-badge">IC</span></label>
+        <textarea id="ic_desarrollo" rows="4" placeholder="Ej: Se lleva a cabo la inspección de la fortificación definitiva en el subnivel de Producción MB-S05, correspondiente a la labor C-48W/CAB-02-NP. La inspección abarca un tramo de 25 metros, desde el pk 415 al 390. Se identifica lo siguiente:"></textarea>
+      </div>
       
       <div class="form-group">
         <label>Observaciones Generales</label>
@@ -2371,6 +2376,7 @@ async function generatePDF() {
   const nivel = document.getElementById('ic_nivel').value || '';
   const objetivo = document.getElementById('ic_objetivo').value ||
     'Realizar inspección a las obras de construcción que se ejecuten en Mina Chuquicamata Subterránea, verificando la conformidad de los estándares establecidos (especificaciones técnicas, planos, normativa vigente, entre otros)';
+  const desarrollo = document.getElementById('ic_desarrollo').value || '';
   const observaciones = document.getElementById('ic_observaciones').value ||
     'Las observaciones encontradas deben ser subsanadas progresivamente durante los avances correspondientes, procurando una utilización eficiente de los recursos disponibles.';
 
@@ -2441,8 +2447,6 @@ async function generatePDF() {
       ${tablaRows}
     </tbody>
   </table>`;
-
-  const desarrollo = items.map(i => `• ${i.descripcion}`).join('\n');
 
   const htmlContent = `<!DOCTYPE html>
 <html>
