@@ -1292,7 +1292,10 @@ textarea { resize: vertical; min-height: 80px; }
       <div id="itemSelectorList"></div>
     </div>
     
-    <button class="btn btn-primary" onclick="generatePDF()">📥 Generar PDF</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" style="flex:1" onclick="generatePDF()">📥 Generar PDF</button>
+      <button class="btn btn-secondary" style="flex:1;background:rgba(37,108,188,0.15);border:1px solid #2564BC;color:#5B9BD5;" onclick="exportarWord()">📝 Exportar Word</button>
+    </div>
   </div>
 </main>
 
@@ -2556,6 +2559,248 @@ ${tablaHTML}
   };
   pdfFrame.srcdoc = htmlContent;
   showToast('PDF listo - Use "Guardar como PDF" en el diálogo de impresión');
+}
+
+// ==================== EXPORTAR WORD ====================
+async function exportarWord() {
+  // Validaciones idénticas al PDF
+  const codigo = document.getElementById('ic_codigo').value.trim();
+  const nombreLabor = await getConfig('nombreLabor');
+  const planoReferencial = await getConfig('planoReferencial');
+  const disciplinaIC = document.getElementById('ic_disciplina').value;
+  const cumpleActive = document.getElementById('ic_toggleCumple').classList.contains('active');
+  const noCumpleActive = document.getElementById('ic_toggleNoCumple').classList.contains('active');
+  const resultadoIC = cumpleActive ? 'cumple' : (noCumpleActive ? 'nocumple' : '');
+
+  if (!codigo) { showToast('Ingrese el código del informe', 'error'); return; }
+  if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
+  if (!disciplinaIC) { showToast('Seleccione la Disciplina del informe', 'error'); return; }
+  if (!resultadoIC) { showToast('Seleccione el Resultado (Cumple/No Cumple)', 'error'); return; }
+
+  const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
+    .map(cb => parseInt(cb.value));
+  if (selectedIds.length === 0) { showToast('Seleccione al menos un ítem', 'error'); return; }
+
+  const allItems = await getItems();
+  const items = allItems.filter(i => selectedIds.includes(i.id));
+
+  const nivel = document.getElementById('ic_nivel').value || '';
+  const objetivo = document.getElementById('ic_objetivo').value ||
+    'Realizar inspección a las obras de construcción que se ejecuten en Mina Chuquicamata Subterránea, verificando la conformidad de los estándares establecidos.';
+  const desarrollo = document.getElementById('ic_desarrollo').value || '';
+  const observaciones = document.getElementById('ic_observaciones').value ||
+    'Las observaciones encontradas deben ser subsanadas progresivamente durante los avances correspondientes.';
+
+  const cfg = items[0]?.config || {};
+  const fechaEmision = cfg.fechaEmision || new Date().toISOString().split('T')[0];
+  const subsistema = cfg.subsistema || '';
+  const originadoPor = cfg.originadoPor || '';
+
+  let contrato = '';
+  if (cfg.contrato) contrato = cfg.contrato.split('/').pop() || cfg.contrato;
+
+  showToast('Generando Word...', 'success');
+
+  // Cargar docx.js desde CDN si no está cargado
+  if (!window.docx) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/docx@8.5.0/build/index.js';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+          AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign,
+          PageBreak, HeadingLevel } = window.docx;
+
+  // Constantes de página A4
+  const PAGE_W = 11906; // DXA
+  const MARGIN = 1080;  // ~1.9cm
+  const CONTENT_W = PAGE_W - MARGIN * 2; // 9746 DXA
+
+  const border = { style: BorderStyle.SINGLE, size: 4, color: '333333' };
+  const borders = { top: border, bottom: border, left: border, right: border };
+  const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+  const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+  const cellMargins = { top: 80, bottom: 80, left: 120, right: 120 };
+
+  const bold = (text, size = 18) => new TextRun({ text, bold: true, size, font: 'Arial' });
+  const normal = (text, size = 18) => new TextRun({ text, size, font: 'Arial' });
+  const cell = (children, opts = {}) => new TableCell({
+    borders, margins: cellMargins, verticalAlign: VerticalAlign.CENTER,
+    ...opts,
+    children: [new Paragraph({ children: Array.isArray(children) ? children : [children] })]
+  });
+  const cellShaded = (children, opts = {}) => new TableCell({
+    borders, margins: cellMargins, verticalAlign: VerticalAlign.CENTER,
+    shading: { fill: 'F0F0F0', type: ShadingType.CLEAR },
+    ...opts,
+    children: [new Paragraph({ children: Array.isArray(children) ? children : [children] })]
+  });
+
+  // ── TABLA ENCABEZADO ──
+  const tablaEncabezado = new Table({
+    width: { size: CONTENT_W, type: WidthType.DXA },
+    columnWidths: [1400, 6800, 1546],
+    rows: [
+      new TableRow({ children: [
+        new TableCell({ borders, margins: cellMargins, rowSpan: 4, verticalAlign: VerticalAlign.CENTER,
+          width: { size: 1400, type: WidthType.DXA },
+          children: [
+            new Paragraph({ alignment: AlignmentType.CENTER, children: [bold('JEJ', 24)] }),
+            new Paragraph({ alignment: AlignmentType.CENTER, children: [normal('INGENIERÍA CONSCIENTE', 14)] }),
+          ]}),
+        new TableCell({ borders, margins: cellMargins, rowSpan: 4, verticalAlign: VerticalAlign.CENTER,
+          width: { size: 6800, type: WidthType.DXA },
+          children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [bold('INSPECCIÓN DE CALIDAD', 26)] })] }),
+        new TableCell({ borders, margins: cellMargins, width: { size: 1546, type: WidthType.DXA },
+          children: [new Paragraph({ children: [bold('Código: ', 16), normal(codigo, 16)] })] }),
+      ]}),
+      new TableRow({ children: [
+        new TableCell({ borders, margins: cellMargins, width: { size: 1546, type: WidthType.DXA },
+          children: [new Paragraph({ children: [bold('Rev. ', 16), normal('1', 16)] })] }),
+      ]}),
+      new TableRow({ children: [
+        new TableCell({ borders, margins: cellMargins, width: { size: 1546, type: WidthType.DXA },
+          children: [new Paragraph({ children: [bold('Fecha: ', 16), normal(fechaEmision, 16)] })] }),
+      ]}),
+      new TableRow({ children: [
+        new TableCell({ borders, margins: cellMargins, width: { size: 1546, type: WidthType.DXA },
+          children: [new Paragraph({ children: [bold('Pág: ', 16), normal('1 de 1', 16)] })] }),
+      ]}),
+    ]
+  });
+
+  // ── TABLA DATOS PROYECTO ──
+  const half = Math.floor(CONTENT_W / 2);
+  const tablaDatos = new Table({
+    width: { size: CONTENT_W, type: WidthType.DXA },
+    columnWidths: [half, CONTENT_W - half],
+    rows: [
+      new TableRow({ children: [
+        cell([bold('CONTRATO: '), normal(contrato)]),
+        cell([bold('DISCIPLINA: '), normal(disciplinaIC)]),
+      ]}),
+      new TableRow({ children: [
+        cell([bold('N° SUBSISTEMA: '), normal(subsistema)]),
+        cell([bold('PLANO: '), normal(planoReferencial || '')]),
+      ]}),
+      new TableRow({ children: [
+        cell([bold('NIVEL: '), normal(nivel ? 'NIVEL ' + nivel : '')]),
+        cell([bold('LABOR: '), normal(nombreLabor)]),
+      ]}),
+      new TableRow({ children: [
+        cell([bold('RESPONSABLE INSPECCIÓN: '), normal(originadoPor)]),
+        new TableCell({ borders, margins: cellMargins,
+          children: [
+            new Paragraph({ children: [bold('FIRMA: ')] }),
+            new Paragraph({ children: [normal('')] }),
+            new Paragraph({ children: [normal('')] }),
+          ]}),
+      ]}),
+    ]
+  });
+
+  // ── SECCIONES DE TEXTO ──
+  const seccion = (num, titulo, texto) => [
+    new Paragraph({ spacing: { before: 160, after: 60 },
+      children: [bold(`${num}. ${titulo}`, 18)] }),
+    ...texto.split('\n').map(line =>
+      new Paragraph({ spacing: { after: 60 }, children: [normal(line, 18)] })
+    )
+  ];
+
+  // ── TABLA RESULTADO ──
+  const tablaResultado = new Table({
+    width: { size: Math.floor(CONTENT_W * 0.65), type: WidthType.DXA },
+    columnWidths: [Math.floor(CONTENT_W * 0.57), Math.floor(CONTENT_W * 0.08)],
+    rows: [
+      new TableRow({ children: [
+        cell([bold('CUMPLE con los estándares del Proyecto')]),
+        cell([bold(resultadoIC === 'cumple' ? 'X' : ' ')], { width: { size: Math.floor(CONTENT_W * 0.08), type: WidthType.DXA } }),
+      ]}),
+      new TableRow({ children: [
+        cell([bold('NO CUMPLE con los estándares del Proyecto')]),
+        cell([bold(resultadoIC === 'nocumple' ? 'X' : ' ')]),
+      ]}),
+    ]
+  });
+
+  // ── TABLA PUNCH ──
+  const colWidths = [500, 1200, 2800, 1100, 2000, 2146];
+  const tablaHeaders = new TableRow({
+    tableHeader: true,
+    children: ['ID','UBICACIÓN','DESCRIPCIÓN','FECHA COMPR. CIERRE','ACTIVIDAD DE HALLAZGOS','CLASIF. DE DESVIACIÓN']
+      .map((h, i) => new TableCell({
+        borders, margins: cellMargins,
+        shading: { fill: 'F0F0F0', type: ShadingType.CLEAR },
+        width: { size: colWidths[i], type: WidthType.DXA },
+        children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [bold(h, 16)] })]
+      }))
+  });
+
+  const tablaRows = items.map(it => new TableRow({ children: [
+    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[0], type: WidthType.DXA },
+      children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [normal(String(it.numero || it.id), 16)] })] }),
+    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[1], type: WidthType.DXA },
+      children: [new Paragraph({ children: [normal(it.ubicacion || '', 16)] })] }),
+    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[2], type: WidthType.DXA },
+      children: [new Paragraph({ children: [normal(it.descripcion || '', 16)] })] }),
+    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[3], type: WidthType.DXA },
+      children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [normal(it.fechaCompromiso || '', 16)] })] }),
+    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[4], type: WidthType.DXA },
+      children: [new Paragraph({ children: [normal(it.actividad || '', 16)] })] }),
+    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[5], type: WidthType.DXA },
+      children: [new Paragraph({ children: [normal(it.itemActividad || '', 16)] })] }),
+  ]}));
+
+  const tablaPunch = new Table({
+    width: { size: CONTENT_W, type: WidthType.DXA },
+    columnWidths: colWidths,
+    rows: [tablaHeaders, ...tablaRows]
+  });
+
+  // ── ARMAR DOCUMENTO ──
+  const children = [
+    tablaEncabezado,
+    new Paragraph({ spacing: { after: 80 }, children: [] }),
+    tablaDatos,
+    new Paragraph({ spacing: { after: 80 }, children: [] }),
+    ...seccion('1', 'OBJETIVO:', objetivo),
+    ...seccion('2', 'REFERENCIAS:', planoReferencial || ''),
+    ...seccion('3', 'DESARROLLO:', desarrollo),
+    new Paragraph({ spacing: { before: 160, after: 60 }, children: [bold('4. RESULTADO.')] }),
+    tablaResultado,
+    ...seccion('5', 'OBSERVACIONES', observaciones),
+    new Paragraph({ spacing: { before: 200, after: 60 }, children: [bold('TABLA DE HALLAZGOS')] }),
+    tablaPunch,
+  ];
+
+  const doc = new Document({
+    sections: [{
+      properties: {
+        page: {
+          size: { width: PAGE_W, height: 16838 },
+          margin: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN }
+        }
+      },
+      children
+    }]
+  });
+
+  const buffer = await Packer.toBlob(doc);
+  const url = URL.createObjectURL(buffer);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${codigo}_IC.docx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Word descargado — ' + codigo + '_IC.docx');
 }
 
 // ==================== PWA / SERVICE WORKER ====================
