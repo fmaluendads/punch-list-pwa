@@ -536,7 +536,8 @@ textarea { resize: vertical; min-height: 80px; }
   height: 24px;
   min-width: 24px;
   accent-color: var(--copper);
-  pointer-events: none;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 .item-checkbox-info {
   flex: 1;
@@ -2319,38 +2320,45 @@ function selectWBSItem(rec) {
 async function renderItemSelector() {
   const items = await getItems();
   const container = document.getElementById('itemSelectorList');
-  
+
   if (items.length === 0) {
     container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">No hay ítems registrados</p>';
     return;
   }
-  
+
+  // Usar <label> nativo — funciona en iOS Safari, Android, desktop sin JS adicional
   container.innerHTML = items.map(item => {
     const num = item.numero || item.id;
     return `
-    <div class="item-checkbox" onclick="toggleItemCheck(this)">
+    <label class="item-checkbox">
       <input type="checkbox" value="${item.id}">
       <div class="item-checkbox-info">
         <div class="id">#${num} - ${item.prioridad} ${item.foto ? '📷' : ''}</div>
         <div class="desc">${item.descripcion.substring(0, 60)}${item.descripcion.length > 60 ? '...' : ''}</div>
       </div>
-    </div>
+    </label>
   `}).join('');
 
-  // Forzar checked=true como propiedad JS (no solo atributo HTML)
+  // Forzar checked=true como propiedad JS post-render
   container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = true; });
+
+  // Resetear estado del botón Todos
+  _todosSeleccionados = true;
 }
 
 let _todosSeleccionados = true;
+
 function toggleAllItems() {
   const checkboxes = document.querySelectorAll('#itemSelectorList input[type="checkbox"]');
   _todosSeleccionados = !_todosSeleccionados;
   checkboxes.forEach(cb => { cb.checked = _todosSeleccionados; });
 }
 
+// toggleItemCheck ya no se necesita — el <label> lo maneja nativamente
+// Se mantiene por compatibilidad por si hay llamadas residuales
 function toggleItemCheck(div) {
-  const cb = div.querySelector('input[type="checkbox"]');
-  cb.checked = !cb.checked;
+  const cb = div.querySelector && div.querySelector('input[type="checkbox"]');
+  if (cb) cb.checked = !cb.checked;
 }
 
 async function generatePDF() {
@@ -2562,8 +2570,8 @@ ${tablaHTML}
 }
 
 // ==================== EXPORTAR WORD ====================
+// Paso 1: recolectar todos los datos async ANTES de generar el documento
 async function exportarWord() {
-  // Validaciones idénticas al PDF
   const codigo = document.getElementById('ic_codigo').value.trim();
   const nombreLabor = await getConfig('nombreLabor');
   const planoReferencial = await getConfig('planoReferencial');
@@ -2584,224 +2592,146 @@ async function exportarWord() {
   const allItems = await getItems();
   const items = allItems.filter(i => selectedIds.includes(i.id));
 
-  const nivel = document.getElementById('ic_nivel').value || '';
-  const objetivo = document.getElementById('ic_objetivo').value ||
+  const nivel         = document.getElementById('ic_nivel').value || '';
+  const objetivo      = document.getElementById('ic_objetivo').value ||
     'Realizar inspección a las obras de construcción que se ejecuten en Mina Chuquicamata Subterránea, verificando la conformidad de los estándares establecidos.';
-  const desarrollo = document.getElementById('ic_desarrollo').value || '';
+  const desarrollo    = document.getElementById('ic_desarrollo').value || '';
   const observaciones = document.getElementById('ic_observaciones').value ||
     'Las observaciones encontradas deben ser subsanadas progresivamente durante los avances correspondientes.';
 
-  const cfg = items[0]?.config || {};
+  const cfg          = items[0]?.config || {};
   const fechaEmision = cfg.fechaEmision || new Date().toISOString().split('T')[0];
-  const subsistema = cfg.subsistema || '';
+  const subsistema   = cfg.subsistema || '';
   const originadoPor = cfg.originadoPor || '';
+  const contrato     = cfg.contrato ? (cfg.contrato.split('/').pop() || cfg.contrato) : '';
 
-  let contrato = '';
-  if (cfg.contrato) contrato = cfg.contrato.split('/').pop() || cfg.contrato;
-
-  showToast('Generando Word...', 'success');
-
-  // Cargar docx.js desde CDN si no está cargado
-  if (!window.docx) {
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://unpkg.com/docx@8.5.0/build/index.js';
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
-
-  const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-          AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign,
-          PageBreak, HeadingLevel } = window.docx;
-
-  // Constantes de página A4
-  const PAGE_W = 11906; // DXA
-  const MARGIN = 1080;  // ~1.9cm
-  const CONTENT_W = PAGE_W - MARGIN * 2; // 9746 DXA
-
-  const border = { style: BorderStyle.SINGLE, size: 4, color: '333333' };
-  const borders = { top: border, bottom: border, left: border, right: border };
-  const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
-  const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
-  const cellMargins = { top: 80, bottom: 80, left: 120, right: 120 };
-
-  const bold = (text, size = 18) => new TextRun({ text, bold: true, size, font: 'Arial' });
-  const normal = (text, size = 18) => new TextRun({ text, size, font: 'Arial' });
-  const cell = (children, opts = {}) => new TableCell({
-    borders, margins: cellMargins, verticalAlign: VerticalAlign.CENTER,
-    ...opts,
-    children: [new Paragraph({ children: Array.isArray(children) ? children : [children] })]
+  // Pasar todos los datos a la función de descarga SINCRONA
+  _descargarWord({
+    codigo, nombreLabor, planoReferencial, disciplinaIC, resultadoIC,
+    nivel, objetivo, desarrollo, observaciones,
+    fechaEmision, subsistema, originadoPor, contrato, items
   });
-  const cellShaded = (children, opts = {}) => new TableCell({
-    borders, margins: cellMargins, verticalAlign: VerticalAlign.CENTER,
-    shading: { fill: 'F0F0F0', type: ShadingType.CLEAR },
-    ...opts,
-    children: [new Paragraph({ children: Array.isArray(children) ? children : [children] })]
-  });
-
-  // ── TABLA ENCABEZADO ──
-  const tablaEncabezado = new Table({
-    width: { size: CONTENT_W, type: WidthType.DXA },
-    columnWidths: [1400, 6800, 1546],
-    rows: [
-      new TableRow({ children: [
-        new TableCell({ borders, margins: cellMargins, rowSpan: 4, verticalAlign: VerticalAlign.CENTER,
-          width: { size: 1400, type: WidthType.DXA },
-          children: [
-            new Paragraph({ alignment: AlignmentType.CENTER, children: [bold('JEJ', 24)] }),
-            new Paragraph({ alignment: AlignmentType.CENTER, children: [normal('INGENIERÍA CONSCIENTE', 14)] }),
-          ]}),
-        new TableCell({ borders, margins: cellMargins, rowSpan: 4, verticalAlign: VerticalAlign.CENTER,
-          width: { size: 6800, type: WidthType.DXA },
-          children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [bold('INSPECCIÓN DE CALIDAD', 26)] })] }),
-        new TableCell({ borders, margins: cellMargins, width: { size: 1546, type: WidthType.DXA },
-          children: [new Paragraph({ children: [bold('Código: ', 16), normal(codigo, 16)] })] }),
-      ]}),
-      new TableRow({ children: [
-        new TableCell({ borders, margins: cellMargins, width: { size: 1546, type: WidthType.DXA },
-          children: [new Paragraph({ children: [bold('Rev. ', 16), normal('1', 16)] })] }),
-      ]}),
-      new TableRow({ children: [
-        new TableCell({ borders, margins: cellMargins, width: { size: 1546, type: WidthType.DXA },
-          children: [new Paragraph({ children: [bold('Fecha: ', 16), normal(fechaEmision, 16)] })] }),
-      ]}),
-      new TableRow({ children: [
-        new TableCell({ borders, margins: cellMargins, width: { size: 1546, type: WidthType.DXA },
-          children: [new Paragraph({ children: [bold('Pág: ', 16), normal('1 de 1', 16)] })] }),
-      ]}),
-    ]
-  });
-
-  // ── TABLA DATOS PROYECTO ──
-  const half = Math.floor(CONTENT_W / 2);
-  const tablaDatos = new Table({
-    width: { size: CONTENT_W, type: WidthType.DXA },
-    columnWidths: [half, CONTENT_W - half],
-    rows: [
-      new TableRow({ children: [
-        cell([bold('CONTRATO: '), normal(contrato)]),
-        cell([bold('DISCIPLINA: '), normal(disciplinaIC)]),
-      ]}),
-      new TableRow({ children: [
-        cell([bold('N° SUBSISTEMA: '), normal(subsistema)]),
-        cell([bold('PLANO: '), normal(planoReferencial || '')]),
-      ]}),
-      new TableRow({ children: [
-        cell([bold('NIVEL: '), normal(nivel ? 'NIVEL ' + nivel : '')]),
-        cell([bold('LABOR: '), normal(nombreLabor)]),
-      ]}),
-      new TableRow({ children: [
-        cell([bold('RESPONSABLE INSPECCIÓN: '), normal(originadoPor)]),
-        new TableCell({ borders, margins: cellMargins,
-          children: [
-            new Paragraph({ children: [bold('FIRMA: ')] }),
-            new Paragraph({ children: [normal('')] }),
-            new Paragraph({ children: [normal('')] }),
-          ]}),
-      ]}),
-    ]
-  });
-
-  // ── SECCIONES DE TEXTO ──
-  const seccion = (num, titulo, texto) => [
-    new Paragraph({ spacing: { before: 160, after: 60 },
-      children: [bold(`${num}. ${titulo}`, 18)] }),
-    ...texto.split('\n').map(line =>
-      new Paragraph({ spacing: { after: 60 }, children: [normal(line, 18)] })
-    )
-  ];
-
-  // ── TABLA RESULTADO ──
-  const tablaResultado = new Table({
-    width: { size: Math.floor(CONTENT_W * 0.65), type: WidthType.DXA },
-    columnWidths: [Math.floor(CONTENT_W * 0.57), Math.floor(CONTENT_W * 0.08)],
-    rows: [
-      new TableRow({ children: [
-        cell([bold('CUMPLE con los estándares del Proyecto')]),
-        cell([bold(resultadoIC === 'cumple' ? 'X' : ' ')], { width: { size: Math.floor(CONTENT_W * 0.08), type: WidthType.DXA } }),
-      ]}),
-      new TableRow({ children: [
-        cell([bold('NO CUMPLE con los estándares del Proyecto')]),
-        cell([bold(resultadoIC === 'nocumple' ? 'X' : ' ')]),
-      ]}),
-    ]
-  });
-
-  // ── TABLA PUNCH ──
-  const colWidths = [500, 1200, 2800, 1100, 2000, 2146];
-  const tablaHeaders = new TableRow({
-    tableHeader: true,
-    children: ['ID','UBICACIÓN','DESCRIPCIÓN','FECHA COMPR. CIERRE','ACTIVIDAD DE HALLAZGOS','CLASIF. DE DESVIACIÓN']
-      .map((h, i) => new TableCell({
-        borders, margins: cellMargins,
-        shading: { fill: 'F0F0F0', type: ShadingType.CLEAR },
-        width: { size: colWidths[i], type: WidthType.DXA },
-        children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [bold(h, 16)] })]
-      }))
-  });
-
-  const tablaRows = items.map(it => new TableRow({ children: [
-    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[0], type: WidthType.DXA },
-      children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [normal(String(it.numero || it.id), 16)] })] }),
-    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[1], type: WidthType.DXA },
-      children: [new Paragraph({ children: [normal(it.ubicacion || '', 16)] })] }),
-    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[2], type: WidthType.DXA },
-      children: [new Paragraph({ children: [normal(it.descripcion || '', 16)] })] }),
-    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[3], type: WidthType.DXA },
-      children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [normal(it.fechaCompromiso || '', 16)] })] }),
-    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[4], type: WidthType.DXA },
-      children: [new Paragraph({ children: [normal(it.actividad || '', 16)] })] }),
-    new TableCell({ borders, margins: cellMargins, width: { size: colWidths[5], type: WidthType.DXA },
-      children: [new Paragraph({ children: [normal(it.itemActividad || '', 16)] })] }),
-  ]}));
-
-  const tablaPunch = new Table({
-    width: { size: CONTENT_W, type: WidthType.DXA },
-    columnWidths: colWidths,
-    rows: [tablaHeaders, ...tablaRows]
-  });
-
-  // ── ARMAR DOCUMENTO ──
-  const children = [
-    tablaEncabezado,
-    new Paragraph({ spacing: { after: 80 }, children: [] }),
-    tablaDatos,
-    new Paragraph({ spacing: { after: 80 }, children: [] }),
-    ...seccion('1', 'OBJETIVO:', objetivo),
-    ...seccion('2', 'REFERENCIAS:', planoReferencial || ''),
-    ...seccion('3', 'DESARROLLO:', desarrollo),
-    new Paragraph({ spacing: { before: 160, after: 60 }, children: [bold('4. RESULTADO.')] }),
-    tablaResultado,
-    ...seccion('5', 'OBSERVACIONES', observaciones),
-    new Paragraph({ spacing: { before: 200, after: 60 }, children: [bold('TABLA DE HALLAZGOS')] }),
-    tablaPunch,
-  ];
-
-  const doc = new Document({
-    sections: [{
-      properties: {
-        page: {
-          size: { width: PAGE_W, height: 16838 },
-          margin: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN }
-        }
-      },
-      children
-    }]
-  });
-
-  const buffer = await Packer.toBlob(doc);
-  const url = URL.createObjectURL(buffer);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${codigo}_IC.docx`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast('Word descargado — ' + codigo + '_IC.docx');
 }
+
+// Paso 2: generar y descargar — 100% síncrono para preservar el gesto en iOS
+function _descargarWord(d) {
+  const punchRows = d.items.map(it =>
+    '<tr>' +
+    '<td style="border:1px solid #333;padding:4px;text-align:center;">' + (it.numero || it.id) + '</td>' +
+    '<td style="border:1px solid #333;padding:4px;">' + (it.ubicacion || '') + '</td>' +
+    '<td style="border:1px solid #333;padding:4px;">' + (it.descripcion || '') + '</td>' +
+    '<td style="border:1px solid #333;padding:4px;text-align:center;">' + (it.fechaCompromiso || '') + '</td>' +
+    '<td style="border:1px solid #333;padding:4px;">' + (it.actividad || '') + '</td>' +
+    '<td style="border:1px solid #333;padding:4px;">' + (it.itemActividad || '') + '</td>' +
+    '</tr>'
+  ).join('');
+
+  const itemsConFoto = d.items.filter(i => i.foto);
+  const fotosHTML = itemsConFoto.length > 0
+    ? '<p style="font-weight:bold;margin:10px 0 4px;">REGISTRO FOTOGRÁFICO</p>' +
+      itemsConFoto.map((it, idx) =>
+        '<div style="display:inline-block;width:45%;margin:4px;vertical-align:top;text-align:center;">' +
+        '<b>' + (idx + 1) + '.</b><br>' +
+        '<img src="' + it.foto + '" style="max-width:100%;max-height:180px;border:1px solid #ccc;"><br>' +
+        '<small>' + (it.ubicacion || '') + '</small>' +
+        '</div>'
+      ).join('')
+    : '';
+
+  const html =
+    '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+    'xmlns:w="urn:schemas-microsoft-com:office:word" ' +
+    'xmlns="http://www.w3.org/TR/REC-html40">' +
+    '<head><meta charset="UTF-8">' +
+    '<meta name=ProgId content=Word.Document>' +
+    '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->' +
+    '<style>' +
+    '@page{size:21cm 29.7cm;margin:2cm}' +
+    'body{font-family:Arial,sans-serif;font-size:10pt;color:#333}' +
+    'table{border-collapse:collapse;width:100%;margin-bottom:8px}' +
+    'td{font-size:9pt;vertical-align:middle;padding:5px 8px}' +
+    '</style></head><body>' +
+
+    // Encabezado
+    '<table>' +
+    '<tr>' +
+    '<td style="border:1px solid #333;width:80px;text-align:center;" rowspan="4"><b style="font-size:13pt;color:#1a3a6b;">JEJ</b><br><span style="font-size:7pt;">INGENIERÍA CONSCIENTE</span></td>' +
+    '<td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;" rowspan="4">INSPECCIÓN DE CALIDAD</td>' +
+    '<td style="border:1px solid #333;width:160px;"><b>Código:</b> ' + d.codigo + '</td>' +
+    '</tr>' +
+    '<tr><td style="border:1px solid #333;"><b>Rev.</b> 1</td></tr>' +
+    '<tr><td style="border:1px solid #333;"><b>Fecha:</b> ' + d.fechaEmision + '</td></tr>' +
+    '<tr><td style="border:1px solid #333;"><b>Pág:</b> 1 de 1</td></tr>' +
+    '</table>' +
+
+    // Datos proyecto
+    '<table>' +
+    '<tr><td style="border:1px solid #333;width:50%;"><b>CONTRATO:</b> ' + d.contrato + '</td><td style="border:1px solid #333;"><b>DISCIPLINA:</b> ' + d.disciplinaIC + '</td></tr>' +
+    '<tr><td style="border:1px solid #333;"><b>N° SUBSISTEMA:</b> ' + d.subsistema + '</td><td style="border:1px solid #333;"><b>PLANO:</b> ' + (d.planoReferencial || '') + '</td></tr>' +
+    '<tr><td style="border:1px solid #333;"><b>NIVEL:</b> ' + (d.nivel ? 'NIVEL ' + d.nivel : '') + '</td><td style="border:1px solid #333;"><b>LABOR:</b> ' + d.nombreLabor + '</td></tr>' +
+    '<tr><td style="border:1px solid #333;"><b>RESPONSABLE:</b> ' + d.originadoPor + '</td><td style="border:1px solid #333;min-height:40px;"><b>FIRMA:</b><br><br></td></tr>' +
+    '</table>' +
+
+    // Secciones
+    '<p style="font-weight:bold;margin:10px 0 4px;">1. OBJETIVO:</p><p style="white-space:pre-wrap;font-size:9pt;">' + d.objetivo + '</p>' +
+    '<p style="font-weight:bold;margin:10px 0 4px;">2. REFERENCIAS:</p><p style="font-size:9pt;">' + (d.planoReferencial || '') + '</p>' +
+    '<p style="font-weight:bold;margin:10px 0 4px;">3. DESARROLLO:</p><p style="white-space:pre-wrap;font-size:9pt;">' + d.desarrollo + '</p>' +
+
+    // Resultado
+    '<p style="font-weight:bold;margin:10px 0 4px;">4. RESULTADO.</p>' +
+    '<table style="width:60%;">' +
+    '<tr><td style="border:1px solid #333;padding:6px;"><b>CUMPLE con los estándares del Proyecto</b></td><td style="border:1px solid #333;width:30px;text-align:center;"><b>' + (d.resultadoIC === 'cumple' ? 'X' : '') + '</b></td></tr>' +
+    '<tr><td style="border:1px solid #333;padding:6px;"><b>NO CUMPLE con los estándares del Proyecto</b></td><td style="border:1px solid #333;width:30px;text-align:center;"><b>' + (d.resultadoIC === 'nocumple' ? 'X' : '') + '</b></td></tr>' +
+    '</table>' +
+
+    '<p style="font-weight:bold;margin:10px 0 4px;">5. OBSERVACIONES</p><p style="white-space:pre-wrap;font-size:9pt;">' + d.observaciones + '</p>' +
+
+    fotosHTML +
+
+    // Tabla punch
+    '<p style="font-weight:bold;margin:10px 0 4px;">TABLA DE HALLAZGOS</p>' +
+    '<table>' +
+    '<tr style="background:#f0f0f0;font-weight:bold;text-align:center;">' +
+    '<td style="border:1px solid #333;width:5%;">ID</td>' +
+    '<td style="border:1px solid #333;width:14%;">UBICACIÓN</td>' +
+    '<td style="border:1px solid #333;width:28%;">DESCRIPCIÓN</td>' +
+    '<td style="border:1px solid #333;width:12%;">FECHA COMPR. CIERRE</td>' +
+    '<td style="border:1px solid #333;width:20%;">ACTIVIDAD DE HALLAZGOS</td>' +
+    '<td style="border:1px solid #333;width:21%;">CLASIF. DE DESVIACIÓN</td>' +
+    '</tr>' +
+    punchRows +
+    '</table>' +
+    '</body></html>';
+
+  // Descarga — usando data URI para máxima compatibilidad iOS/Android
+  const filename = d.codigo + '_IC.doc';
+  try {
+    // Método 1: Blob + objectURL (funciona en la mayoría de browsers)
+    const blob = new Blob(['\uFEFF' + html], { type: 'application/octet-stream' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.style.display = 'none';
+    a.href     = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 3000);
+    showToast('Word descargado — ' + filename);
+  } catch(e) {
+    // Método 2: data URI fallback
+    try {
+      const dataUri = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent('\uFEFF' + html);
+      const a = document.createElement('a');
+      a.href = dataUri; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      showToast('Word descargado — ' + filename);
+    } catch(e2) {
+      showToast('Error al descargar: ' + e2.message, 'error');
+    }
+  }
+}
+
+
 
 // ==================== PWA / SERVICE WORKER ====================
 if ('serviceWorker' in navigator) {
