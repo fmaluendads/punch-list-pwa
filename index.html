@@ -261,7 +261,62 @@ textarea { resize: vertical; min-height: 80px; }
   border-radius: 6px;
   cursor: pointer;
 }
-/* ── Menú de selección de foto ── */
+/* ── Firmantes ── */
+.firmante-card {
+  background: var(--coal);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.firmante-nombre {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--slate-lt);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-family: inherit;
+}
+.firma-canvas-wrap {
+  position: relative;
+  border: 2px dashed var(--copper);
+  border-radius: 6px;
+  background: #fff;
+  touch-action: none;
+}
+.firma-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 120px;
+  cursor: crosshair;
+  touch-action: none;
+}
+.firma-canvas-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #bbb;
+  font-size: 12px;
+}
+.firmante-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.firmante-actions button {
+  flex: 1;
+  padding: 7px;
+  font-size: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
 .foto-menu-overlay {
   display: none;
   position: fixed;
@@ -1010,7 +1065,6 @@ textarea { resize: vertical; min-height: 80px; }
             <option value="P2">P2</option>
             <option value="P3">P3</option>
             <option value="P4">P4</option>
-            <option value="P5">P5</option>
           </select>
         </div>
         
@@ -1216,11 +1270,10 @@ textarea { resize: vertical; min-height: 80px; }
         </div>
         <div class="form-group">
           <label>Caminata</label>
-          <select id="cfg_caminata">
+          <select id="cfg_caminata" onchange="actualizarVisibilidadFirmantes()">
             <option value="CAMINATA 0">CAMINATA 0</option>
-            <option value="CAMINATA 1">CAMINATA 1</option>
-            <option value="CAMINATA 2">CAMINATA 2</option>
-            <option value="CAMINATA 3">CAMINATA 3</option>
+            <option value="CAMINATA DE RECEPCIÓN">CAMINATA DE RECEPCIÓN</option>
+            <option value="CAMINATA DE ENTREGA">CAMINATA DE ENTREGA</option>
           </select>
         </div>
       </div>
@@ -1336,6 +1389,18 @@ textarea { resize: vertical; min-height: 80px; }
       <div id="itemSelectorList"></div>
     </div>
     
+    <!-- Sección Firmantes — visible solo en Caminata Recepción/Entrega -->
+    <div id="seccionFirmantes" style="display:none;">
+      <div class="form-section">
+        <h3>✍️ Firmantes</h3>
+        <div id="listaFirmantes"></div>
+        <button type="button" class="btn btn-secondary" onclick="agregarFirmante()"
+          style="margin-top:8px;width:100%;" id="btnAgregarFirmante">
+          + Agregar Firmante
+        </button>
+      </div>
+    </div>
+
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-primary" style="flex:1" onclick="generatePDF()">📥 Generar PDF</button>
       <button class="btn btn-secondary" style="flex:1;background:rgba(37,108,188,0.15);border:1px solid #2564BC;color:#5B9BD5;" onclick="exportarWord()">📝 Exportar Word</button>
@@ -1391,7 +1456,6 @@ textarea { resize: vertical; min-height: 80px; }
           <option value="P2">P2</option>
           <option value="P3">P3</option>
           <option value="P4">P4</option>
-          <option value="P5">P5</option>
         </select>
       </div>
       <div class="form-group">
@@ -1733,7 +1797,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
     if (tab.dataset.tab === 'lista') renderItems();
-    if (tab.dataset.tab === 'informe') renderItemSelector();
+    if (tab.dataset.tab === 'informe') { renderItemSelector(); actualizarVisibilidadFirmantes(); }
   });
 });
 
@@ -2122,6 +2186,9 @@ async function loadConfig() {
   document.getElementById('cfg_nombreLabor').value = await getConfig('nombreLabor') || '';
   document.getElementById('cfg_planoReferencial').value = await getConfig('planoReferencial') || '';
 
+  // Actualizar visibilidad sección firmantes según caminata guardada
+  actualizarVisibilidadFirmantes();
+
   await loadEspecialistas();
 }
 
@@ -2493,7 +2560,17 @@ async function generatePDF() {
   // Extraer solo el número de contrato (sin empresa)
   const contratoDisplay = contrato.split('/').pop() || contrato;
 
-  // Fotos con numeración
+  // Determinar tipo de documento por caminata
+  const caminataConfig = cfg.caminata || await getConfig('caminata') || 'CAMINATA 0';
+  const esCaminata0 = caminataConfig === 'CAMINATA 0';
+  const tituloPDF = esCaminata0 ? 'INSPECCIÓN DE CALIDAD' : caminataConfig.toUpperCase();
+
+  // Bloque firma IC (caminata 0) vs firmantes (caminata recepción/entrega)
+  const firmaICHTML = esCaminata0
+    ? `<td style="border:1px solid #333;padding:5px 8px;min-height:36px;"><b>FIRMA:</b><div style="min-height:28px;"></div></td>`
+    : `<td style="border:1px solid #333;padding:5px 8px;"></td>`;
+
+  const firmasBloque = esCaminata0 ? '' : getFirmasHTML();
   const itemsConFoto = items.filter(i => i.foto);
   const fotosHTML = itemsConFoto.length > 0 ? `
   <div style="page-break-before:auto;">
@@ -2570,7 +2647,7 @@ td { vertical-align: middle; }
       <div style="font-weight:bold;font-size:13pt;color:#1a3a6b;">JEJ</div>
       <div style="font-size:6pt;color:#555;">INGENIERÍA CONSCIENTE</div>
     </td>
-    <td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;vertical-align:middle;" rowspan="4">INSPECCIÓN DE CALIDAD</td>
+    <td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;vertical-align:middle;" rowspan="4">${tituloPDF}</td>
     <td style="border:1px solid #333;padding:4px 8px;font-size:9pt;width:160px;"><b>Código:</b> ${codigo}</td>
   </tr>
   <tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Rev.</b> 1</td></tr>
@@ -2594,7 +2671,7 @@ td { vertical-align: middle; }
   </tr>
   <tr>
     <td style="border:1px solid #333;padding:5px 8px;"><b>RESPONSABLE INSPECCIÓN:</b> ${originadoPor}</td>
-    <td style="border:1px solid #333;padding:5px 8px;min-height:36px;"><b>FIRMA:</b><div style="min-height:28px;"></div></td>
+    ${firmaICHTML}
   </tr>
 </table>
 
@@ -2635,6 +2712,7 @@ td { vertical-align: middle; }
 
 ${fotosHTML}
 ${tablaHTML}
+${firmasBloque}
 
 <div class="footer">${codigo} (${nombreLabor}) Página 1 de 1</div>
 </body>
@@ -2690,12 +2768,17 @@ async function exportarWord() {
   const subsistema   = cfg.subsistema || '';
   const originadoPor = cfg.originadoPor || '';
   const contrato     = cfg.contrato ? (cfg.contrato.split('/').pop() || cfg.contrato) : '';
+  const caminataWord = cfg.caminata || await getConfig('caminata') || 'CAMINATA 0';
+  const esCaminata0W = caminataWord === 'CAMINATA 0';
+  const tituloWord   = esCaminata0W ? 'INSPECCIÓN DE CALIDAD' : caminataWord.toUpperCase();
+  const firmasWord   = esCaminata0W ? [] : _firmantes.filter(f => f.nombre || f.data);
 
   // Pasar todos los datos a la función de descarga SINCRONA
   _descargarWord({
     codigo, nombreLabor, planoReferencial, disciplinaIC, resultadoIC,
     nivel, objetivo, desarrollo, observaciones,
-    fechaEmision, subsistema, originadoPor, contrato, items
+    fechaEmision, subsistema, originadoPor, contrato, items,
+    titulo: tituloWord, esCaminata0: esCaminata0W, firmantes: firmasWord
   });
 }
 
@@ -2742,7 +2825,7 @@ function _descargarWord(d) {
     '<table>' +
     '<tr>' +
     '<td style="border:1px solid #333;width:80px;text-align:center;" rowspan="4"><b style="font-size:13pt;color:#1a3a6b;">JEJ</b><br><span style="font-size:7pt;">INGENIERÍA CONSCIENTE</span></td>' +
-    '<td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;" rowspan="4">INSPECCIÓN DE CALIDAD</td>' +
+    '<td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;" rowspan="4">' + (d.titulo || 'INSPECCIÓN DE CALIDAD') + '</td>' +
     '<td style="border:1px solid #333;width:160px;"><b>Código:</b> ' + d.codigo + '</td>' +
     '</tr>' +
     '<tr><td style="border:1px solid #333;"><b>Rev.</b> 1</td></tr>' +
@@ -2755,7 +2838,9 @@ function _descargarWord(d) {
     '<tr><td style="border:1px solid #333;width:50%;"><b>CONTRATO:</b> ' + d.contrato + '</td><td style="border:1px solid #333;"><b>DISCIPLINA:</b> ' + d.disciplinaIC + '</td></tr>' +
     '<tr><td style="border:1px solid #333;"><b>N° SUBSISTEMA:</b> ' + d.subsistema + '</td><td style="border:1px solid #333;"><b>PLANO:</b> ' + (d.planoReferencial || '') + '</td></tr>' +
     '<tr><td style="border:1px solid #333;"><b>NIVEL:</b> ' + (d.nivel ? 'NIVEL ' + d.nivel : '') + '</td><td style="border:1px solid #333;"><b>LABOR:</b> ' + d.nombreLabor + '</td></tr>' +
-    '<tr><td style="border:1px solid #333;"><b>RESPONSABLE:</b> ' + d.originadoPor + '</td><td style="border:1px solid #333;min-height:40px;"><b>FIRMA:</b><br><br></td></tr>' +
+    '<tr><td style="border:1px solid #333;"><b>RESPONSABLE:</b> ' + d.originadoPor + '</td>' +
+    (d.esCaminata0 ? '<td style="border:1px solid #333;min-height:40px;"><b>FIRMA:</b><br><br></td>' : '<td style="border:1px solid #333;"></td>') +
+    '</tr>' +
     '</table>' +
 
     // Secciones
@@ -2787,6 +2872,27 @@ function _descargarWord(d) {
     '</tr>' +
     punchRows +
     '</table>' +
+
+    // Bloque firmantes (solo caminata recepción/entrega)
+    ((!d.esCaminata0 && d.firmantes && d.firmantes.length > 0) ? (function() {
+      let rows = '';
+      for (let i = 0; i < d.firmantes.length; i += 3) {
+        const grupo = d.firmantes.slice(i, i + 3);
+        const cds = grupo.map(f =>
+          '<td style="border:1px solid #333;padding:8px;text-align:center;vertical-align:bottom;width:33%;">' +
+          (f.data ? '<img src="' + f.data + '" style="max-width:100%;height:60px;object-fit:contain;display:block;margin:0 auto 4px;">' : '<div style="height:60px;"></div>') +
+          '<div style="border-top:1px solid #333;padding-top:4px;font-size:9pt;font-weight:bold;">' + (f.nombre || '') + '</div>' +
+          '</td>'
+        ).join('');
+        const vacias = Array(3 - grupo.length).fill('<td style="border:1px solid #333;padding:8px;width:33%;"></td>').join('');
+        rows += '<tr>' + cds + vacias + '</tr>';
+      }
+      return '<p style="font-weight:bold;margin:10px 0 4px;">FIRMAS</p>' +
+        '<table style="width:100%;border-collapse:collapse;">' +
+        '<tr style="background:#f0f0f0;"><td colspan="3" style="border:1px solid #333;padding:5px 8px;font-weight:bold;text-align:center;">FIRMAS</td></tr>' +
+        rows + '</table>';
+    })() : '') +
+
     '</body></html>';
 
   // Descarga — usando data URI para máxima compatibilidad iOS/Android
@@ -2818,6 +2924,164 @@ function _descargarWord(d) {
 }
 
 
+
+// ==================== FIRMANTES ====================
+let _firmantes = []; // [{nombre, canvas}]
+
+function actualizarVisibilidadFirmantes() {
+  const caminata = document.getElementById('cfg_caminata')?.value || '';
+  const esCaminata0 = caminata === 'CAMINATA 0' || caminata === '';
+  const seccion = document.getElementById('seccionFirmantes');
+  if (seccion) seccion.style.display = esCaminata0 ? 'none' : 'block';
+}
+
+function agregarFirmante() {
+  if (_firmantes.length >= 10) { showToast('Máximo 10 firmantes', 'error'); return; }
+  const idx = _firmantes.length;
+  _firmantes.push({ nombre: '', data: null });
+  renderFirmantes();
+}
+
+function renderFirmantes() {
+  const container = document.getElementById('listaFirmantes');
+  container.innerHTML = _firmantes.map((f, idx) => `
+    <div class="firmante-card" id="firmante-card-${idx}">
+      <input class="firmante-nombre" type="text" placeholder="Nombre del firmante"
+        value="${f.nombre}" oninput="_firmantes[${idx}].nombre = this.value">
+      <div class="firma-canvas-wrap" id="firma-wrap-${idx}">
+        <canvas id="firma-canvas-${idx}" height="120"></canvas>
+        <div class="firma-canvas-hint" id="firma-hint-${idx}">Firme aquí con dedo o lápiz</div>
+      </div>
+      <div class="firmante-actions">
+        <button onclick="limpiarFirma(${idx})" style="background:var(--slate-lt);color:var(--text)">🗑️ Limpiar</button>
+        <button onclick="eliminarFirmante(${idx})" style="background:rgba(239,68,68,0.15);color:var(--danger)">✕ Eliminar</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Mostrar/ocultar botón agregar
+  document.getElementById('btnAgregarFirmante').style.display =
+    _firmantes.length >= 10 ? 'none' : 'block';
+
+  // Inicializar canvas de firma para cada firmante
+  _firmantes.forEach((f, idx) => {
+    initFirmaCanvas(idx);
+    if (f.data) {
+      const canvas = document.getElementById(`firma-canvas-${idx}`);
+      const img = new Image();
+      img.onload = () => {
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        document.getElementById(`firma-hint-${idx}`).style.display = 'none';
+      };
+      img.src = f.data;
+    }
+  });
+}
+
+function initFirmaCanvas(idx) {
+  const canvas = document.getElementById(`firma-canvas-${idx}`);
+  if (!canvas) return;
+  // Ajustar resolución del canvas al tamaño real del elemento
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width || canvas.offsetWidth || 300;
+  canvas.height = 120;
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  let drawing = false, lastX = 0, lastY = 0;
+
+  const getPos = (e) => {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * (canvas.width / r.width),
+             y: (src.clientY - r.top)  * (canvas.height / r.height) };
+  };
+  const start = (e) => {
+    e.preventDefault();
+    drawing = true;
+    const p = getPos(e); lastX = p.x; lastY = p.y;
+    document.getElementById(`firma-hint-${idx}`).style.display = 'none';
+  };
+  const draw = (e) => {
+    if (!drawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  };
+  const stop = (e) => {
+    if (!drawing) return;
+    drawing = false;
+    _firmantes[idx].data = canvas.toDataURL('image/png');
+  };
+
+  canvas.removeEventListener('mousedown', canvas._mdown);
+  canvas.removeEventListener('mousemove', canvas._mmove);
+  canvas.removeEventListener('mouseup', canvas._mup);
+  canvas.removeEventListener('touchstart', canvas._tstart);
+  canvas.removeEventListener('touchmove', canvas._tmove);
+  canvas.removeEventListener('touchend', canvas._tend);
+
+  canvas._mdown = start; canvas._mmove = draw; canvas._mup = stop;
+  canvas._tstart = start; canvas._tmove = draw; canvas._tend = stop;
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stop);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', draw, { passive: false });
+  canvas.addEventListener('touchend', stop, { passive: false });
+}
+
+function limpiarFirma(idx) {
+  const canvas = document.getElementById(`firma-canvas-${idx}`);
+  if (!canvas) return;
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  _firmantes[idx].data = null;
+  document.getElementById(`firma-hint-${idx}`).style.display = 'flex';
+}
+
+function eliminarFirmante(idx) {
+  _firmantes.splice(idx, 1);
+  renderFirmantes();
+}
+
+function getFirmasHTML() {
+  const validos = _firmantes.filter(f => f.nombre || f.data);
+  if (!validos.length) return '';
+  const celdas = validos.map(f => `
+    <td style="border:1px solid #333;padding:8px;text-align:center;width:${Math.floor(100/Math.min(validos.length,3))}%;vertical-align:bottom;">
+      ${f.data ? `<img src="${f.data}" style="max-width:100%;height:60px;object-fit:contain;display:block;margin:0 auto 4px;">` : '<div style="height:60px;"></div>'}
+      <div style="border-top:1px solid #333;padding-top:4px;font-size:8pt;font-weight:bold;">${f.nombre || ''}</div>
+    </td>`).join('');
+
+  // Agrupar de 3 en 3
+  let rows = '';
+  for (let i = 0; i < validos.length; i += 3) {
+    const grupo = validos.slice(i, i + 3);
+    const cds = grupo.map(f => `
+      <td style="border:1px solid #333;padding:8px;text-align:center;vertical-align:bottom;">
+        ${f.data ? `<img src="${f.data}" style="max-width:100%;height:60px;object-fit:contain;display:block;margin:0 auto 4px;">` : '<div style="height:60px;"></div>'}
+        <div style="border-top:1px solid #333;padding-top:4px;font-size:8pt;font-weight:bold;">${f.nombre || ''}</div>
+      </td>`).join('');
+    // Rellenar con celdas vacías si el grupo tiene menos de 3
+    const vacias = Array(3 - grupo.length).fill('<td style="border:1px solid #333;padding:8px;"></td>').join('');
+    rows += `<tr>${cds}${vacias}</tr>`;
+  }
+
+  return `
+  <div style="margin-top:14px;">
+    <table style="width:100%;border-collapse:collapse;font-size:9pt;">
+      <tr style="background:#f0f0f0;">
+        <td colspan="3" style="border:1px solid #333;padding:5px 8px;font-weight:bold;text-align:center;">FIRMAS</td>
+      </tr>
+      ${rows}
+    </table>
+  </div>`;
+}
 
 // ==================== PWA / SERVICE WORKER ====================
 if ('serviceWorker' in navigator) {
