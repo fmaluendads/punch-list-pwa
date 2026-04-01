@@ -2561,9 +2561,12 @@ async function renderItemSelector() {
 let _todosSeleccionados = true;
 
 function toggleAllItems() {
-  const checkboxes = document.querySelectorAll('#itemSelectorList input[type="checkbox"]');
-  _todosSeleccionados = !_todosSeleccionados;
-  checkboxes.forEach(cb => { cb.checked = _todosSeleccionados; });
+  const checkboxes = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]'));
+  if (checkboxes.length === 0) return;
+  // Si TODOS están marcados → desmarcar. En cualquier otro caso → marcar todos.
+  const todosActivos = checkboxes.every(cb => cb.checked);
+  checkboxes.forEach(cb => { cb.checked = !todosActivos; });
+  _todosSeleccionados = !todosActivos;
 }
 
 // toggleItemCheck ya no se necesita — el <label> lo maneja nativamente
