@@ -2591,7 +2591,6 @@ async function generatePDF() {
 
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
     .map(cb => parseInt(cb.value));
-  if (selectedIds.length === 0) { showToast('Seleccione al menos un ítem', 'error'); return; }
 
   const allItems = await getItems();
   const items = allItems.filter(i => selectedIds.includes(i.id));
@@ -2813,7 +2812,6 @@ async function exportarWord() {
 
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
     .map(cb => parseInt(cb.value));
-  if (selectedIds.length === 0) { showToast('Seleccione al menos un ítem', 'error'); return; }
 
   const allItems = await getItems();
   const items = allItems.filter(i => selectedIds.includes(i.id));
