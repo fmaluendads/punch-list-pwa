@@ -127,6 +127,14 @@ body {
   border-radius: 3px;
   margin-left: 6px;
 }
+.form-group label .cam-badge {
+  background: #2563EB;
+  color: white;
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-left: 6px;
+}
 input, select, textarea {
   width: 100%;
   padding: 12px 14px;
@@ -1078,7 +1086,7 @@ textarea { resize: vertical; min-height: 80px; }
         <h3>🔧 Clasificación</h3>
         
         <div class="form-group">
-          <label>Disciplina <span class="required">*</span></label>
+          <label>Disciplina</label>
           <select id="disciplina" required>
             <option value="">Seleccionar disciplina</option>
             <option value="CIVIL">CIVIL</option>
@@ -1093,12 +1101,7 @@ textarea { resize: vertical; min-height: 80px; }
           </select>
         </div>
         
-        <div class="form-group">
-          <label>Actividad de Hallazgos <span class="required">*</span></label>
-          <select id="actividad" required disabled>
-            <option value="">Primero seleccione disciplina</option>
-          </select>
-        </div>
+
 
       </div>
       
@@ -1263,7 +1266,7 @@ textarea { resize: vertical; min-height: 80px; }
           <input type="date" id="cfg_fechaEmision">
         </div>
         <div class="form-group">
-          <label>Caminata</label>
+          <label>Caminata <span class="cam-badge">CAM</span></label>
           <select id="cfg_caminata" onchange="actualizarVisibilidadFirmantes()">
             <option value="CAMINATA 0">CAMINATA 0</option>
             <option value="CAMINATA DE RECEPCIÓN">CAMINATA DE RECEPCIÓN</option>
@@ -1280,11 +1283,11 @@ textarea { resize: vertical; min-height: 80px; }
       </div>
       <div class="config-body">
         <div class="form-group">
-          <label>Nombre Labor <span class="ic-badge">IC</span> <span class="required">*</span></label>
+          <label>Nombre Labor <span class="ic-badge">IC</span> <span class="cam-badge">CAM</span> <span class="required">*</span></label>
           <input type="text" id="cfg_nombreLabor" placeholder="Ej: Chimeneas Piloto CAP-PD-S04-10">
         </div>
         <div class="form-group">
-          <label>Plano Referencial <span class="ic-badge">IC</span> <span class="required">*</span></label>
+          <label>Plano Referencial <span class="ic-badge">IC</span> <span class="cam-badge">CAM</span> <span class="required">*</span></label>
           <input type="text" id="cfg_planoReferencial" placeholder="Ej: ND20S04-I2-220000-200MI-00023 REV.0">
         </div>
       </div>
@@ -1341,21 +1344,7 @@ textarea { resize: vertical; min-height: 80px; }
         </select>
       </div>
 
-      <div class="form-group">
-        <label>Disciplina <span class="ic-badge">IC</span> <span class="required">*</span></label>
-        <select id="ic_disciplina">
-          <option value="">Seleccionar disciplina</option>
-          <option value="CIVIL">CIVIL</option>
-          <option value="CAÑERIAS">CAÑERIAS</option>
-          <option value="ESTRUCTURA">ESTRUCTURA</option>
-          <option value="MECANICOS">MECANICOS</option>
-          <option value="MINERIA">MINERIA</option>
-          <option value="INSTRUMENTACION">INSTRUMENTACION</option>
-          <option value="OTRA">OTRA</option>
-          <option value="ELECTRICOS">ELECTRICOS</option>
-          <option value="TOPOGRAFIA">TOPOGRAFIA</option>
-        </select>
-      </div>
+
       
       <div class="form-group">
         <label>Objetivo de la Inspección</label>
@@ -1395,7 +1384,7 @@ textarea { resize: vertical; min-height: 80px; }
     <!-- Sección Firmantes — visible solo en Caminata Recepción/Entrega -->
     <div id="seccionFirmantes" style="display:none;">
       <div class="form-section">
-        <h3>✍️ Firmantes</h3>
+        <h3>✍️ Firmantes <span class="cam-badge">CAM</span></h3>
         <div id="listaFirmantes"></div>
         <button type="button" class="btn btn-secondary" onclick="agregarFirmante()"
           style="margin-top:8px;width:100%;" id="btnAgregarFirmante">
@@ -1806,21 +1795,7 @@ const disciplinaSelect = document.getElementById('disciplina');
 const actividadSelect = document.getElementById('actividad');
 const itemActividadSelect = document.getElementById('itemActividad');
 
-disciplinaSelect.addEventListener('change', () => {
-  const disc = disciplinaSelect.value;
-  actividadSelect.innerHTML = '<option value="">Seleccionar actividad</option>';
-  itemActividadSelect.innerHTML = '<option value="">Seleccionar clasificación</option>';
-  itemActividadSelect.disabled = true;
-  
-  if (disc && DATOS.hallazgos[disc]) {
-    actividadSelect.disabled = false;
-    Object.keys(DATOS.hallazgos[disc]).sort().forEach(act => {
-      actividadSelect.innerHTML += `<option value="${act}">${act}</option>`;
-    });
-  } else {
-    actividadSelect.disabled = true;
-  }
-});
+// Disciplina/actividad listeners removed — fields eliminated
 
 actividadSelect.addEventListener('change', () => {
   const disc = disciplinaSelect.value;
@@ -2341,7 +2316,7 @@ async function nuevaInspeccion() {
   await setConfig('nextItemNum', 1);
 
   // 3. Limpiar campos del tab Informe
-  const campos = ['ic_codigo','ic_nivel','ic_disciplina','ic_objetivo','ic_desarrollo','ic_observaciones'];
+  const campos = ['ic_codigo','ic_nivel','ic_objetivo','ic_desarrollo','ic_observaciones'];
   campos.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -2609,7 +2584,7 @@ async function generatePDF() {
   const codigo = document.getElementById('ic_codigo').value.trim();
   const nombreLabor = await getConfig('nombreLabor');
   const planoReferencial = await getConfig('planoReferencial');
-  const disciplinaIC = document.getElementById('ic_disciplina').value;
+  const disciplinaIC = '';
 
   const cumpleActive = document.getElementById('ic_toggleCumple').classList.contains('active');
   const noCumpleActive = document.getElementById('ic_toggleNoCumple').classList.contains('active');
@@ -2618,7 +2593,6 @@ async function generatePDF() {
   if (!codigo) { showToast('Ingrese el código del informe', 'error'); return; }
   if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
   if (!planoReferencial) { showToast('Configure Plano Referencial en Config', 'error'); return; }
-  if (!disciplinaIC) { showToast('Seleccione la Disciplina del informe', 'error'); return; }
   // resultadoIC validation deferred to after caminata detection
 
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
@@ -2833,14 +2807,13 @@ async function exportarWord() {
   const codigo = document.getElementById('ic_codigo').value.trim();
   const nombreLabor = await getConfig('nombreLabor');
   const planoReferencial = await getConfig('planoReferencial');
-  const disciplinaIC = document.getElementById('ic_disciplina').value;
+  const disciplinaIC = '';
   const cumpleActive = document.getElementById('ic_toggleCumple').classList.contains('active');
   const noCumpleActive = document.getElementById('ic_toggleNoCumple').classList.contains('active');
   const resultadoIC = cumpleActive ? 'cumple' : (noCumpleActive ? 'nocumple' : '');
 
   if (!codigo) { showToast('Ingrese el código del informe', 'error'); return; }
   if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
-  if (!disciplinaIC) { showToast('Seleccione la Disciplina del informe', 'error'); return; }
   // resultadoIC se valida después de conocer la caminata
 
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
