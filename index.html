@@ -1106,26 +1106,58 @@ textarea { resize: vertical; min-height: 80px; }
       </div>
       
       <div class="form-section">
-        <h3>📷 Foto (Opcional)</h3>
-        <div class="form-group">
-          <div class="photo-upload" id="photoUpload" onclick="mostrarMenuFoto()">
-            <div class="placeholder" id="photoPlaceholder">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-              <div>Toca para agregar foto</div>
+        <h3>📷 Fotos (Opcional — máx. 3)</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;" id="fotosContainer">
+          <!-- Slot 0 -->
+          <div class="foto-slot" id="fotoSlot0">
+            <div class="photo-upload" onclick="mostrarMenuFotoSlot(0)">
+              <div class="placeholder" id="fotoPlaceholder0">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:12px">Foto 1</div>
+              </div>
+              <img id="fotoPreview0" style="display:none;max-width:100%;max-height:160px;border-radius:4px;">
             </div>
-            <img id="photoPreview" style="display:none">
+            <div class="photo-actions" id="fotoActions0" style="display:none">
+              <button type="button" onclick="mostrarMenuFotoSlot(0)" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
+              <button type="button" onclick="removePhotoSlot(0)" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+            </div>
           </div>
-          <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoSelect(event)">
-          <input type="file" id="photoCameraInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelect(event)">
-          <div class="photo-actions" id="photoActions" style="display:none">
-            <button type="button" onclick="mostrarMenuFoto()" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
-            <button type="button" onclick="removePhoto()" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+          <!-- Slot 1 -->
+          <div class="foto-slot" id="fotoSlot1" style="display:none">
+            <div class="photo-upload" onclick="mostrarMenuFotoSlot(1)">
+              <div class="placeholder" id="fotoPlaceholder1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:12px">Foto 2</div>
+              </div>
+              <img id="fotoPreview1" style="display:none;max-width:100%;max-height:160px;border-radius:4px;">
+            </div>
+            <div class="photo-actions" id="fotoActions1" style="display:none">
+              <button type="button" onclick="mostrarMenuFotoSlot(1)" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
+              <button type="button" onclick="removePhotoSlot(1)" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+            </div>
+          </div>
+          <!-- Slot 2 -->
+          <div class="foto-slot" id="fotoSlot2" style="display:none">
+            <div class="photo-upload" onclick="mostrarMenuFotoSlot(2)">
+              <div class="placeholder" id="fotoPlaceholder2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:12px">Foto 3</div>
+              </div>
+              <img id="fotoPreview2" style="display:none;max-width:100%;max-height:160px;border-radius:4px;">
+            </div>
+            <div class="photo-actions" id="fotoActions2" style="display:none">
+              <button type="button" onclick="mostrarMenuFotoSlot(2)" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
+              <button type="button" onclick="removePhotoSlot(2)" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+            </div>
           </div>
         </div>
+        <!-- Inputs ocultos para cada slot -->
+        <input type="file" id="fotoInput0" accept="image/*" style="display:none" onchange="handleFotoSlot(event,0)">
+        <input type="file" id="fotoCamInput0" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,0)">
+        <input type="file" id="fotoInput1" accept="image/*" style="display:none" onchange="handleFotoSlot(event,1)">
+        <input type="file" id="fotoCamInput1" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,1)">
+        <input type="file" id="fotoInput2" accept="image/*" style="display:none" onchange="handleFotoSlot(event,2)">
+        <input type="file" id="fotoCamInput2" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,2)">
       </div>
       
       <button type="submit" class="btn btn-primary">💾 Guardar Ítem</button>
@@ -1269,7 +1301,7 @@ textarea { resize: vertical; min-height: 80px; }
         <div class="form-group">
           <label>Caminata <span class="cam-badge">CAM</span></label>
           <select id="cfg_caminata" onchange="actualizarVisibilidadFirmantes()">
-            <option value="CAMINATA 0">CAMINATA 0</option>
+            <option value="INSPECCIÓN">INSPECCIÓN</option>
             <option value="CAMINATA DE RECEPCIÓN">CAMINATA DE RECEPCIÓN</option>
             <option value="CAMINATA DE ENTREGA">CAMINATA DE ENTREGA</option>
           </select>
@@ -1324,10 +1356,7 @@ textarea { resize: vertical; min-height: 80px; }
     <div class="form-section">
       <h3>📄 Generar Informe — Inspecciones / Caminatas</h3>
       
-      <div class="form-group">
-        <label>Código del Informe <span class="required">*</span></label>
-        <input type="text" id="ic_codigo" placeholder="IC-GOMS-DCH">
-      </div>
+
       <div class="form-group">
         <label>Correlativo</label>
         <input type="text" id="ic_correlativo" placeholder="Ej: 001">
@@ -1362,13 +1391,26 @@ textarea { resize: vertical; min-height: 80px; }
         <textarea id="ic_observaciones" rows="3" placeholder="Observaciones adicionales..."></textarea>
       </div>
 
-      <!-- Resultado — solo Caminata 0 -->
+      <!-- Resultado + Firma — solo INSPECCIÓN -->
       <div id="seccionResultado">
         <div class="form-group">
           <label>Resultado Inspección <span class="required">*</span></label>
           <div class="toggle-group">
             <button type="button" class="toggle-option success" id="ic_toggleCumple" onclick="setResultadoICInforme('cumple')">✓ CUMPLE</button>
             <button type="button" class="toggle-option danger" id="ic_toggleNoCumple" onclick="setResultadoICInforme('nocumple')">✗ NO CUMPLE</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Firma Responsable <span class="ic-badge">IC</span></label>
+          <div class="firmante-card" style="background:var(--surface);padding:10px;">
+            <div id="ic_firma_nombre" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;"></div>
+            <div class="firma-canvas-wrap" id="ic-firma-wrap">
+              <canvas id="ic-firma-canvas" height="100"></canvas>
+              <div class="firma-canvas-hint" id="ic-firma-hint">Firme aquí con dedo o lápiz</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button type="button" onclick="limpiarFirmaIC()" style="flex:1;padding:7px;font-size:12px;border:none;border-radius:6px;cursor:pointer;background:var(--slate-lt);color:var(--text);font-family:inherit;">🗑️ Limpiar firma</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1546,8 +1588,11 @@ async function loadDatos() {
 };
 
 // ==================== VARIABLES GLOBALES ====================
-let currentPhoto = null;
+let currentPhoto = null;       // legacy compat
 let editCurrentPhoto = null;
+let _currentFotos = [null, null, null]; // slots 0,1,2
+let _currentFotoSlot = 0;
+let _icFirmaData = null; // firma responsable IC
 let _wbsActiveEmpresa = '';
 let _selectedWBSRecord = null;
 
@@ -1680,29 +1725,91 @@ function toggleConfig(header) {
 // ==================== PHOTO HANDLING ====================
 // ── MENÚ FOTO ────────────────────────────────────────────────────────────────
 let _fotoModoEdit = false;
+let _fotoModoSlot = -1; // -1=edit mode, 0-2=nuevo slot
 
-function mostrarMenuFoto() {
-  _fotoModoEdit = false;
+function mostrarMenuFotoSlot(slot) {
+  _fotoModoEdit = false; _fotoModoSlot = slot;
   document.getElementById('fotoMenuOverlay').classList.add('active');
 }
 function mostrarMenuFotoEdit() {
-  _fotoModoEdit = true;
+  _fotoModoEdit = true; _fotoModoSlot = -1;
   document.getElementById('fotoMenuOverlay').classList.add('active');
 }
+// legacy compat
+function mostrarMenuFoto() { mostrarMenuFotoSlot(0); }
 function cerrarMenuFoto() {
   document.getElementById('fotoMenuOverlay').classList.remove('active');
 }
 function abrirCamara() {
   cerrarMenuFoto();
-  const id = _fotoModoEdit ? 'editPhotoCameraInput' : 'photoCameraInput';
-  document.getElementById(id).value = '';
-  document.getElementById(id).click();
+  if (_fotoModoEdit) {
+    document.getElementById('editPhotoCameraInput').value = '';
+    document.getElementById('editPhotoCameraInput').click();
+  } else {
+    const id = 'fotoCamInput' + _fotoModoSlot;
+    document.getElementById(id).value = '';
+    document.getElementById(id).click();
+  }
 }
 function abrirGaleria() {
   cerrarMenuFoto();
-  const id = _fotoModoEdit ? 'editPhotoInput' : 'photoInput';
-  document.getElementById(id).value = '';
-  document.getElementById(id).click();
+  if (_fotoModoEdit) {
+    document.getElementById('editPhotoInput').value = '';
+    document.getElementById('editPhotoInput').click();
+  } else {
+    const id = 'fotoInput' + _fotoModoSlot;
+    document.getElementById(id).value = '';
+    document.getElementById(id).click();
+  }
+}
+
+async function handleFotoSlot(event, slot) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const compressed = await compressImage(file);
+  _currentFotos[slot] = compressed;
+  // Show preview
+  document.getElementById('fotoPreview' + slot).src = compressed;
+  document.getElementById('fotoPreview' + slot).style.display = 'block';
+  document.getElementById('fotoPlaceholder' + slot).style.display = 'none';
+  document.getElementById('fotoActions' + slot).style.display = 'flex';
+  // Show next slot if available
+  if (slot < 2) document.getElementById('fotoSlot' + (slot+1)).style.display = 'block';
+}
+
+function removePhotoSlot(slot) {
+  _currentFotos[slot] = null;
+  document.getElementById('fotoPreview' + slot).style.display = 'none';
+  document.getElementById('fotoPlaceholder' + slot).style.display = 'flex';
+  document.getElementById('fotoActions' + slot).style.display = 'none';
+  document.getElementById('fotoInput' + slot).value = '';
+  document.getElementById('fotoCamInput' + slot).value = '';
+  // Hide subsequent slots and clear them
+  for (let i = slot + 1; i <= 2; i++) {
+    _currentFotos[i] = null;
+    document.getElementById('fotoSlot' + i).style.display = 'none';
+    document.getElementById('fotoPreview' + i).style.display = 'none';
+    document.getElementById('fotoPlaceholder' + i).style.display = 'flex';
+    document.getElementById('fotoActions' + i).style.display = 'none';
+  }
+}
+
+// Reset foto slots after saving item
+function resetFotoSlots() {
+  _currentFotos = [null, null, null];
+  for (let i = 0; i <= 2; i++) {
+    const prev = document.getElementById('fotoPreview' + i);
+    const ph = document.getElementById('fotoPlaceholder' + i);
+    const act = document.getElementById('fotoActions' + i);
+    const inp = document.getElementById('fotoInput' + i);
+    const cam = document.getElementById('fotoCamInput' + i);
+    if (prev) prev.style.display = 'none';
+    if (ph) ph.style.display = 'flex';
+    if (act) act.style.display = 'none';
+    if (inp) inp.value = '';
+    if (cam) cam.value = '';
+    if (i > 0) { const sl = document.getElementById('fotoSlot' + i); if(sl) sl.style.display = 'none'; }
+  }
 }
 
 function compressImage(file, maxWidth = 800, quality = 0.7) {
@@ -1820,7 +1927,7 @@ document.getElementById('itemForm').addEventListener('submit', async (e) => {
     respConstruccion: await getConfig('respConstruccion') || '',
     ingSistema: await getConfig('ingSistema') || '',
     fechaEmision: await getConfig('fechaEmision') || '',
-    caminata: await getConfig('caminata') || 'CAMINATA 0'
+    caminata: await getConfig('caminata') || 'INSPECCIÓN'
   };
 
   // ⑤ Validación: avisar si WBS no está configurado
@@ -1840,7 +1947,8 @@ document.getElementById('itemForm').addEventListener('submit', async (e) => {
     disciplina: document.getElementById('disciplina').value,
     actividad: '',
     itemActividad: '',
-    foto: currentPhoto,
+    foto: _currentFotos[0],        // legacy compat col 1
+    fotos: _currentFotos.filter(Boolean), // array hasta 3
     config: config,
     createdAt: new Date().toISOString()
   };
@@ -1849,7 +1957,7 @@ document.getElementById('itemForm').addEventListener('submit', async (e) => {
   showToast('Ítem guardado correctamente');
   e.target.reset();
   charCount.textContent = '0';
-  removePhoto();
+  resetFotoSlots();
   // actividad/itemActividad removed
 });
 
@@ -1892,7 +2000,7 @@ async function renderItems() {
           <span class="item-priority">${item.prioridad}</span>
         </div>
       </div>
-      ${item.foto ? `<img src="${item.foto}" class="item-photo-preview" onclick="showFullscreenImage('${item.foto}')">` : ''}
+      ${(item.fotos && item.fotos.length ? item.fotos : (item.foto ? [item.foto] : [])).filter(Boolean).map(f => `<img src="${f}" class="item-photo-preview" onclick="showFullscreenImage('${f}')" style="max-width:32%;margin-right:4px;">`).join('')}
       <div class="item-desc">${item.descripcion}</div>
       <div class="item-meta">
         <span>📍 ${item.ubicacion}</span>
@@ -1956,6 +2064,20 @@ async function duplicarItem(id) {
   document.getElementById('fechaCompromiso').value = item.fechaCompromiso || '';
   document.getElementById('disciplina').value = item.disciplina || '';
   document.getElementById('charCount').textContent = (item.descripcion || '').length;
+
+  // Copiar fotos del ítem original
+  const fotosOrig = item.fotos && item.fotos.length ? item.fotos : (item.foto ? [item.foto] : []);
+  resetFotoSlots();
+  fotosOrig.slice(0, 3).forEach((f, i) => {
+    if (f) {
+      _currentFotos[i] = f;
+      document.getElementById('fotoPreview' + i).src = f;
+      document.getElementById('fotoPreview' + i).style.display = 'block';
+      document.getElementById('fotoPlaceholder' + i).style.display = 'none';
+      document.getElementById('fotoActions' + i).style.display = 'flex';
+      if (i > 0) document.getElementById('fotoSlot' + i).style.display = 'block';
+    }
+  });
 
   // Cambiar al tab Nuevo
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -2139,7 +2261,7 @@ async function loadConfig() {
   document.getElementById('cfg_respConstruccion').value = await getConfig('respConstruccion') || '';
   document.getElementById('cfg_ingSistema').value = await getConfig('ingSistema') || '';
   document.getElementById('cfg_fechaEmision').value = await getConfig('fechaEmision') || '';
-  document.getElementById('cfg_caminata').value = await getConfig('caminata') || 'CAMINATA 0';
+  document.getElementById('cfg_caminata').value = await getConfig('caminata') || 'INSPECCIÓN';
   
   // Campos IC
   document.getElementById('cfg_nombreLabor').value = await getConfig('nombreLabor') || '';
@@ -2218,6 +2340,41 @@ async function removeEspecialistaUI(nombre) {
   showToast('Especialista eliminado');
 }
 
+// ── FIRMA RESPONSABLE IC ──────────────────────────────────────
+function initFirmaIC() {
+  const canvas = document.getElementById('ic-firma-canvas');
+  if (!canvas) return;
+  // Precarga nombre del responsable
+  getConfig('originadoPor').then(nombre => {
+    const el = document.getElementById('ic_firma_nombre');
+    if (el) el.textContent = nombre || 'Responsable de Inspección';
+  });
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width || canvas.offsetWidth || 300;
+  canvas.height = 100;
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  let drawing = false, lastX = 0, lastY = 0;
+  const getPos = (e) => {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left)*(canvas.width/r.width), y: (src.clientY - r.top)*(canvas.height/r.height) };
+  };
+  const start = (e) => { e.preventDefault(); drawing = true; const p = getPos(e); lastX=p.x; lastY=p.y; document.getElementById('ic-firma-hint').style.display='none'; };
+  const draw = (e) => { if (!drawing) return; e.preventDefault(); const p=getPos(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; };
+  const stop = () => { if (!drawing) return; drawing=false; _icFirmaData = canvas.toDataURL('image/png'); };
+  canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
+  canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', draw, {passive:false}); canvas.addEventListener('touchend', stop, {passive:false});
+}
+
+function limpiarFirmaIC() {
+  const canvas = document.getElementById('ic-firma-canvas');
+  if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  _icFirmaData = null;
+  const hint = document.getElementById('ic-firma-hint');
+  if (hint) hint.style.display = 'flex';
+}
+
 function setResultadoICInforme(valor) {
   document.getElementById('ic_toggleCumple').classList.remove('active');
   document.getElementById('ic_toggleNoCumple').classList.remove('active');
@@ -2266,7 +2423,7 @@ async function nuevaInspeccion() {
   await setConfig('nextItemNum', 1);
 
   // 3. Limpiar campos del tab Informe
-  const campos = ['ic_codigo','ic_nivel','ic_objetivo','ic_desarrollo','ic_observaciones'];
+  const campos = ['ic_nivel','ic_objetivo','ic_desarrollo','ic_observaciones'];
   campos.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -2530,7 +2687,9 @@ function toggleItemCheck(div) {
 }
 
 async function generatePDF() {
-  const codigo = document.getElementById('ic_codigo').value.trim();
+  // Código automático según tipo de caminata
+  const _tipoCam = await getConfig('caminata') || 'INSPECCIÓN';
+  const codigo = _tipoCam === 'INSPECCIÓN' ? 'IC-GOMS-DCH' : 'CAMINATA';
   const nombreLabor = await getConfig('nombreLabor');
   const planoReferencial = await getConfig('planoReferencial');
   const disciplinaIC = '';
@@ -2539,7 +2698,6 @@ async function generatePDF() {
   const noCumpleActive = document.getElementById('ic_toggleNoCumple').classList.contains('active');
   const resultadoIC = cumpleActive ? 'cumple' : (noCumpleActive ? 'nocumple' : '');
 
-  if (!codigo) { showToast('Ingrese el código del informe', 'error'); return; }
   if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
   if (!planoReferencial) { showToast('Configure Plano Referencial en Config', 'error'); return; }
   // resultadoIC validation deferred to after caminata detection
@@ -2575,8 +2733,8 @@ async function generatePDF() {
   const contratoDisplay = contrato.split('/').pop() || contrato;
 
   // Determinar tipo de documento por caminata
-  const caminataConfig = cfg.caminata || await getConfig('caminata') || 'CAMINATA 0';
-  const esCaminata0 = caminataConfig === 'CAMINATA 0';
+  const caminataConfig = cfg.caminata || await getConfig('caminata') || 'INSPECCIÓN';
+  const esCaminata0 = caminataConfig === 'INSPECCIÓN';
   const tituloPDF = esCaminata0 ? 'INSPECCIÓN DE CALIDAD' : caminataConfig.toUpperCase();
 
   // Validar resultado solo en Caminata 0
@@ -2584,30 +2742,37 @@ async function generatePDF() {
 
   // Bloque firma IC (caminata 0) vs firmantes (caminata recepción/entrega)
   const firmaICHTML = esCaminata0
-    ? `<td style="border:1px solid #333;padding:5px 8px;min-height:36px;"><b>FIRMA:</b><div style="min-height:28px;"></div></td>`
+    ? `<td style="border:1px solid #333;padding:4px 8px;text-align:center;vertical-align:middle;">${_icFirmaData ? `<img src="${_icFirmaData}" style="max-width:130px;max-height:45px;object-fit:contain;">` : '<b>FIRMA:</b><div style="min-height:30px;"></div>'}</td>`
     : `<td style="border:1px solid #333;padding:5px 8px;"></td>`;
 
+
   const firmasBloque = esCaminata0 ? '' : getFirmasHTML();
-  const itemsConFoto = items.filter(i => i.foto);
-  const fotosHTML = itemsConFoto.length > 0 ? `
-  <div style="page-break-before:auto;">
+  // _icFirmaData ya es variable global
+  // Fotos correlacionadas con número de ítem (hasta 3 por ítem)
+  const fotosCeldas = [];
+  items.forEach(it => {
+    const num = it.numero || it.id;
+    const fotosArr = (it.fotos && it.fotos.length) ? it.fotos : (it.foto ? [it.foto] : []);
+    fotosArr.filter(Boolean).forEach(fotoSrc => {
+      fotosCeldas.push({ src: fotoSrc, num, ubicacion: it.ubicacion, desc: it.descripcion });
+    });
+  });
+  const fotosHTML = fotosCeldas.length > 0 ? `
+  <div style="margin-top:12px;">
     <table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
-      <tr>
-        <td style="border:1px solid #333;padding:4px 8px;font-weight:bold;font-size:9pt;text-align:center;background:#f0f0f0;" colspan="2">REGISTRO FOTOGRÁFICO</td>
-      </tr>
+      <tr><td style="border:1px solid #333;padding:4px 8px;font-weight:bold;font-size:9pt;text-align:center;background:#f0f0f0;" colspan="2">REGISTRO FOTOGRÁFICO</td></tr>
     </table>
     <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-      ${itemsConFoto.map((it, idx) => `
-        <div style="width:46%;text-align:center;position:relative;">
-          <div style="display:inline-block;background:#f5a623;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;font-weight:bold;font-size:10pt;text-align:center;margin-bottom:4px;">${idx + 1}</div>
-          <img src="${it.foto}" style="width:100%;max-height:180px;object-fit:cover;border:1px solid #ccc;display:block;">
+      ${fotosCeldas.map(f => `
+        <div style="width:46%;text-align:center;">
+          <div style="display:inline-block;background:#f5a623;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;font-weight:bold;font-size:10pt;text-align:center;margin-bottom:4px;">#${f.num}</div>
+          <img src="${f.src}" style="width:100%;max-height:180px;object-fit:cover;border:1px solid #ccc;display:block;">
+          <div style="font-size:8pt;margin-top:3px;color:#555;">${f.ubicacion}</div>
         </div>
       `).join('')}
     </div>
-    <div style="font-size:8pt;margin-top:8px;text-align:left;">
-      ${itemsConFoto.map((it, idx) => `<b>Imagen ${idx + 1}</b>, ${it.ubicacion} — ${it.descripcion.substring(0, 80)}`).join('. ')}
-    </div>
   </div>` : '';
+
 
   // Tabla de punch
   const tablaRows = items.map((it, idx) => {
@@ -2752,7 +2917,9 @@ ${firmasBloque}
 // ==================== EXPORTAR WORD ====================
 // Paso 1: recolectar todos los datos async ANTES de generar el documento
 async function exportarWord() {
-  const codigo = document.getElementById('ic_codigo').value.trim();
+  // Código automático según tipo
+  const _tipoCamW = await getConfig('caminata') || 'INSPECCIÓN';
+  const codigo = _tipoCamW === 'INSPECCIÓN' ? 'IC-GOMS-DCH' : 'CAMINATA';
   const nombreLabor = await getConfig('nombreLabor');
   const planoReferencial = await getConfig('planoReferencial');
   const disciplinaIC = '';
@@ -2760,7 +2927,6 @@ async function exportarWord() {
   const noCumpleActive = document.getElementById('ic_toggleNoCumple').classList.contains('active');
   const resultadoIC = cumpleActive ? 'cumple' : (noCumpleActive ? 'nocumple' : '');
 
-  if (!codigo) { showToast('Ingrese el código del informe', 'error'); return; }
   if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
   // resultadoIC se valida después de conocer la caminata
 
@@ -2783,8 +2949,8 @@ async function exportarWord() {
   const subsistema   = cfg.subsistema || '';
   const originadoPor = cfg.originadoPor || '';
   const contrato     = cfg.contrato ? (cfg.contrato.split('/').pop() || cfg.contrato) : '';
-  const caminataWord = cfg.caminata || await getConfig('caminata') || 'CAMINATA 0';
-  const esCaminata0W = caminataWord === 'CAMINATA 0';
+  const caminataWord = cfg.caminata || await getConfig('caminata') || 'INSPECCIÓN';
+  const esCaminata0W = caminataWord === 'INSPECCIÓN';
   if (esCaminata0W && !resultadoIC) { showToast('Seleccione el Resultado (Cumple/No Cumple)', 'error'); return; }
   const tituloWord   = esCaminata0W ? 'INSPECCIÓN DE CALIDAD' : caminataWord.toUpperCase();
   const firmasWord   = esCaminata0W ? [] : _firmantes.filter(f => f.nombre || f.data);
@@ -2812,14 +2978,20 @@ function _descargarWord(d) {
     '</tr>'
   ).join('');
 
-  const itemsConFoto = d.items.filter(i => i.foto);
-  const fotosHTML = itemsConFoto.length > 0
+  // Fotos correlacionadas con ítem en Word
+  const fotosCeldasW = [];
+  d.items.forEach(it => {
+    const num = it.numero || it.id;
+    const fotosArr = (it.fotos && it.fotos.length) ? it.fotos : (it.foto ? [it.foto] : []);
+    fotosArr.filter(Boolean).forEach(src => fotosCeldasW.push({ src, num, ubicacion: it.ubicacion }));
+  });
+  const fotosHTML = fotosCeldasW.length > 0
     ? '<p style="font-weight:bold;margin:10px 0 4px;">REGISTRO FOTOGRÁFICO</p>' +
-      itemsConFoto.map((it, idx) =>
+      fotosCeldasW.map(f =>
         '<div style="display:inline-block;width:45%;margin:4px;vertical-align:top;text-align:center;">' +
-        '<b>' + (idx + 1) + '.</b><br>' +
-        '<img src="' + it.foto + '" style="max-width:100%;max-height:180px;border:1px solid #ccc;"><br>' +
-        '<small>' + (it.ubicacion || '') + '</small>' +
+        '<b>#' + f.num + '</b><br>' +
+        '<img src="' + f.src + '" style="max-width:100%;max-height:180px;border:1px solid #ccc;"><br>' +
+        '<small>' + (f.ubicacion || '') + '</small>' +
         '</div>'
       ).join('')
     : '';
@@ -2948,11 +3120,14 @@ let _firmantes = []; // [{nombre, canvas}]
 
 function actualizarVisibilidadFirmantes() {
   const caminata = document.getElementById('cfg_caminata')?.value || '';
-  const esCaminata0 = caminata === 'CAMINATA 0' || caminata === '';
+  const esCaminata0 = caminata === 'INSPECCIÓN' || caminata === '';
   const secFirmantes = document.getElementById('seccionFirmantes');
   const secResultado = document.getElementById('seccionResultado');
   if (secFirmantes) secFirmantes.style.display = esCaminata0 ? 'none' : 'block';
-  if (secResultado) secResultado.style.display  = esCaminata0 ? 'block' : 'none';
+  if (secResultado) {
+    secResultado.style.display = esCaminata0 ? 'block' : 'none';
+    if (esCaminata0) setTimeout(initFirmaIC, 100);
+  }
 }
 
 function agregarFirmante() {
