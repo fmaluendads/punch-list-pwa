@@ -1538,6 +1538,8 @@ async function loadDatos() {
 // ==================== VARIABLES GLOBALES ====================
 let currentPhoto = null;
 let editCurrentPhoto = null;
+let _wbsActiveEmpresa = '';
+let _selectedWBSRecord = null;
 
 // ==================== INDEXEDDB ====================
 const DB_NAME = 'PunchListDB';
@@ -1785,13 +1787,6 @@ document.querySelectorAll('.tab').forEach(tab => {
 
 // ==================== DESPLEGABLES DEPENDIENTES ====================
 const disciplinaSelect = document.getElementById('disciplina');
-
-
-
-} else {
-    itemActividadSelect.disabled = true;
-  }
-});
 
 // ==================== FORMULARIO NUEVO ITEM ====================
 const descripcionInput = document.getElementById('descripcion');
@@ -2329,8 +2324,7 @@ async function updateWBSContextBanner() {
 }
 
 // ==================== WBS SEARCH ====================
-let _wbsActiveEmpresa = '';
-let _selectedWBSRecord = null;
+
 
 function onEmpresaWbsChange() {
   const empresa = document.getElementById('cfg_empresaWbs').value;
