@@ -1,4 +1,4 @@
-const CACHE_NAME = 'punch-list-v17';
+const CACHE_NAME = 'punch-list-v18';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -9,20 +9,19 @@ const URLS_TO_CACHE = [
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(URLS_TO_CACHE))
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      )
-    ).then(() => self.clients.claim())
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
   );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
