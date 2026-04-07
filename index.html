@@ -2717,23 +2717,21 @@ async function generatePDF() {
     'Las observaciones encontradas deben ser subsanadas progresivamente durante los avances correspondientes, procurando una utilización eficiente de los recursos disponibles.';
 
   const cfg = items[0]?.config || {};
-  const fechaEmision = cfg.fechaEmision || new Date().toISOString().split('T')[0];
-  const subsistema = cfg.subsistema || '';
-  const originadoPor = cfg.originadoPor || '';
-  const pkReferencia = cfg.nombreLabor || nombreLabor;
+  const fechaEmision = cfg.fechaEmision || await getConfig('fechaEmision') || new Date().toISOString().split('T')[0];
+  const subsistema   = cfg.subsistema   || await getConfig('subsistema')   || '';
+  const originadoPor = cfg.originadoPor || await getConfig('originadoPor') || '';
+  const pkReferencia = cfg.nombreLabor  || nombreLabor;
 
-  let empresa = '', contrato = '';
-  if (cfg.empresa) {
-    empresa = cfg.empresa; contrato = cfg.contrato || '';
-  } else if (cfg.empresaContrato) {
+  let empresa = cfg.empresa || await getConfig('empresa') || '';
+  let contrato = cfg.contrato || await getConfig('contrato') || '';
+  if (!empresa && cfg.empresaContrato) {
     const ec = DATOS.empresasContratos.find(e => `${e.empresa} - ${e.contrato}` === cfg.empresaContrato);
     if (ec) { empresa = ec.empresa; contrato = ec.contrato; }
   }
-  // Extraer solo el número de contrato (sin empresa)
   const contratoDisplay = contrato.split('/').pop() || contrato;
 
-  // Determinar tipo de documento por caminata
-  const caminataConfig = cfg.caminata || await getConfig('caminata') || 'INSPECCIÓN';
+  // Leer caminata siempre desde DOM (evita valores viejos en IndexedDB)
+  const caminataConfig = document.getElementById('cfg_caminata')?.value || await getConfig('caminata') || 'INSPECCIÓN';
   const esCaminata0 = caminataConfig === 'INSPECCIÓN';
   const tituloPDF = esCaminata0 ? 'INSPECCIÓN DE CALIDAD' : caminataConfig.toUpperCase();
 
@@ -2782,8 +2780,6 @@ async function generatePDF() {
       <td>${it.ubicacion}</td>
       <td>${it.descripcion}</td>
       <td style="text-align:center;">${it.fechaCompromiso}</td>
-      <td>${it.actividad || ''}</td>
-      <td>${it.itemActividad || ''}</td>
     </tr>`;
   }).join('');
 
@@ -2791,12 +2787,10 @@ async function generatePDF() {
   <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:8pt;">
     <thead>
       <tr style="background:#f0f0f0;font-weight:bold;text-align:center;">
-        <td style="border:1px solid #333;padding:4px;width:5%;">ID</td>
-        <td style="border:1px solid #333;padding:4px;width:14%;">UBICACIÓN</td>
-        <td style="border:1px solid #333;padding:4px;width:28%;">DESCRIPCIÓN</td>
-        <td style="border:1px solid #333;padding:4px;width:12%;">FECHA COMPR. CIERRE</td>
-        <td style="border:1px solid #333;padding:4px;width:20%;">ACTIVIDAD DE HALLAZGOS</td>
-        <td style="border:1px solid #333;padding:4px;width:21%;">CLASIF. DE DESVIACIÓN</td>
+        <td style="border:1px solid #333;padding:4px;width:6%;">ID</td>
+        <td style="border:1px solid #333;padding:4px;width:22%;">UBICACIÓN</td>
+        <td style="border:1px solid #333;padding:4px;width:50%;">DESCRIPCIÓN</td>
+        <td style="border:1px solid #333;padding:4px;width:22%;">FECHA COMPR. CIERRE</td>
       </tr>
     </thead>
     <tbody>
@@ -2872,6 +2866,7 @@ td { vertical-align: middle; }
   <div class="section-content">${desarrollo}</div>
 </div>
 
+${esCaminata0 ? `
 <div class="section">
   <div class="section-title">4. RESULTADO.</div>
   <table style="width:60%;border-collapse:collapse;margin:6px 0;font-size:10pt;">
@@ -2884,7 +2879,7 @@ td { vertical-align: middle; }
       <td style="border:1px solid #333;width:28px;height:28px;text-align:center;font-weight:bold;">${resultadoIC === 'nocumple' ? 'X' : ''}</td>
     </tr>
   </table>
-</div>
+</div>` : ''}
 
 <div class="section">
   <div class="section-title">5. OBSERVACIONES</div>
@@ -2973,8 +2968,6 @@ function _descargarWord(d) {
     '<td style="border:1px solid #333;padding:4px;">' + (it.ubicacion || '') + '</td>' +
     '<td style="border:1px solid #333;padding:4px;">' + (it.descripcion || '') + '</td>' +
     '<td style="border:1px solid #333;padding:4px;text-align:center;">' + (it.fechaCompromiso || '') + '</td>' +
-    '<td style="border:1px solid #333;padding:4px;">' + (it.actividad || '') + '</td>' +
-    '<td style="border:1px solid #333;padding:4px;">' + (it.itemActividad || '') + '</td>' +
     '</tr>'
   ).join('');
 
@@ -3053,12 +3046,10 @@ function _descargarWord(d) {
     '<p style="font-weight:bold;margin:10px 0 4px;">TABLA DE HALLAZGOS</p>' +
     '<table>' +
     '<tr style="background:#f0f0f0;font-weight:bold;text-align:center;">' +
-    '<td style="border:1px solid #333;width:5%;">ID</td>' +
-    '<td style="border:1px solid #333;width:14%;">UBICACIÓN</td>' +
-    '<td style="border:1px solid #333;width:28%;">DESCRIPCIÓN</td>' +
-    '<td style="border:1px solid #333;width:12%;">FECHA COMPR. CIERRE</td>' +
-    '<td style="border:1px solid #333;width:20%;">ACTIVIDAD DE HALLAZGOS</td>' +
-    '<td style="border:1px solid #333;width:21%;">CLASIF. DE DESVIACIÓN</td>' +
+    '<td style="border:1px solid #333;width:6%;">ID</td>' +
+    '<td style="border:1px solid #333;width:22%;">UBICACIÓN</td>' +
+    '<td style="border:1px solid #333;width:50%;">DESCRIPCIÓN</td>' +
+    '<td style="border:1px solid #333;width:22%;">FECHA COMPR. CIERRE</td>' +
     '</tr>' +
     punchRows +
     '</table>' +
