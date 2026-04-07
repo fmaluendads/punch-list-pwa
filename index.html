@@ -1181,6 +1181,11 @@ textarea { resize: vertical; min-height: 80px; }
           <label>Empresa Contratista <span class="required">*</span></label>
           <select id="cfg_empresaWbs" onchange="onEmpresaWbsChange()">
             <option value="">Seleccionar empresa</option>
+            <option value="GARDILCIC">GARDILCIC</option>
+            <option value="GEOVITA">GEOVITA</option>
+            <option value="MASTER DRILLING - BESALCO">MASTER DRILLING - BESALCO</option>
+            <option value="SIGDO KOPPERS S.A">SIGDO KOPPERS S.A</option>
+            <option value="ZUBLIN">ZUBLIN</option>
           </select>
         </div>
         <div class="form-group">
@@ -1528,10 +1533,15 @@ let DATOS = {
 
 async function loadDatos() {
   try {
-    const r = await fetch('./data.json');
-    if (r.ok) DATOS = await r.json();
+    const r = await fetch('./data.json?v=' + Date.now());
+    if (r.ok) {
+      DATOS = await r.json();
+      console.log('data.json cargado OK — WBS:', DATOS.wbsData?.length || 0, 'registros');
+    } else {
+      console.warn('data.json HTTP error:', r.status);
+    }
   } catch(e) {
-    console.warn('data.json no disponible, usando cache offline:', e);
+    console.warn('data.json fetch error:', e.message);
   }
 };
 
@@ -2112,13 +2122,15 @@ async function loadConfig() {
   const savedEmpresa = await getConfig('empresa') || '';
   const savedSubsistemaId = await getConfig('subsistema') || '';
   
-  // Poblar empresas desde data.json dinámicamente
+  // Actualizar empresas desde data.json si cargó correctamente
   const selEmp = document.getElementById('cfg_empresaWbs');
-  const empresasWbs = [...new Set(DATOS.wbsData.map(r => r.empresa))].sort();
-  selEmp.innerHTML = '<option value="">Seleccionar empresa</option>';
-  empresasWbs.forEach(e => {
-    selEmp.innerHTML += `<option value="${e}">${e}</option>`;
-  });
+  if (DATOS.wbsData && DATOS.wbsData.length > 0) {
+    const empresasWbs = [...new Set(DATOS.wbsData.map(r => r.empresa))].sort();
+    selEmp.innerHTML = '<option value="">Seleccionar empresa</option>';
+    empresasWbs.forEach(e => {
+      selEmp.innerHTML += `<option value="${e}">${e}</option>`;
+    });
+  }
   selEmp.value = savedEmpresa;
   
   if (savedSubsistemaId) {
