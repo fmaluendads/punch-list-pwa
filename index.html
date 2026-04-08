@@ -2122,14 +2122,7 @@ async function editItem(id) {
   
 
   
-  // Cargar clasificaciones
-  const editItemActividadSelect = document.getElementById('edit_itemActividad');
-  editItemActividadSelect.innerHTML = '';
-  if (DATOS.hallazgos[item.disciplina] && DATOS.hallazgos[item.disciplina][item.actividad]) {
-    DATOS.hallazgos[item.disciplina][item.actividad].sort().forEach(clasif => {
-      editItemActividadSelect.innerHTML += `<option value="${clasif}" ${clasif === item.itemActividad ? 'selected' : ''}>${clasif}</option>`;
-    });
-  }
+  // actividad/clasificación eliminados
   
   // Cargar foto
   editCurrentPhoto = item.foto || null;
@@ -2162,9 +2155,13 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
   item.prioridad = document.getElementById('edit_prioridad').value;
   item.fechaCompromiso = document.getElementById('edit_fechaCompromiso').value;
   item.disciplina = document.getElementById('edit_disciplina').value;
-  item.actividad = document.getElementById('edit_actividad').value;
-  item.itemActividad = document.getElementById('edit_itemActividad').value;
+  item.actividad = item.actividad || '';
+  item.itemActividad = item.itemActividad || '';
   item.foto = editCurrentPhoto;
+  // Preserve existing fotos array; foto is legacy compat
+  if (editCurrentPhoto && (!item.fotos || !item.fotos.length)) {
+    item.fotos = [editCurrentPhoto];
+  }
   
   await updateItem(item);
   closeEditModal();
@@ -2843,8 +2840,15 @@ async function generatePDF() {
   const observaciones = document.getElementById('ic_observaciones').value ||
     'Las observaciones encontradas deben ser subsanadas progresivamente durante los avances correspondientes, procurando una utilización eficiente de los recursos disponibles.';
 
+  // Formatear fecha YYYY-MM-DD → DD-MM-YYYY
+  const formatDate = d => {
+    if (!d) return '';
+    const p = d.split('-');
+    return p.length === 3 ? p[2]+'-'+p[1]+'-'+p[0] : d;
+  };
+
   const cfg = items[0]?.config || {};
-  const fechaEmision = cfg.fechaEmision || await getConfig('fechaEmision') || new Date().toISOString().split('T')[0];
+  const fechaEmision = formatDate(cfg.fechaEmision || await getConfig('fechaEmision') || new Date().toISOString().split('T')[0]);
   const subsistema   = cfg.subsistema   || await getConfig('subsistema')   || '';
   const originadoPor = cfg.originadoPor || await getConfig('originadoPor') || '';
   const pkReferencia = cfg.nombreLabor  || nombreLabor;
@@ -2962,7 +2966,7 @@ async function generatePDF() {
   const htmlContent = esCaminata0
     ? buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
         planoReferencial, nivel, nombreLabor, originadoPor, firmaICHTML,
-        objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO)
+        objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO, subsistema)
     : buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
         wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
         originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO);
