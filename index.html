@@ -2719,38 +2719,55 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO) {
   const logoSrc = LOGO || '';
   const rowspan = correlativo ? 4 : 3;
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<style>@page{size:A4;margin:12mm 15mm;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:10pt;color:#333;}table{border-collapse:collapse;}td{vertical-align:middle;}.section{margin-bottom:8px;}.section-title{font-weight:bold;font-size:10pt;margin-bottom:3px;}.section-content{font-size:9pt;line-height:1.5;white-space:pre-wrap;}.footer{margin-top:12px;font-size:8pt;text-align:center;border-top:1px solid #ccc;padding-top:4px;}</style>
-</head><body>
-<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
-  <tr>
-    <td style="border:1px solid #333;width:100px;text-align:center;vertical-align:middle;padding:6px;" rowspan="\${rowspan}"><img src="\${logoSrc}" style="width:90px;height:auto;object-fit:contain;"></td>
-    <td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;vertical-align:middle;" rowspan="\${rowspan}">INSPECCIÓN DE CALIDAD</td>
-    <td style="border:1px solid #333;padding:4px 8px;font-size:9pt;width:160px;"><b>Código:</b> \${codigo}</td>
-  </tr>
-  \${correlativo ? `<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Correlativo:</b> \${correlativo}</td></tr>` : ''}
-  <tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Rev.</b> 1</td></tr>
-  <tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Pág:</b> 1 de 1</td></tr>
-</table>
-<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:9pt;">
-  <tr><td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>CONTRATO:</b> \${contratoDisplay}</td><td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>FECHA:</b> \${fechaEmision}</td></tr>
-  <tr><td style="border:1px solid #333;padding:5px 8px;"><b>N° SUBSISTEMA:</b></td><td style="border:1px solid #333;padding:5px 8px;"><b>PLANO:</b> \${planoReferencial}</td></tr>
-  <tr><td style="border:1px solid #333;padding:5px 8px;"><b>NIVEL:</b> \${nivel ? 'NIVEL '+nivel : ''}</td><td style="border:1px solid #333;padding:5px 8px;"><b>LABOR:</b> \${nombreLabor}</td></tr>
-  <tr><td style="border:1px solid #333;padding:5px 8px;"><b>RESPONSABLE INSPECCIÓN:</b> \${originadoPor}</td>\${firmaICHTML}</tr>
-</table>
-<div class="section"><div class="section-title">1. OBJETIVO:</div><div class="section-content">\${objetivo}</div></div>
-<div class="section"><div class="section-title">2. REFERENCIAS:</div><div class="section-content">\${planoReferencial}</div></div>
-<div class="section"><div class="section-title">3. DESARROLLO:</div><div class="section-content">\${desarrollo}</div></div>
-<div class="section"><div class="section-title">4. RESULTADO.</div>
-  <table style="width:60%;border-collapse:collapse;margin:6px 0;font-size:10pt;">
-    <tr><td style="padding:6px 12px;font-weight:bold;">CUMPLE con los estándares del Proyecto</td><td style="border:1px solid #333;width:28px;height:28px;text-align:center;font-weight:bold;">\${resultadoIC==='cumple'?'X':''}</td></tr>
-    <tr><td style="padding:6px 12px;font-weight:bold;">NO CUMPLE con los estándares del Proyecto</td><td style="border:1px solid #333;width:28px;height:28px;text-align:center;font-weight:bold;">\${resultadoIC==='nocumple'?'X':''}</td></tr>
-  </table>
-</div>
-<div class="section"><div class="section-title">5. OBSERVACIONES</div><div class="section-content">\${observaciones}</div></div>
-\${fotosHTML}\${tablaHTML}\${firmasBloque}
-<div class="footer">\${codigo} (\${nombreLabor}) Página 1 de 1</div>
-</body></html>`;
+  const correlativoRow = correlativo
+    ? '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Correlativo:</b> ' + correlativo + '</td></tr>'
+    : '';
+  const firmaCell = firmaICHTML || '<td style="border:1px solid #333;padding:5px 8px;"></td>';
+  const resultadoHTML = resultadoIC
+    ? '<div class="section"><div class="section-title">4. RESULTADO.</div>' +
+      '<table style="width:60%;border-collapse:collapse;margin:6px 0;font-size:10pt;">' +
+      '<tr><td style="padding:6px 12px;font-weight:bold;">CUMPLE con los estándares del Proyecto</td>' +
+      '<td style="border:1px solid #333;width:28px;height:28px;text-align:center;font-weight:bold;">' + (resultadoIC === 'cumple' ? 'X' : '') + '</td></tr>' +
+      '<tr><td style="padding:6px 12px;font-weight:bold;">NO CUMPLE con los estándares del Proyecto</td>' +
+      '<td style="border:1px solid #333;width:28px;height:28px;text-align:center;font-weight:bold;">' + (resultadoIC === 'nocumple' ? 'X' : '') + '</td></tr>' +
+      '</table></div>'
+    : '';
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<style>@page{size:A4;margin:12mm 15mm;}*{box-sizing:border-box;margin:0;padding:0;}' +
+    'body{font-family:Arial,sans-serif;font-size:10pt;color:#333;}' +
+    'table{border-collapse:collapse;}td{vertical-align:middle;}' +
+    '.section{margin-bottom:8px;}.section-title{font-weight:bold;font-size:10pt;margin-bottom:3px;}' +
+    '.section-content{font-size:9pt;line-height:1.5;white-space:pre-wrap;}' +
+    '.footer{margin-top:12px;font-size:8pt;text-align:center;border-top:1px solid #ccc;padding-top:4px;}' +
+    '</style></head><body>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">' +
+    '<tr>' +
+    '<td style="border:1px solid #333;width:100px;text-align:center;vertical-align:middle;padding:6px;" rowspan="' + rowspan + '">' +
+    '<img src="' + logoSrc + '" style="width:90px;height:auto;object-fit:contain;"></td>' +
+    '<td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;vertical-align:middle;" rowspan="' + rowspan + '">INSPECCI\u00d3N DE CALIDAD</td>' +
+    '<td style="border:1px solid #333;padding:4px 8px;font-size:9pt;width:160px;"><b>C\u00f3digo:</b> ' + codigo + '</td>' +
+    '</tr>' + correlativoRow +
+    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Rev.</b> 1</td></tr>' +
+    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>P\u00e1g:</b> 1 de 1</td></tr>' +
+    '</table>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:9pt;">' +
+    '<tr><td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>CONTRATO:</b> ' + contratoDisplay + '</td>' +
+    '<td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>FECHA:</b> ' + fechaEmision + '</td></tr>' +
+    '<tr><td style="border:1px solid #333;padding:5px 8px;"><b>N\u00b0 SUBSISTEMA:</b></td>' +
+    '<td style="border:1px solid #333;padding:5px 8px;"><b>PLANO:</b> ' + planoReferencial + '</td></tr>' +
+    '<tr><td style="border:1px solid #333;padding:5px 8px;"><b>NIVEL:</b> ' + (nivel ? 'NIVEL ' + nivel : '') + '</td>' +
+    '<td style="border:1px solid #333;padding:5px 8px;"><b>LABOR:</b> ' + nombreLabor + '</td></tr>' +
+    '<tr><td style="border:1px solid #333;padding:5px 8px;"><b>RESPONSABLE INSPECCI\u00d3N:</b> ' + originadoPor + '</td>' + firmaCell + '</tr>' +
+    '</table>' +
+    '<div class="section"><div class="section-title">1. OBJETIVO:</div><div class="section-content">' + objetivo + '</div></div>' +
+    '<div class="section"><div class="section-title">2. REFERENCIAS:</div><div class="section-content">' + planoReferencial + '</div></div>' +
+    '<div class="section"><div class="section-title">3. DESARROLLO:</div><div class="section-content">' + desarrollo + '</div></div>' +
+    resultadoHTML +
+    '<div class="section"><div class="section-title">5. OBSERVACIONES</div><div class="section-content">' + observaciones + '</div></div>' +
+    fotosHTML + tablaHTML + firmasBloque +
+    '<div class="footer">' + codigo + ' (' + nombreLabor + ') P\u00e1gina 1 de 1</div>' +
+    '</body></html>';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2761,30 +2778,40 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     originadoPor, fotosHTML, tablaHTML, firmasBloque, LOGO) {
   const logoSrc = LOGO || '';
   const rowspan = correlativo ? 4 : 3;
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<style>@page{size:A4;margin:12mm 15mm;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:10pt;color:#333;}table{border-collapse:collapse;}td{vertical-align:middle;}.footer{margin-top:12px;font-size:8pt;text-align:center;border-top:1px solid #ccc;padding-top:4px;}</style>
-</head><body>
-<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
-  <tr>
-    <td style="border:1px solid #333;width:100px;text-align:center;vertical-align:middle;padding:6px;" rowspan="\${rowspan}"><img src="\${logoSrc}" style="width:90px;height:auto;object-fit:contain;"></td>
-    <td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;vertical-align:middle;" rowspan="\${rowspan}">\${tituloPDF}</td>
-    <td style="border:1px solid #333;padding:4px 8px;font-size:9pt;width:160px;"><b>Código:</b> \${codigo}</td>
-  </tr>
-  \${correlativo ? `<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Correlativo:</b> \${correlativo}</td></tr>` : ''}
-  <tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Rev.</b> 1</td></tr>
-  <tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Pág:</b> 1 de 1</td></tr>
-</table>
-<table style="width:100%;border-collapse:collapse;margin-bottom:10px;font-size:9pt;">
-  <tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>WBS:</b> \${wbsNombre}</td></tr>
-  <tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>ÁREA:</b> \${areaNombre}</td></tr>
-  <tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>SUBSISTEMA:</b> \${subsistemaNombre}</td></tr>
-  <tr><td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>EMPRESA:</b> \${empresa}</td><td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>N° CONTRATO:</b> \${contratoDisplay}</td></tr>
-  <tr><td style="border:1px solid #333;padding:5px 8px;"><b>FECHA:</b> \${fechaEmision}</td><td style="border:1px solid #333;padding:5px 8px;"><b>RESPONSABLE:</b> \${originadoPor}</td></tr>
-</table>
-\${fotosHTML}\${tablaHTML}\${firmasBloque}
-<div class="footer">\${codigo} (\${subsistemaNombre}) Página 1 de 1</div>
-</body></html>`;
+  const correlativoRow = correlativo
+    ? '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Correlativo:</b> ' + correlativo + '</td></tr>'
+    : '';
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<style>@page{size:A4;margin:12mm 15mm;}*{box-sizing:border-box;margin:0;padding:0;}' +
+    'body{font-family:Arial,sans-serif;font-size:10pt;color:#333;}' +
+    'table{border-collapse:collapse;}td{vertical-align:middle;}' +
+    '.footer{margin-top:12px;font-size:8pt;text-align:center;border-top:1px solid #ccc;padding-top:4px;}' +
+    '</style></head><body>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">' +
+    '<tr>' +
+    '<td style="border:1px solid #333;width:100px;text-align:center;vertical-align:middle;padding:6px;" rowspan="' + rowspan + '">' +
+    '<img src="' + logoSrc + '" style="width:90px;height:auto;object-fit:contain;"></td>' +
+    '<td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;vertical-align:middle;" rowspan="' + rowspan + '">' + tituloPDF + '</td>' +
+    '<td style="border:1px solid #333;padding:4px 8px;font-size:9pt;width:160px;"><b>C\u00f3digo:</b> ' + codigo + '</td>' +
+    '</tr>' + correlativoRow +
+    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Rev.</b> 1</td></tr>' +
+    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>P\u00e1g:</b> 1 de 1</td></tr>' +
+    '</table>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:10px;font-size:9pt;">' +
+    '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>WBS:</b> ' + wbsNombre + '</td></tr>' +
+    '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>\u00c1REA:</b> ' + areaNombre + '</td></tr>' +
+    '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>SUBSISTEMA:</b> ' + subsistemaNombre + '</td></tr>' +
+    '<tr><td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>EMPRESA:</b> ' + empresa + '</td>' +
+    '<td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>N\u00b0 CONTRATO:</b> ' + contratoDisplay + '</td></tr>' +
+    '<tr><td style="border:1px solid #333;padding:5px 8px;"><b>FECHA:</b> ' + fechaEmision + '</td>' +
+    '<td style="border:1px solid #333;padding:5px 8px;"><b>RESPONSABLE:</b> ' + originadoPor + '</td></tr>' +
+    '</table>' +
+    fotosHTML + tablaHTML + firmasBloque +
+    '<div class="footer">' + codigo + ' (' + subsistemaNombre + ') P\u00e1gina 1 de 1</div>' +
+    '</body></html>';
 }
+
 
 async function generatePDF() {
   // Código automático según tipo de caminata
