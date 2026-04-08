@@ -1362,33 +1362,34 @@ textarea { resize: vertical; min-height: 80px; }
         <input type="text" id="ic_correlativo" placeholder="Ej: 001">
       </div>
       
-      <div class="form-group">
-        <label>Nivel</label>
-        <select id="ic_nivel">
-          <option value="">Seleccionar nivel</option>
-          <option value="PRODUCCIÓN">PRODUCCIÓN</option>
-          <option value="ACARREO">ACARREO</option>
-          <option value="HUNDIMIENTO">HUNDIMIENTO</option>
-          <option value="EXTRACCIÓN">EXTRACCIÓN</option>
-          <option value="INYECCIÓN">INYECCIÓN</option>
-        </select>
-      </div>
+      <!-- Campos solo INSPECCIÓN -->
+      <div id="seccionIC">
+        <div class="form-group">
+          <label>Nivel <span class="ic-badge">IC</span></label>
+          <select id="ic_nivel">
+            <option value="">Seleccionar nivel</option>
+            <option value="PRODUCCIÓN">PRODUCCIÓN</option>
+            <option value="ACARREO">ACARREO</option>
+            <option value="HUNDIMIENTO">HUNDIMIENTO</option>
+            <option value="EXTRACCIÓN">EXTRACCIÓN</option>
+            <option value="INYECCIÓN">INYECCIÓN</option>
+          </select>
+        </div>
 
+        <div class="form-group">
+          <label>Objetivo de la Inspección <span class="ic-badge">IC</span></label>
+          <textarea id="ic_objetivo" rows="3" placeholder="Realizar inspección a las obras de construcción que se ejecuten en Mina Chuquicamata Subterránea, verficando la conformidad de los estándares establecidos (especificaciones técnicas, planos, normativa vigente, entre otros)"></textarea>
+        </div>
 
-      
-      <div class="form-group">
-        <label>Objetivo de la Inspección</label>
-        <textarea id="ic_objetivo" rows="3" placeholder="Realizar inspección a las obras de construcción que se ejecuten en Mina Chuquicamata Subterránea, verficando la conformidad de los estándares establecidos (especificaciones técnicas, planos, normativa vigente, entre otros)"></textarea>
-      </div>
+        <div class="form-group">
+          <label>Desarrollo <span class="ic-badge">IC</span></label>
+          <textarea id="ic_desarrollo" rows="4" placeholder="Ej: Se lleva a cabo la inspección de la fortificación definitiva en el subnivel de Producción MB-S05, correspondiente a la labor C-48W/CAB-02-NP. La inspección abarca un tramo de 25 metros, desde el pk 415 al 390. Se identifica lo siguiente:"></textarea>
+        </div>
 
-      <div class="form-group">
-        <label>Desarrollo <span class="ic-badge">IC</span></label>
-        <textarea id="ic_desarrollo" rows="4" placeholder="Ej: Se lleva a cabo la inspección de la fortificación definitiva en el subnivel de Producción MB-S05, correspondiente a la labor C-48W/CAB-02-NP. La inspección abarca un tramo de 25 metros, desde el pk 415 al 390. Se identifica lo siguiente:"></textarea>
-      </div>
-      
-      <div class="form-group">
-        <label>Observaciones Generales</label>
-        <textarea id="ic_observaciones" rows="3" placeholder="Observaciones adicionales..."></textarea>
+        <div class="form-group">
+          <label>Observaciones Generales <span class="ic-badge">IC</span></label>
+          <textarea id="ic_observaciones" rows="3" placeholder="Observaciones adicionales..."></textarea>
+        </div>
       </div>
 
       <!-- Resultado + Firma — solo INSPECCIÓN -->
@@ -2713,7 +2714,8 @@ function toggleItemCheck(div) {
 // ═══════════════════════════════════════════════════════
 function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     planoReferencial, nivel, nombreLabor, originadoPor, firmaICHTML,
-    objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO) {
+    objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO, subsistema) {
+  subsistema = subsistema || '';
   const logoSrc = LOGO || '';
   const rowspan = correlativo ? 4 : 3;
   const correlativoRow = correlativo
@@ -3192,6 +3194,8 @@ function actualizarVisibilidadFirmantes() {
   const secFirmantes = document.getElementById('seccionFirmantes');
   const secResultado = document.getElementById('seccionResultado');
   if (secFirmantes) secFirmantes.style.display = esCaminata0 ? 'none' : 'block';
+  const secIC = document.getElementById('seccionIC');
+  if (secIC) secIC.style.display = esCaminata0 ? 'block' : 'none';
   if (secResultado) {
     secResultado.style.display = esCaminata0 ? 'block' : 'none';
     if (esCaminata0) setTimeout(initFirmaIC, 100);
