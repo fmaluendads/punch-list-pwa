@@ -2469,14 +2469,7 @@ async function nuevaInspeccion() {
   const listaF = document.getElementById('listaFirmantes');
   if (listaF) listaF.innerHTML = '';
 
-  // 5. Destruir iframe PDF (borrador)
-  const frame = document.getElementById('_pdfFrame');
-  if (frame) {
-    frame.srcdoc = '';
-    frame.src = 'about:blank';
-  }
-
-  // 6. Refrescar listas
+  // 5. Refrescar listas
   await renderItems();
   await renderItemSelector();
 
@@ -2875,8 +2868,18 @@ async function generatePDF() {
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
     .map(cb => parseInt(cb.value));
 
+  if (selectedIds.length === 0) {
+    showToast('Seleccione al menos un ítem para generar el PDF', 'error');
+    return;
+  }
+
   const allItems = await getItems();
   const items = allItems.filter(i => selectedIds.includes(i.id));
+
+  if (items.length === 0) {
+    showToast('No se encontraron los ítems seleccionados', 'error');
+    return;
+  }
 
   const nivel = document.getElementById('ic_nivel').value || '';
   const correlativo = document.getElementById('ic_correlativo')?.value?.trim() || '';
@@ -3017,19 +3020,26 @@ async function generatePDF() {
         wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
         originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO);
 
-    // Imprimir usando iframe oculto — el usuario nunca sale de la app
-  let pdfFrame = document.getElementById('_pdfFrame');
-  if (!pdfFrame) {
-    pdfFrame = document.createElement('iframe');
-    pdfFrame.id = '_pdfFrame';
-    pdfFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;visibility:hidden';
-    document.body.appendChild(pdfFrame);
+    // Abrir PDF en nueva ventana usando Blob URL — funciona en iOS, Android y desktop
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const blobUrl = URL.createObjectURL(blob);
+  const pdfWin = window.open(blobUrl, '_blank');
+
+  if (!pdfWin) {
+    // Popup bloqueado — ofrecer descarga directa como fallback
+    showToast('Popup bloqueado. Permitir ventanas emergentes para generar PDF.', 'error');
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = 'punch-list-preview.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } else {
+    showToast('PDF listo — Use "Guardar como PDF" en el diálogo de impresión');
   }
-  pdfFrame.onload = () => {
-    setTimeout(() => { pdfFrame.contentWindow.focus(); pdfFrame.contentWindow.print(); }, 400);
-  };
-  pdfFrame.srcdoc = htmlContent;
-  showToast('PDF listo - Use "Guardar como PDF" en el diálogo de impresión');
+
+  // Liberar memoria después de 2 minutos
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
 }
 
 // ==================== EXPORTAR WORD ====================
