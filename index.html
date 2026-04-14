@@ -1030,41 +1030,6 @@ textarea { resize: vertical; min-height: 80px; }
   .form-row { display: flex; gap: 12px; }
   .form-row .form-group { flex: 1; }
 }
-/* ── Modal PDF preview ── */
-#pdfPreviewModal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: #1a1a1a;
-  flex-direction: column;
-}
-#pdfPreviewModal.active { display: flex; }
-#pdfPreviewBar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: #111;
-  border-bottom: 1px solid #333;
-  flex-shrink: 0;
-}
-#pdfPreviewFrame {
-  flex: 1;
-  width: 100%;
-  border: none;
-  background: #fff;
-}
-/* Al imprimir: ocultar app, mostrar solo contenido PDF */
-@media print {
-  body > *:not(#pdfPrintContent) { display: none !important; }
-  #pdfPrintContent {
-    display: block !important;
-    position: fixed;
-    inset: 0;
-    background: white;
-  }
-}
 </style>
 </head>
 <body>
@@ -1499,18 +1464,6 @@ textarea { resize: vertical; min-height: 80px; }
     </div>
   </div>
 </main>
-
-<!-- Modal preview PDF (in-app, sin window.open) -->
-<div id="pdfPreviewModal">
-  <div id="pdfPreviewBar">
-    <button onclick="closePDFPreview()" style="background:#333;border:none;color:#fff;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">✕ Cerrar</button>
-    <button onclick="printPDF()" style="background:var(--copper);border:none;color:#fff;padding:8px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;flex:1;">🖨️ Imprimir / Guardar PDF</button>
-  </div>
-  <iframe id="pdfPreviewFrame"></iframe>
-</div>
-
-<!-- Contenedor invisible para impresión directa (@media print) -->
-<div id="pdfPrintContent" style="display:none;"></div>
 
 <datalist id="cargos-list">
   <option value="Inspector de Calidad">
@@ -2516,7 +2469,11 @@ async function nuevaInspeccion() {
   const listaF = document.getElementById('listaFirmantes');
   if (listaF) listaF.innerHTML = '';
 
-  // 5. Refrescar listas
+  // 5. Destruir iframe PDF si existe
+  const frame = document.getElementById('_pdfFrame');
+  if (frame) frame.parentNode.removeChild(frame);
+
+  // 6. Refrescar listas
   await renderItems();
   await renderItemSelector();
 
@@ -3067,33 +3024,28 @@ async function generatePDF() {
         wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
         originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO);
 
-    // Mostrar en modal in-app — sin window.open, funciona en Android/iOS/desktop
-  const frame = document.getElementById('pdfPreviewFrame');
-  frame.srcdoc = htmlContent;
-  document.getElementById('pdfPreviewModal').classList.add('active');
-  document.body.style.overflow = 'hidden';
-  // Guardar HTML para impresión directa
-  document.getElementById('pdfPrintContent').innerHTML = htmlContent;
-  showToast('PDF listo — pulse "Imprimir / Guardar PDF"');
-}
+    // Imprimir usando iframe oculto — mecanismo V33 (funciona iOS/Android/desktop)
+  // Destruir y recrear el iframe cada vez para garantizar que onload se dispare
+  let pdfFrame = document.getElementById('_pdfFrame');
+  if (pdfFrame) pdfFrame.parentNode.removeChild(pdfFrame);
 
-function closePDFPreview() {
-  document.getElementById('pdfPreviewModal').classList.remove('active');
-  document.body.style.overflow = '';
-}
+  pdfFrame = document.createElement('iframe');
+  pdfFrame.id = '_pdfFrame';
+  pdfFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;visibility:hidden';
+  document.body.appendChild(pdfFrame);
 
-function printPDF() {
-  // En desktop/Android: imprimir el iframe
-  const frame = document.getElementById('pdfPreviewFrame');
-  if (frame && frame.contentWindow) {
-    try {
-      frame.contentWindow.focus();
-      frame.contentWindow.print();
-      return;
-    } catch(e) {}
-  }
-  // Fallback iOS Safari: window.print() con @media print
-  window.print();
+  pdfFrame.onload = () => {
+    setTimeout(() => {
+      try {
+        pdfFrame.contentWindow.focus();
+        pdfFrame.contentWindow.print();
+      } catch(e) {
+        showToast('Error al imprimir. Intente nuevamente.', 'error');
+      }
+    }, 400);
+  };
+  pdfFrame.srcdoc = htmlContent;
+  showToast('PDF listo - Use "Guardar como PDF" en el diálogo de impresión');
 }
 
 // ==================== EXPORTAR WORD ====================
