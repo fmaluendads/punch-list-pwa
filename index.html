@@ -1030,6 +1030,41 @@ textarea { resize: vertical; min-height: 80px; }
   .form-row { display: flex; gap: 12px; }
   .form-row .form-group { flex: 1; }
 }
+/* ── Modal PDF preview ── */
+#pdfPreviewModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #1a1a1a;
+  flex-direction: column;
+}
+#pdfPreviewModal.active { display: flex; }
+#pdfPreviewBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #111;
+  border-bottom: 1px solid #333;
+  flex-shrink: 0;
+}
+#pdfPreviewFrame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #fff;
+}
+/* Al imprimir: ocultar app, mostrar solo contenido PDF */
+@media print {
+  body > *:not(#pdfPrintContent) { display: none !important; }
+  #pdfPrintContent {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    background: white;
+  }
+}
 </style>
 </head>
 <body>
@@ -1464,6 +1499,18 @@ textarea { resize: vertical; min-height: 80px; }
     </div>
   </div>
 </main>
+
+<!-- Modal preview PDF (in-app, sin window.open) -->
+<div id="pdfPreviewModal">
+  <div id="pdfPreviewBar">
+    <button onclick="closePDFPreview()" style="background:#333;border:none;color:#fff;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">✕ Cerrar</button>
+    <button onclick="printPDF()" style="background:var(--copper);border:none;color:#fff;padding:8px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;flex:1;">🖨️ Imprimir / Guardar PDF</button>
+  </div>
+  <iframe id="pdfPreviewFrame"></iframe>
+</div>
+
+<!-- Contenedor invisible para impresión directa (@media print) -->
+<div id="pdfPrintContent" style="display:none;"></div>
 
 <datalist id="cargos-list">
   <option value="Inspector de Calidad">
@@ -2850,14 +2897,6 @@ function fmtFecha(str) {
 }
 
 async function generatePDF() {
-  // Abrir ventana ANTES de cualquier await — Android Chrome bloquea window.open() post-await
-  const pdfWin = window.open('', '_blank');
-  if (!pdfWin) {
-    showToast('Popup bloqueado. Permitir ventanas emergentes para este sitio.', 'error');
-    return;
-  }
-  pdfWin.document.write('<html><body style="font-family:sans-serif;padding:20px;color:#555">⏳ Generando PDF, espere...</body></html>');
-
   // Código automático según tipo de caminata
   const _tipoCam = await getConfig('caminata') || 'INSPECCIÓN';
   const codigo = _tipoCam === 'INSPECCIÓN' ? 'IC-GOMS-DCH' : 'CAMINATA';
@@ -2869,15 +2908,14 @@ async function generatePDF() {
   const noCumpleActive = document.getElementById('ic_toggleNoCumple').classList.contains('active');
   const resultadoIC = cumpleActive ? 'cumple' : (noCumpleActive ? 'nocumple' : '');
 
-  if (!nombreLabor) { pdfWin.close(); showToast('Configure Nombre Labor en Config', 'error'); return; }
-  if (!planoReferencial) { pdfWin.close(); showToast('Configure Plano Referencial en Config', 'error'); return; }
+  if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
+  if (!planoReferencial) { showToast('Configure Plano Referencial en Config', 'error'); return; }
   // resultadoIC validation deferred to after caminata detection
 
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
     .map(cb => parseInt(cb.value));
 
   if (selectedIds.length === 0) {
-    pdfWin.close();
     showToast('Seleccione al menos un ítem para generar el PDF', 'error');
     return;
   }
@@ -2886,7 +2924,6 @@ async function generatePDF() {
   const items = allItems.filter(i => selectedIds.includes(i.id));
 
   if (items.length === 0) {
-    pdfWin.close();
     showToast('No se encontraron los ítems seleccionados', 'error');
     return;
   }
@@ -2926,7 +2963,7 @@ async function generatePDF() {
   const tituloPDF = esCaminata0 ? 'INSPECCIÓN DE CALIDAD' : caminataConfig.toUpperCase();
 
   // Validar resultado solo en Caminata 0
-  if (esCaminata0 && !resultadoIC) { pdfWin.close(); showToast('Seleccione el Resultado (Cumple/No Cumple)', 'error'); return; }
+  if (esCaminata0 && !resultadoIC) { showToast('Seleccione el Resultado (Cumple/No Cumple)', 'error'); return; }
 
   // Bloque firma IC (caminata 0) vs firmantes (caminata recepción/entrega)
   const firmaICHTML = esCaminata0
@@ -3030,11 +3067,33 @@ async function generatePDF() {
         wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
         originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO);
 
-    // Escribir contenido en la ventana ya abierta (preserva contexto de gesto en Android)
-  pdfWin.document.open();
-  pdfWin.document.write(htmlContent);
-  pdfWin.document.close();
-  showToast('PDF listo — Use "Guardar como PDF" en el diálogo de impresión');
+    // Mostrar en modal in-app — sin window.open, funciona en Android/iOS/desktop
+  const frame = document.getElementById('pdfPreviewFrame');
+  frame.srcdoc = htmlContent;
+  document.getElementById('pdfPreviewModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  // Guardar HTML para impresión directa
+  document.getElementById('pdfPrintContent').innerHTML = htmlContent;
+  showToast('PDF listo — pulse "Imprimir / Guardar PDF"');
+}
+
+function closePDFPreview() {
+  document.getElementById('pdfPreviewModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function printPDF() {
+  // En desktop/Android: imprimir el iframe
+  const frame = document.getElementById('pdfPreviewFrame');
+  if (frame && frame.contentWindow) {
+    try {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+      return;
+    } catch(e) {}
+  }
+  // Fallback iOS Safari: window.print() con @media print
+  window.print();
 }
 
 // ==================== EXPORTAR WORD ====================
