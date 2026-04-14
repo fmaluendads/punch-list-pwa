@@ -1494,7 +1494,7 @@ textarea { resize: vertical; min-height: 80px; }
   </div>
 </main>
 
-<button id="pdfPrintBtn" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+<button id="pdfPrintBtn" onclick="document.getElementById('_pdfFrame').contentWindow.print()">🖨️ Imprimir / Guardar PDF</button>
 
 <datalist id="cargos-list">
   <option value="Inspector de Calidad">
@@ -2809,8 +2809,6 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     '.section{margin-bottom:8px;}.section-title{font-weight:bold;font-size:10pt;margin-bottom:3px;}' +
     '.section-content{font-size:9pt;line-height:1.5;white-space:pre-wrap;}' +
     '.footer{margin-top:12px;font-size:8pt;text-align:center;border-top:1px solid #ccc;padding-top:4px;}' +
-    '.pg::before{content:counter(page);}' +
-    '@page{@bottom-center{content:"' + codigo + ' — Página " counter(page) " de " counter(pages);font-size:8pt;color:#555;}}' +
     '</style></head><body>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">' +
     '<tr>' +
@@ -2820,15 +2818,16 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     '<td style="border:1px solid #333;padding:4px 8px;font-size:9pt;width:160px;"><b>C\u00f3digo:</b> ' + codigo + '</td>' +
     '</tr>' + correlativoRow +
     '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Rev.</b> 1</td></tr>' +
-    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>P\u00e1g:</b> <span class="pg"></span></td></tr>' +
+    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>P\u00e1g:</b> 1 de 1</td></tr>' +
     '</table>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:9pt;">' +
-    '<tr><td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>FECHA:</b> ' + fechaEmision + '</td>' +
+    '<tr><td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>CONTRATO:</b> ' + contratoDisplay + '</td>' +
+    '<td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>FECHA:</b> ' + fechaEmision + '</td></tr>' +
     '<tr><td style="border:1px solid #333;padding:5px 8px;"><b>N\u00b0 SUBSISTEMA:</b> ' + subsistema + '</td>' +
     '<td style="border:1px solid #333;padding:5px 8px;"><b>PLANO:</b> ' + planoReferencial + '</td></tr>' +
     '<tr><td style="border:1px solid #333;padding:5px 8px;"><b>NIVEL:</b> ' + (nivel ? 'NIVEL ' + nivel : '') + '</td>' +
     '<td style="border:1px solid #333;padding:5px 8px;"><b>LABOR:</b> ' + nombreLabor + '</td></tr>' +
-    '<tr><td style="border:1px solid #333;padding:5px 8px;" colspan="2"><b>RESPONSABLE INSPECCI\u00d3N:</b> ' + originadoPor + '</td>' + firmaCell + '</tr>' +
+    '<tr><td style="border:1px solid #333;padding:5px 8px;"><b>RESPONSABLE INSPECCI\u00d3N:</b> ' + originadoPor + '</td>' + firmaCell + '</tr>' +
     '</table>' +
     '<div class="section"><div class="section-title">1. OBJETIVO:</div><div class="section-content">' + objetivo + '</div></div>' +
     '<div class="section"><div class="section-title">2. REFERENCIAS:</div><div class="section-content">' + planoReferencial + '</div></div>' +
@@ -2836,6 +2835,7 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     resultadoHTML +
     '<div class="section"><div class="section-title">5. OBSERVACIONES</div><div class="section-content">' + observaciones + '</div></div>' +
     fotosHTML + tablaHTML + firmasBloque +
+    '<div class="footer">' + codigo + ' (' + nombreLabor + ') P\u00e1gina 1 de 1</div>' +
     '</body></html>';
 }
 
@@ -2856,8 +2856,6 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     'body{font-family:Arial,sans-serif;font-size:10pt;color:#333;}' +
     'table{border-collapse:collapse;}td{vertical-align:middle;}' +
     '.footer{margin-top:12px;font-size:8pt;text-align:center;border-top:1px solid #ccc;padding-top:4px;}' +
-    '.pg::before{content:counter(page);}' +
-    '@page{@bottom-center{content:"' + codigo + ' — Página " counter(page) " de " counter(pages);font-size:8pt;color:#555;}}' +
     '</style></head><body>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">' +
     '<tr>' +
@@ -2867,7 +2865,9 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     '<td style="border:1px solid #333;padding:4px 8px;font-size:9pt;width:160px;"><b>C\u00f3digo:</b> ' + codigo + '</td>' +
     '</tr>' + correlativoRow +
     '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Rev.</b> 1</td></tr>' +
-    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>P\u00e1g:</b> <span class="pg"></span></td></tr>' +
+    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>P\u00e1g:</b> 1 de 1</td></tr>' +
+    '</table>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:10px;font-size:9pt;">' +
     '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>WBS:</b> ' + wbsNombre + '</td></tr>' +
     '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>\u00c1REA:</b> ' + areaNombre + '</td></tr>' +
     '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>SUBSISTEMA:</b> ' + subsistemaNombre + '</td></tr>' +
@@ -2877,6 +2877,7 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     '<td style="border:1px solid #333;padding:5px 8px;"><b>RESPONSABLE:</b> ' + originadoPor + '</td></tr>' +
     '</table>' +
     fotosHTML + tablaHTML + firmasBloque +
+    '<div class="footer">' + codigo + ' (' + subsistemaNombre + ') P\u00e1gina 1 de 1</div>' +
     '</body></html>';
 }
 
