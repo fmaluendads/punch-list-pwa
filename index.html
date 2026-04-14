@@ -635,6 +635,17 @@ textarea { resize: vertical; min-height: 80px; }
   min-height: 48px;
   user-select: none;
   -webkit-user-select: none;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+.item-checkbox:has(input:checked) {
+  border-color: var(--copper);
+  background: rgba(181,101,29,0.12);
+}
+.btn-todos-activo {
+  background: var(--copper) !important;
+  color: #fff !important;
+  border-color: var(--copper) !important;
 }
 .item-checkbox input[type="checkbox"] {
   width: 24px;
@@ -1067,16 +1078,17 @@ textarea { resize: vertical; min-height: 80px; }
         
         <div class="form-group">
           <label>Prioridad <span class="required">*</span></label>
-          <select id="prioridad" required>
+          <select id="prioridad" required onchange="onPrioridadChange(this,'fechaCompromisoGroup')">
             <option value="">Seleccionar prioridad</option>
             <option value="P1">P1</option>
             <option value="P2" selected>P2</option>
             <option value="P3">P3</option>
             <option value="P4">P4</option>
+            <option value="S/O">S/O — Sin Observaciones</option>
           </select>
         </div>
         
-        <div class="form-group">
+        <div class="form-group" id="fechaCompromisoGroup">
           <label>Fecha Compromiso de Cierre <span class="required">*</span></label>
           <input type="date" id="fechaCompromiso" required>
         </div>
@@ -1420,7 +1432,7 @@ textarea { resize: vertical; min-height: 80px; }
     <div class="item-selector">
       <div class="item-selector-header">
         <h4>Seleccionar Ítems para el Informe</h4>
-        <button class="btn btn-sm btn-secondary" onclick="toggleAllItems()" style="width:auto;padding:8px 12px">Todos</button>
+        <button id="btnTodos" class="btn btn-sm btn-secondary btn-todos-activo" onclick="toggleAllItems()" style="width:auto;padding:8px 12px">✓ Todos</button>
       </div>
       <div id="itemSelectorList"></div>
     </div>
@@ -1506,14 +1518,15 @@ textarea { resize: vertical; min-height: 80px; }
       </div>
       <div class="form-group">
         <label>Prioridad</label>
-        <select id="edit_prioridad" required>
+        <select id="edit_prioridad" required onchange="onPrioridadChange(this,'edit_fechaCompromisoGroup')">
           <option value="P1">P1</option>
           <option value="P2">P2</option>
           <option value="P3">P3</option>
           <option value="P4">P4</option>
+          <option value="S/O">S/O — Sin Observaciones</option>
         </select>
       </div>
-      <div class="form-group">
+      <div class="form-group" id="edit_fechaCompromisoGroup">
         <label>Fecha Compromiso</label>
         <input type="date" id="edit_fechaCompromiso" required>
       </div>
@@ -2119,6 +2132,7 @@ async function editItem(id) {
   document.getElementById('edit_descripcion').value = item.descripcion;
   document.getElementById('edit_prioridad').value = item.prioridad;
   document.getElementById('edit_fechaCompromiso').value = item.fechaCompromiso;
+  onPrioridadChange(document.getElementById('edit_prioridad'), 'edit_fechaCompromisoGroup');
   document.getElementById('edit_disciplina').value = item.disciplina;
   
 
@@ -2455,14 +2469,7 @@ async function nuevaInspeccion() {
   const listaF = document.getElementById('listaFirmantes');
   if (listaF) listaF.innerHTML = '';
 
-  // 5. Destruir iframe PDF (borrador)
-  const frame = document.getElementById('_pdfFrame');
-  if (frame) {
-    frame.srcdoc = '';
-    frame.src = 'about:blank';
-  }
-
-  // 6. Refrescar listas
+  // 5. Refrescar listas
   await renderItems();
   await renderItemSelector();
 
@@ -2688,17 +2695,44 @@ async function renderItemSelector() {
 
   // Resetear estado del botón Todos
   _todosSeleccionados = true;
+  _actualizarBtnTodos();
 }
 
 let _todosSeleccionados = true;
 
+function _actualizarBtnTodos() {
+  const btn = document.getElementById('btnTodos');
+  if (!btn) return;
+  if (_todosSeleccionados) {
+    btn.textContent = '✓ Todos';
+    btn.classList.add('btn-todos-activo');
+  } else {
+    btn.textContent = 'Todos';
+    btn.classList.remove('btn-todos-activo');
+  }
+}
+
+// ── Prioridad S/O: oculta fecha compromiso ──────────────────
+function onPrioridadChange(sel, groupId) {
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  const fc = group.querySelector('input[type="date"]');
+  if (sel.value === 'S/O') {
+    group.style.display = 'none';
+    if (fc) { fc.removeAttribute('required'); fc.value = ''; }
+  } else {
+    group.style.display = '';
+    if (fc) fc.setAttribute('required', 'required');
+  }
+}
+
 function toggleAllItems() {
   const checkboxes = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]'));
   if (checkboxes.length === 0) return;
-  // Si TODOS están marcados → desmarcar. En cualquier otro caso → marcar todos.
   const todosActivos = checkboxes.every(cb => cb.checked);
   checkboxes.forEach(cb => { cb.checked = !todosActivos; });
   _todosSeleccionados = !todosActivos;
+  _actualizarBtnTodos();
 }
 
 // toggleItemCheck ya no se necesita — el <label> lo maneja nativamente
@@ -2748,10 +2782,7 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     '<td style="border:1px solid #333;padding:4px 8px;font-size:9pt;width:160px;"><b>C\u00f3digo:</b> ' + codigo + '</td>' +
     '</tr>' + correlativoRow +
     '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Rev.</b> 1</td></tr>' +
-    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>P\u00e1g:</b> 1 de 1</td></tr>' +
-    '</table>' +
-    '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;font-size:9pt;">' +
-    '<tr><td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>CONTRATO:</b> ' + contratoDisplay + '</td>' +
+    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>P\u00e1g:</b> 1</td></tr>' +
     '<td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>FECHA:</b> ' + fechaEmision + '</td></tr>' +
     '<tr><td style="border:1px solid #333;padding:5px 8px;"><b>N\u00b0 SUBSISTEMA:</b> ' + subsistema + '</td>' +
     '<td style="border:1px solid #333;padding:5px 8px;"><b>PLANO:</b> ' + planoReferencial + '</td></tr>' +
@@ -2765,7 +2796,7 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     resultadoHTML +
     '<div class="section"><div class="section-title">5. OBSERVACIONES</div><div class="section-content">' + observaciones + '</div></div>' +
     fotosHTML + tablaHTML + firmasBloque +
-    '<div class="footer">' + codigo + ' (' + nombreLabor + ') P\u00e1gina 1 de 1</div>' +
+    '<div class="footer">' + codigo + ' (' + nombreLabor + ') P\u00e1gina 1</div>' +
     '</body></html>';
 }
 
@@ -2795,9 +2826,7 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     '<td style="border:1px solid #333;padding:4px 8px;font-size:9pt;width:160px;"><b>C\u00f3digo:</b> ' + codigo + '</td>' +
     '</tr>' + correlativoRow +
     '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Rev.</b> 1</td></tr>' +
-    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>P\u00e1g:</b> 1 de 1</td></tr>' +
-    '</table>' +
-    '<table style="width:100%;border-collapse:collapse;margin-bottom:10px;font-size:9pt;">' +
+    '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>P\u00e1g:</b> 1</td></tr>' +
     '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>WBS:</b> ' + wbsNombre + '</td></tr>' +
     '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>\u00c1REA:</b> ' + areaNombre + '</td></tr>' +
     '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>SUBSISTEMA:</b> ' + subsistemaNombre + '</td></tr>' +
@@ -2807,10 +2836,18 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     '<td style="border:1px solid #333;padding:5px 8px;"><b>RESPONSABLE:</b> ' + originadoPor + '</td></tr>' +
     '</table>' +
     fotosHTML + tablaHTML + firmasBloque +
-    '<div class="footer">' + codigo + ' (' + subsistemaNombre + ') P\u00e1gina 1 de 1</div>' +
+    '<div class="footer">' + codigo + ' (' + subsistemaNombre + ') P\u00e1gina 1</div>' +
     '</body></html>';
 }
 
+
+// Helper: convierte YYYY-MM-DD a DD/MM/AA para PDF
+function fmtFecha(str) {
+  if (!str) return '—';
+  const p = str.split('-');
+  if (p.length !== 3) return str;
+  return p[2] + '/' + p[1] + '/' + p[0].slice(2);
+}
 
 async function generatePDF() {
   // Código automático según tipo de caminata
@@ -2831,8 +2868,18 @@ async function generatePDF() {
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
     .map(cb => parseInt(cb.value));
 
+  if (selectedIds.length === 0) {
+    showToast('Seleccione al menos un ítem para generar el PDF', 'error');
+    return;
+  }
+
   const allItems = await getItems();
   const items = allItems.filter(i => selectedIds.includes(i.id));
+
+  if (items.length === 0) {
+    showToast('No se encontraron los ítems seleccionados', 'error');
+    return;
+  }
 
   const nivel = document.getElementById('ic_nivel').value || '';
   const correlativo = document.getElementById('ic_correlativo')?.value?.trim() || '';
@@ -2914,7 +2961,7 @@ async function generatePDF() {
       <td style="border:1px solid #333;padding:4px;text-align:center;">${num}</td>
       <td style="border:1px solid #333;padding:4px;">${it.ubicacion}</td>
       <td style="border:1px solid #333;padding:4px;">${it.descripcion}</td>
-      <td style="border:1px solid #333;padding:4px;text-align:center;">${it.fechaCompromiso}</td>
+      <td style="border:1px solid #333;padding:4px;text-align:center;">${fmtFecha(it.fechaCompromiso)}</td>
       <td style="border:1px solid #333;padding:4px;text-align:center;">${it.prioridad||''}</td>
     </tr>`;
   }).join('');
@@ -2946,7 +2993,7 @@ async function generatePDF() {
       <td style="border:1px solid #333;padding:4px;text-align:center;">${num}</td>
       <td style="border:1px solid #333;padding:4px;">${it.ubicacion}</td>
       <td style="border:1px solid #333;padding:4px;">${it.descripcion}</td>
-      <td style="border:1px solid #333;padding:4px;text-align:center;">${it.fechaCompromiso}</td>
+      <td style="border:1px solid #333;padding:4px;text-align:center;">${fmtFecha(it.fechaCompromiso)}</td>
       <td style="border:1px solid #333;padding:4px;text-align:center;">${it.prioridad||''}</td>
     </tr>`;
   }).join('');
@@ -2973,19 +3020,26 @@ async function generatePDF() {
         wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
         originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO);
 
-    // Imprimir usando iframe oculto — el usuario nunca sale de la app
-  let pdfFrame = document.getElementById('_pdfFrame');
-  if (!pdfFrame) {
-    pdfFrame = document.createElement('iframe');
-    pdfFrame.id = '_pdfFrame';
-    pdfFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;visibility:hidden';
-    document.body.appendChild(pdfFrame);
+    // Abrir PDF en nueva ventana usando Blob URL — funciona en iOS, Android y desktop
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const blobUrl = URL.createObjectURL(blob);
+  const pdfWin = window.open(blobUrl, '_blank');
+
+  if (!pdfWin) {
+    // Popup bloqueado — ofrecer descarga directa como fallback
+    showToast('Popup bloqueado. Permitir ventanas emergentes para generar PDF.', 'error');
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = 'punch-list-preview.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } else {
+    showToast('PDF listo — Use "Guardar como PDF" en el diálogo de impresión');
   }
-  pdfFrame.onload = () => {
-    setTimeout(() => { pdfFrame.contentWindow.focus(); pdfFrame.contentWindow.print(); }, 400);
-  };
-  pdfFrame.srcdoc = htmlContent;
-  showToast('PDF listo - Use "Guardar como PDF" en el diálogo de impresión');
+
+  // Liberar memoria después de 2 minutos
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
 }
 
 // ==================== EXPORTAR WORD ====================
@@ -3046,7 +3100,7 @@ function _descargarWord(d) {
     '<td style="border:1px solid #333;padding:4px;text-align:center;">' + (it.numero || it.id) + '</td>' +
     '<td style="border:1px solid #333;padding:4px;">' + (it.ubicacion || '') + '</td>' +
     '<td style="border:1px solid #333;padding:4px;">' + (it.descripcion || '') + '</td>' +
-    '<td style="border:1px solid #333;padding:4px;text-align:center;">' + (it.fechaCompromiso || '') + '</td>' +
+    '<td style="border:1px solid #333;padding:4px;text-align:center;">' + fmtFecha(it.fechaCompromiso) + '</td>' +
     '</tr>'
   ).join('');
 
@@ -3091,7 +3145,7 @@ function _descargarWord(d) {
     '</tr>' +
     '<tr><td style="border:1px solid #333;"><b>Rev.</b> 1</td></tr>' +
     '<tr><td style="border:1px solid #333;"><b>Fecha:</b> ' + d.fechaEmision + '</td></tr>' +
-    '<tr><td style="border:1px solid #333;"><b>Pág:</b> 1 de 1</td></tr>' +
+    '<tr><td style="border:1px solid #333;"><b>Pág:</b> 1</td></tr>' +
     '</table>' +
 
     // Datos proyecto
