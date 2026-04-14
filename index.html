@@ -2850,6 +2850,14 @@ function fmtFecha(str) {
 }
 
 async function generatePDF() {
+  // Abrir ventana ANTES de cualquier await — Android Chrome bloquea window.open() post-await
+  const pdfWin = window.open('', '_blank');
+  if (!pdfWin) {
+    showToast('Popup bloqueado. Permitir ventanas emergentes para este sitio.', 'error');
+    return;
+  }
+  pdfWin.document.write('<html><body style="font-family:sans-serif;padding:20px;color:#555">⏳ Generando PDF, espere...</body></html>');
+
   // Código automático según tipo de caminata
   const _tipoCam = await getConfig('caminata') || 'INSPECCIÓN';
   const codigo = _tipoCam === 'INSPECCIÓN' ? 'IC-GOMS-DCH' : 'CAMINATA';
@@ -2861,14 +2869,15 @@ async function generatePDF() {
   const noCumpleActive = document.getElementById('ic_toggleNoCumple').classList.contains('active');
   const resultadoIC = cumpleActive ? 'cumple' : (noCumpleActive ? 'nocumple' : '');
 
-  if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
-  if (!planoReferencial) { showToast('Configure Plano Referencial en Config', 'error'); return; }
+  if (!nombreLabor) { pdfWin.close(); showToast('Configure Nombre Labor en Config', 'error'); return; }
+  if (!planoReferencial) { pdfWin.close(); showToast('Configure Plano Referencial en Config', 'error'); return; }
   // resultadoIC validation deferred to after caminata detection
 
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
     .map(cb => parseInt(cb.value));
 
   if (selectedIds.length === 0) {
+    pdfWin.close();
     showToast('Seleccione al menos un ítem para generar el PDF', 'error');
     return;
   }
@@ -2877,6 +2886,7 @@ async function generatePDF() {
   const items = allItems.filter(i => selectedIds.includes(i.id));
 
   if (items.length === 0) {
+    pdfWin.close();
     showToast('No se encontraron los ítems seleccionados', 'error');
     return;
   }
@@ -2916,7 +2926,7 @@ async function generatePDF() {
   const tituloPDF = esCaminata0 ? 'INSPECCIÓN DE CALIDAD' : caminataConfig.toUpperCase();
 
   // Validar resultado solo en Caminata 0
-  if (esCaminata0 && !resultadoIC) { showToast('Seleccione el Resultado (Cumple/No Cumple)', 'error'); return; }
+  if (esCaminata0 && !resultadoIC) { pdfWin.close(); showToast('Seleccione el Resultado (Cumple/No Cumple)', 'error'); return; }
 
   // Bloque firma IC (caminata 0) vs firmantes (caminata recepción/entrega)
   const firmaICHTML = esCaminata0
@@ -3020,26 +3030,11 @@ async function generatePDF() {
         wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
         originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO);
 
-    // Abrir PDF en nueva ventana usando Blob URL — funciona en iOS, Android y desktop
-  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-  const blobUrl = URL.createObjectURL(blob);
-  const pdfWin = window.open(blobUrl, '_blank');
-
-  if (!pdfWin) {
-    // Popup bloqueado — ofrecer descarga directa como fallback
-    showToast('Popup bloqueado. Permitir ventanas emergentes para generar PDF.', 'error');
-    const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = 'punch-list-preview.html';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } else {
-    showToast('PDF listo — Use "Guardar como PDF" en el diálogo de impresión');
-  }
-
-  // Liberar memoria después de 2 minutos
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
+    // Escribir contenido en la ventana ya abierta (preserva contexto de gesto en Android)
+  pdfWin.document.open();
+  pdfWin.document.write(htmlContent);
+  pdfWin.document.close();
+  showToast('PDF listo — Use "Guardar como PDF" en el diálogo de impresión');
 }
 
 // ==================== EXPORTAR WORD ====================
