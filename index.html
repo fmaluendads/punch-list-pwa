@@ -1262,10 +1262,6 @@ textarea { resize: vertical; min-height: 80px; }
           </select>
         </div>
         <div class="form-group">
-          <div id="wbsSyncIndicator" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;border-radius:6px;font-size:12px;background:var(--coal);">
-            <span id="wbsSyncIcon">⏳</span>
-            <span id="wbsSyncText" style="flex:1;">Verificando datos WBS...</span>
-          </div>
           <label>N° SubSistema <span class="required">*</span></label>
           <button type="button" class="wbs-select-btn" id="wbsSelectBtn" onclick="openWBSSearch()">
             <div class="wbs-btn-label">
@@ -1642,51 +1638,18 @@ let DATOS = {
 };
 
 async function loadDatos() {
-  let cargadoDesdeRed = false;
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    const r = await fetch('./data.json?v=' + Date.now(), { signal: controller.signal });
-    clearTimeout(timeout);
+    const r = await fetch('./data.json?v=' + Date.now());
     if (r.ok) {
       DATOS = await r.json();
-      cargadoDesdeRed = true;
-      console.log('data.json RED — WBS:', DATOS.wbsData?.length || 0, 'registros');
-      if (db) saveDatosIDB(DATOS);
-      else setTimeout(() => saveDatosIDB(DATOS), 1000);
+      console.log('data.json cargado OK — WBS:', DATOS.wbsData?.length || 0, 'registros');
+    } else {
+      console.warn('data.json HTTP error:', r.status);
     }
   } catch(e) {
-    console.warn('data.json red no disponible:', e.message);
+    console.warn('data.json fetch error:', e.message);
   }
-  // Fallback IDB si red falló
-  if (!cargadoDesdeRed && db) {
-    const cached = await loadDatosIDB();
-    if (cached?.value?.wbsData?.length > 0) {
-      DATOS = cached.value;
-      const ts = cached.ts ? new Date(cached.ts).toLocaleString('es-CL') : '—';
-      console.log('data.json IDB — WBS:', DATOS.wbsData.length, '— Sync:', ts);
-    }
-  }
-}
-
-async function sincronizarDatosBackground() {
-  try {
-    const controller = new AbortController();
-    setTimeout(() => controller.abort(), 8000);
-    const r = await fetch('./data.json?v=' + Date.now(), { signal: controller.signal });
-    if (r.ok) {
-      const datos = await r.json();
-      if (datos.wbsData?.length > 0) {
-        await saveDatosIDB(datos);
-        if (datos.wbsData.length > (DATOS.wbsData?.length || 0)) {
-          DATOS = datos;
-          loadConfig();
-          console.log('Datos actualizados background — WBS:', datos.wbsData.length);
-        }
-      }
-    }
-  } catch(e) { /* offline */ }
-}
+};
 
 // ==================== VARIABLES GLOBALES ====================
 let currentPhoto = null;       // legacy compat
@@ -1699,7 +1662,7 @@ let _selectedWBSRecord = null;
 
 // ==================== INDEXEDDB ====================
 const DB_NAME = 'PunchListDB';
-const DB_VERSION = 4;
+const DB_VERSION = 3;
 let db;
 
 function openDB() {
@@ -1718,31 +1681,8 @@ function openDB() {
       if (!database.objectStoreNames.contains('especialistas')) {
         database.createObjectStore('especialistas', { keyPath: 'id', autoIncrement: true });
       }
-      if (!database.objectStoreNames.contains('datos_cache')) {
-        database.createObjectStore('datos_cache', { keyPath: 'key' });
-      }
     };
   });
-}
-
-// ── Helpers IDB para datos_cache ─────────────────────────────────────────────
-async function saveDatosIDB(datos) {
-  try {
-    const tx = db.transaction('datos_cache', 'readwrite');
-    tx.objectStore('datos_cache').put({ key: 'datos', value: datos, ts: Date.now() });
-    await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
-  } catch(e) { console.warn('saveDatosIDB:', e); }
-}
-
-async function loadDatosIDB() {
-  try {
-    const tx = db.transaction('datos_cache', 'readonly');
-    return await new Promise((res, rej) => {
-      const req = tx.objectStore('datos_cache').get('datos');
-      req.onsuccess = () => res(req.result || null);
-      req.onerror = () => rej(req.error);
-    });
-  } catch(e) { return null; }
 }
 
 async function getItems() {
@@ -2022,7 +1962,6 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
     if (tab.dataset.tab === 'lista') renderItems();
-    if (tab.dataset.tab === 'config') setTimeout(actualizarIndicadorWBS, 100);
     if (tab.dataset.tab === 'informe') { renderItemSelector(); actualizarVisibilidadFirmantes(); setTimeout(actualizarChecklist, 300); }
   });
 });
@@ -3521,35 +3460,6 @@ function getFirmasHTML() {
   </div>`;
 }
 
-// ==================== INDICADOR WBS SYNC ====================
-async function actualizarIndicadorWBS() {
-  const icon = document.getElementById('wbsSyncIcon');
-  const text = document.getElementById('wbsSyncText');
-  const box  = document.getElementById('wbsSyncIndicator');
-  if (!icon || !text || !box) return;
-  const wbsCount = DATOS.wbsData?.length || 0;
-  let tsText = '';
-  try {
-    if (db) {
-      const cached = await loadDatosIDB();
-      if (cached?.ts) {
-        const d = new Date(cached.ts);
-        tsText = ' · Sync: ' + d.toLocaleDateString('es-CL') + ' ' +
-          d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-      }
-    }
-  } catch(e) {}
-  if (wbsCount === 0) {
-    box.style.cssText += ';background:rgba(239,68,68,0.12);border:1px solid var(--danger);';
-    icon.textContent = '❌'; text.style.color = 'var(--danger)';
-    text.textContent = 'Sin datos WBS — conecte a internet antes de ir a terreno';
-  } else {
-    box.style.cssText += ';background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.4);';
-    icon.textContent = '📦'; text.style.color = '#22C55E';
-    text.textContent = wbsCount + ' subsistemas disponibles offline' + tsText;
-  }
-}
-
 // ==================== CHECKLIST + RESUMEN ====================
 async function actualizarChecklist() {
   const chkEl = document.getElementById('uxChecklistItems');
@@ -3612,18 +3522,16 @@ window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
 // ==================== INICIALIZACIÓN ====================
-openDB().then(async () => {
-  await loadDatos();
+loadDatos().then(() => openDB()).then(() => {
   loadConfig();
   updateOnlineStatus();
   updateWBSContextBanner();
-  actualizarIndicadorWBS();
+  // Fecha compromiso por defecto: hoy + 30 días
   const _fc = document.getElementById('fechaCompromiso');
   if (_fc && !_fc.value) {
     const _d = new Date(); _d.setDate(_d.getDate() + 30);
     _fc.value = _d.toISOString().split('T')[0];
   }
-  setTimeout(sincronizarDatosBackground, 3000);
 });
 
 // Ocultar botón flotante al cerrar diálogo de impresión
