@@ -1406,7 +1406,7 @@ textarea { resize: vertical; min-height: 80px; }
       
 
       <div class="form-group">
-        <label>Correlativo</label>
+        <label id="labelCorrelativo">Correlativo</label>
         <input type="text" id="ic_correlativo" placeholder="Ej: 001">
       </div>
       
@@ -2913,7 +2913,7 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
   const logoSrc = LOGO || '';
   const rowspan = correlativo ? 4 : 3;
   const correlativoRow = correlativo
-    ? '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Correlativo:</b> ' + correlativo + '</td></tr>'
+    ? '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Aviso:</b> ' + correlativo + '</td></tr>'
     : '';
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
@@ -2938,8 +2938,7 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>SUBSISTEMA:</b> ' + subsistemaNombre + '</td></tr>' +
     '<tr><td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>EMPRESA:</b> ' + empresa + '</td>' +
     '<td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>N\u00b0 CONTRATO:</b> ' + contratoDisplay + '</td></tr>' +
-    '<tr><td style="border:1px solid #333;padding:5px 8px;"><b>FECHA:</b> ' + fechaEmision + '</td>' +
-    '<td style="border:1px solid #333;padding:5px 8px;"><b>RESPONSABLE:</b> ' + originadoPor + '</td></tr>' +
+    '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>FECHA:</b> ' + fechaEmision + '</td></tr>' +
     '</table>' +
     fotosHTML + tablaHTML + firmasBloque +
     '<div class="footer">' + codigo + ' (' + subsistemaNombre + ') P\u00e1gina 1 de 1</div>' +
@@ -2958,7 +2957,8 @@ function fmtFecha(str) {
 async function generatePDF() {
   // Código automático según tipo de caminata
   const _tipoCam = await getConfig('caminata') || 'INSPECCIÓN';
-  const codigo = _tipoCam === 'INSPECCIÓN' ? 'IC-GOMS-DCH' : 'CAMINATA';
+  const codigo = _tipoCam === 'INSPECCIÓN' ? 'IC-GOMS-DCH' :
+                 _tipoCam === 'CAMINATA DE RECEPCIÓN' ? 'CAM-REC' : 'CAM-ENT';
   const nombreLabor = await getConfig('nombreLabor');
   const planoReferencial = await getConfig('planoReferencial');
   const disciplinaIC = '';
@@ -3137,7 +3137,8 @@ async function generatePDF() {
 async function exportarWord() {
   // Código automático según tipo
   const _tipoCamW = await getConfig('caminata') || 'INSPECCIÓN';
-  const codigo = _tipoCamW === 'INSPECCIÓN' ? 'IC-GOMS-DCH' : 'CAMINATA';
+  const codigo = _tipoCamW === 'INSPECCIÓN' ? 'IC-GOMS-DCH' :
+                 _tipoCamW === 'CAMINATA DE RECEPCIÓN' ? 'CAM-REC' : 'CAM-ENT';
   const nombreLabor = await getConfig('nombreLabor');
   const planoReferencial = await getConfig('planoReferencial');
   const disciplinaIC = '';
@@ -3185,6 +3186,116 @@ async function exportarWord() {
 
 // Paso 2: generar y descargar — 100% síncrono para preservar el gesto en iOS
 function _descargarWord(d) {
+
+  // ── CAMINATA: template Word propio ───────────────────────────────────────
+  if (!d.esCaminata0) {
+    const logoSrc = document.querySelector('img[src^="data:image"]')?.src || '';
+    const rowspan = d.correlativo ? 4 : 3;
+    const avisoRow = d.correlativo
+      ? '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Aviso:</b> ' + d.correlativo + '</td></tr>'
+      : '';
+    const pr = d.items.map(it =>
+      '<tr>' +
+      '<td style="border:1px solid #333;padding:4px;text-align:center;">' + (it.numero || it.id) + '</td>' +
+      '<td style="border:1px solid #333;padding:4px;">' + (it.ubicacion || '') + '</td>' +
+      '<td style="border:1px solid #333;padding:4px;">' + (it.descripcion || '') + '</td>' +
+      '<td style="border:1px solid #333;padding:4px;text-align:center;">' + fmtFecha(it.fechaCompromiso) + '</td>' +
+      '<td style="border:1px solid #333;padding:4px;text-align:center;">' + (it.prioridad || '') + '</td>' +
+      '</tr>'
+    ).join('');
+    const fc = [];
+    d.items.forEach(it => {
+      const n = it.numero || it.id;
+      const fa = (it.fotos && it.fotos.length) ? it.fotos : (it.foto ? [it.foto] : []);
+      fa.filter(Boolean).forEach(s => fc.push({ src: s, num: n, ub: it.ubicacion }));
+    });
+    const fotosW = fc.length > 0
+      ? '<p style="font-weight:bold;margin:10px 0 4px;">REGISTRO FOTOGR\u00c1FICO</p>' +
+        fc.map(f =>
+          '<div style="display:inline-block;width:45%;margin:4px;vertical-align:top;text-align:center;">' +
+          '<b>#' + f.num + '</b><br>' +
+          '<img src="' + f.src + '" style="max-width:100%;max-height:180px;object-fit:contain;border:1px solid #ccc;"><br>' +
+          '<small>' + (f.ub || '') + '</small></div>'
+        ).join('')
+      : '';
+    let firmasW = '';
+    if (d.firmantes && d.firmantes.length > 0) {
+      let rows = '';
+      for (let i = 0; i < d.firmantes.length; i += 3) {
+        const g = d.firmantes.slice(i, i + 3);
+        const cds = g.map(f =>
+          '<td style="border:1px solid #333;padding:8px;text-align:center;vertical-align:bottom;width:33%;">' +
+          (f.data ? '<img src="' + f.data + '" style="max-width:100%;height:60px;object-fit:contain;display:block;margin:0 auto 4px;">' : '<div style="height:60px;"></div>') +
+          '<div style="border-top:1px solid #333;padding-top:4px;font-size:9pt;font-weight:bold;">' + (f.nombre || '') + '</div>' +
+          '<div style="font-size:8pt;">' + (f.cargo || '') + '</div>' +
+          '<div style="font-size:8pt;">' + (f.empresa || '') + '</div></td>'
+        ).join('');
+        const v = Array(3 - g.length).fill('<td style="border:1px solid #333;padding:8px;width:33%;"></td>').join('');
+        rows += '<tr>' + cds + v + '</tr>';
+      }
+      firmasW = '<p style="font-weight:bold;margin:10px 0 4px;">FIRMAS</p>' +
+        '<table style="width:100%;border-collapse:collapse;">' +
+        '<tr style="background:#f0f0f0;"><td colspan="3" style="border:1px solid #333;padding:5px 8px;font-weight:bold;text-align:center;">FIRMAS</td></tr>' +
+        rows + '</table>';
+    }
+    const htmlCam =
+      '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+      'xmlns:w="urn:schemas-microsoft-com:office:word" ' +
+      'xmlns="http://www.w3.org/TR/REC-html40">' +
+      '<head><meta charset="UTF-8"><meta name=ProgId content=Word.Document>' +
+      '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->' +
+      '<style>@page{size:21cm 29.7cm;margin:2cm}body{font-family:Arial,sans-serif;font-size:10pt;color:#333}' +
+      'table{border-collapse:collapse;width:100%;margin-bottom:8px}td{font-size:9pt;vertical-align:middle;padding:5px 8px}' +
+      '</style></head><body>' +
+      '<table><tr>' +
+      '<td style="border:1px solid #333;width:100px;text-align:center;vertical-align:middle;" rowspan="' + rowspan + '">' +
+      '<img src="' + logoSrc + '" style="width:90px;height:auto;"></td>' +
+      '<td style="border:1px solid #333;text-align:center;font-weight:bold;font-size:13pt;" rowspan="' + rowspan + '">' + (d.titulo || '') + '</td>' +
+      '<td style="border:1px solid #333;width:160px;"><b>C\u00f3digo:</b> ' + d.codigo + '</td></tr>' +
+      avisoRow +
+      '<tr><td style="border:1px solid #333;"><b>Rev.</b> 1</td></tr>' +
+      '<tr><td style="border:1px solid #333;"><b>P\u00e1g:</b> 1</td></tr></table>' +
+      '<table>' +
+      '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>WBS:</b> ' + (d.wbsNombre || '') + '</td></tr>' +
+      '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>\u00c1REA:</b> ' + (d.areaNombre || '') + '</td></tr>' +
+      '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>SUBSISTEMA:</b> ' + (d.subsistemaNombre || '') + '</td></tr>' +
+      '<tr><td style="border:1px solid #333;width:50%;"><b>EMPRESA:</b> ' + (d.empresa || '') + '</td>' +
+      '<td style="border:1px solid #333;"><b>N\u00b0 CONTRATO:</b> ' + (d.contrato || '') + '</td></tr>' +
+      '<tr><td colspan="2" style="border:1px solid #333;"><b>FECHA:</b> ' + d.fechaEmision + '</td></tr>' +
+      '</table>' +
+      fotosW +
+      '<p style="font-weight:bold;margin:10px 0 4px;">TABLA DE HALLAZGOS</p>' +
+      '<table><tr style="background:#f0f0f0;font-weight:bold;text-align:center;">' +
+      '<td style="border:1px solid #333;width:6%;">ID</td>' +
+      '<td style="border:1px solid #333;width:20%;">UBICACI\u00d3N</td>' +
+      '<td style="border:1px solid #333;width:44%;">DESCRIPCI\u00d3N</td>' +
+      '<td style="border:1px solid #333;width:16%;">FECHA</td>' +
+      '<td style="border:1px solid #333;width:14%;">PRIOR.</td></tr>' +
+      pr + '</table>' +
+      firmasW +
+      '</body></html>';
+    const fnCam = d.codigo + '_' + (d.titulo ? d.titulo.replace(/\s+/g, '_') : 'CAM') + '.doc';
+    try {
+      const blob = new Blob(['\uFEFF' + htmlCam], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none'; a.href = url; a.download = fnCam;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 3000);
+      showToast('Word descargado — ' + fnCam);
+    } catch(e) {
+      try {
+        const dataUri = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent('\uFEFF' + htmlCam);
+        const a = document.createElement('a');
+        a.href = dataUri; a.download = fnCam;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        showToast('Word descargado — ' + fnCam);
+      } catch(e2) { showToast('Error al descargar: ' + e2.message, 'error'); }
+    }
+    return;
+  }
+  // ── FIN CAMINATA ──────────────────────────────────────────────────────────
+
   const punchRows = d.items.map(it =>
     '<tr>' +
     '<td style="border:1px solid #333;padding:4px;text-align:center;">' + (it.numero || it.id) + '</td>' +
@@ -3340,6 +3451,8 @@ function actualizarVisibilidadFirmantes() {
   if (secFirmantes) secFirmantes.style.display = esCaminata0 ? 'none' : 'block';
   const secIC = document.getElementById('seccionIC');
   if (secIC) secIC.style.display = esCaminata0 ? 'block' : 'none';
+  const labelCorr = document.getElementById('labelCorrelativo');
+  if (labelCorr) labelCorr.textContent = esCaminata0 ? 'Correlativo' : 'Aviso';
   if (secResultado) {
     secResultado.style.display = esCaminata0 ? 'block' : 'none';
     if (esCaminata0) setTimeout(initFirmaIC, 100);
