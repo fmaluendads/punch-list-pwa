@@ -2236,7 +2236,7 @@ async function editItem(id) {
   // actividad/clasificación eliminados
   
   // Cargar foto
-  editCurrentPhoto = item.foto || null;
+  editCurrentPhoto = item.foto || (item.fotos && item.fotos.length ? item.fotos[0] : null);
   if (editCurrentPhoto) {
     document.getElementById('editPhotoPreview').src = editCurrentPhoto;
     document.getElementById('editPhotoPreview').style.display = 'block';
@@ -2269,14 +2269,12 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
   item.actividad = item.actividad || '';
   item.itemActividad = item.itemActividad || '';
   item.foto = editCurrentPhoto;
-  // Preserve existing fotos array; foto is legacy compat
-  if (editCurrentPhoto && (!item.fotos || !item.fotos.length)) {
-    item.fotos = [editCurrentPhoto];
-  }
+  item.fotos = editCurrentPhoto ? [editCurrentPhoto] : [];
   
   await updateItem(item);
   closeEditModal();
   renderItems();
+  renderItemSelector();
   showToast('Ítem actualizado');
 });
 
@@ -2785,7 +2783,7 @@ async function renderItemSelector() {
     <label class="item-checkbox">
       <input type="checkbox" value="${item.id}">
       <div class="item-checkbox-info">
-        <div class="id">#${num} - ${item.prioridad} ${item.foto ? '📷' : ''}</div>
+        <div class="id">#${num} - ${item.prioridad} ${(item.foto || (item.fotos && item.fotos.length)) ? '📷' : ''}</div>
         <div class="desc">${item.descripcion.substring(0, 60)}${item.descripcion.length > 60 ? '...' : ''}</div>
       </div>
     </label>
