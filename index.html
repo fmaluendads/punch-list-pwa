@@ -1147,7 +1147,7 @@ textarea { resize: vertical; min-height: 80px; }
       </div>
       
       <div class="form-section">
-        <h3>📷 Fotos (Opcional — máx. 3)</h3>
+        <h3 id="fotosSectionTitle">📷 Fotos (Opcional — máx. 3)</h3>
         <div style="display:flex;flex-direction:column;gap:10px;" id="fotosContainer">
           <!-- Slot 0 -->
           <div class="foto-slot" id="fotoSlot0">
@@ -1199,6 +1199,118 @@ textarea { resize: vertical; min-height: 80px; }
         <input type="file" id="fotoCamInput1" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,1)">
         <input type="file" id="fotoInput2" accept="image/*" style="display:none" onchange="handleFotoSlot(event,2)">
         <input type="file" id="fotoCamInput2" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,2)">
+          <!-- Slot 3 -->
+          <div class="foto-slot" id="fotoSlot3" style="display:none">
+            <div class="photo-upload" onclick="mostrarMenuFotoSlot(3)">
+              <div class="placeholder" id="fotoPlaceholder3">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:12px">Foto 4</div>
+              </div>
+              <img id="fotoPreview3" style="display:none;max-width:100%;max-height:160px;border-radius:4px;">
+            </div>
+            <div class="photo-actions" id="fotoActions3" style="display:none">
+              <button type="button" onclick="mostrarMenuFotoSlot(3)" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
+              <button type="button" onclick="removePhotoSlot(3)" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+            </div>
+          </div>
+          <!-- Slot 4 -->
+          <div class="foto-slot" id="fotoSlot4" style="display:none">
+            <div class="photo-upload" onclick="mostrarMenuFotoSlot(4)">
+              <div class="placeholder" id="fotoPlaceholder4">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:12px">Foto 5</div>
+              </div>
+              <img id="fotoPreview4" style="display:none;max-width:100%;max-height:160px;border-radius:4px;">
+            </div>
+            <div class="photo-actions" id="fotoActions4" style="display:none">
+              <button type="button" onclick="mostrarMenuFotoSlot(4)" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
+              <button type="button" onclick="removePhotoSlot(4)" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+            </div>
+          </div>
+          <!-- Slot 5 -->
+          <div class="foto-slot" id="fotoSlot5" style="display:none">
+            <div class="photo-upload" onclick="mostrarMenuFotoSlot(5)">
+              <div class="placeholder" id="fotoPlaceholder5">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:12px">Foto 6</div>
+              </div>
+              <img id="fotoPreview5" style="display:none;max-width:100%;max-height:160px;border-radius:4px;">
+            </div>
+            <div class="photo-actions" id="fotoActions5" style="display:none">
+              <button type="button" onclick="mostrarMenuFotoSlot(5)" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
+              <button type="button" onclick="removePhotoSlot(5)" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+            </div>
+          </div>
+          <!-- Slot 6 -->
+          <div class="foto-slot" id="fotoSlot6" style="display:none">
+            <div class="photo-upload" onclick="mostrarMenuFotoSlot(6)">
+              <div class="placeholder" id="fotoPlaceholder6">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:12px">Foto 7</div>
+              </div>
+              <img id="fotoPreview6" style="display:none;max-width:100%;max-height:160px;border-radius:4px;">
+            </div>
+            <div class="photo-actions" id="fotoActions6" style="display:none">
+              <button type="button" onclick="mostrarMenuFotoSlot(6)" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
+              <button type="button" onclick="removePhotoSlot(6)" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+            </div>
+          </div>
+          <!-- Slot 7 -->
+          <div class="foto-slot" id="fotoSlot7" style="display:none">
+            <div class="photo-upload" onclick="mostrarMenuFotoSlot(7)">
+              <div class="placeholder" id="fotoPlaceholder7">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:12px">Foto 8</div>
+              </div>
+              <img id="fotoPreview7" style="display:none;max-width:100%;max-height:160px;border-radius:4px;">
+            </div>
+            <div class="photo-actions" id="fotoActions7" style="display:none">
+              <button type="button" onclick="mostrarMenuFotoSlot(7)" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
+              <button type="button" onclick="removePhotoSlot(7)" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+            </div>
+          </div>
+          <!-- Slot 8 -->
+          <div class="foto-slot" id="fotoSlot8" style="display:none">
+            <div class="photo-upload" onclick="mostrarMenuFotoSlot(8)">
+              <div class="placeholder" id="fotoPlaceholder8">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:12px">Foto 9</div>
+              </div>
+              <img id="fotoPreview8" style="display:none;max-width:100%;max-height:160px;border-radius:4px;">
+            </div>
+            <div class="photo-actions" id="fotoActions8" style="display:none">
+              <button type="button" onclick="mostrarMenuFotoSlot(8)" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
+              <button type="button" onclick="removePhotoSlot(8)" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+            </div>
+          </div>
+          <!-- Slot 9 -->
+          <div class="foto-slot" id="fotoSlot9" style="display:none">
+            <div class="photo-upload" onclick="mostrarMenuFotoSlot(9)">
+              <div class="placeholder" id="fotoPlaceholder9">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:28px;height:28px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <div style="font-size:12px">Foto 10</div>
+              </div>
+              <img id="fotoPreview9" style="display:none;max-width:100%;max-height:160px;border-radius:4px;">
+            </div>
+            <div class="photo-actions" id="fotoActions9" style="display:none">
+              <button type="button" onclick="mostrarMenuFotoSlot(9)" style="background:var(--slate-lt);color:var(--text)">📷 Cambiar</button>
+              <button type="button" onclick="removePhotoSlot(9)" style="background:rgba(239,68,68,0.2);color:var(--danger)">🗑️ Quitar</button>
+            </div>
+          </div>
+        <input type="file" id="fotoInput3" accept="image/*" style="display:none" onchange="handleFotoSlot(event,3)">
+        <input type="file" id="fotoCamInput3" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,3)">
+        <input type="file" id="fotoInput4" accept="image/*" style="display:none" onchange="handleFotoSlot(event,4)">
+        <input type="file" id="fotoCamInput4" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,4)">
+        <input type="file" id="fotoInput5" accept="image/*" style="display:none" onchange="handleFotoSlot(event,5)">
+        <input type="file" id="fotoCamInput5" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,5)">
+        <input type="file" id="fotoInput6" accept="image/*" style="display:none" onchange="handleFotoSlot(event,6)">
+        <input type="file" id="fotoCamInput6" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,6)">
+        <input type="file" id="fotoInput7" accept="image/*" style="display:none" onchange="handleFotoSlot(event,7)">
+        <input type="file" id="fotoCamInput7" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,7)">
+        <input type="file" id="fotoInput8" accept="image/*" style="display:none" onchange="handleFotoSlot(event,8)">
+        <input type="file" id="fotoCamInput8" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,8)">
+        <input type="file" id="fotoInput9" accept="image/*" style="display:none" onchange="handleFotoSlot(event,9)">
+        <input type="file" id="fotoCamInput9" accept="image/*" capture="environment" style="display:none" onchange="handleFotoSlot(event,9)">
       </div>
       
       <button type="submit" class="btn btn-primary">💾 Guardar Ítem</button>
@@ -1695,7 +1807,8 @@ async function sincronizarDatosBackground() {
 // ==================== VARIABLES GLOBALES ====================
 let currentPhoto = null;       // legacy compat
 let editCurrentPhoto = null;
-let _currentFotos = [null, null, null]; // slots 0,1,2
+let _currentFotos = Array(10).fill(null); // slots 0-9; activos 0-2 normal, 0-9 para S/O
+let _maxFotoSlot = 2; // 2=normal (máx 3 fotos), 9=S/O (máx 10 fotos)
 let _currentFotoSlot = 0;
 let _icFirmaData = null; // firma responsable IC
 let _wbsActiveEmpresa = '';
@@ -1901,8 +2014,8 @@ async function handleFotoSlot(event, slot) {
   document.getElementById('fotoPreview' + slot).style.display = 'block';
   document.getElementById('fotoPlaceholder' + slot).style.display = 'none';
   document.getElementById('fotoActions' + slot).style.display = 'flex';
-  // Show next slot if available
-  if (slot < 2) document.getElementById('fotoSlot' + (slot+1)).style.display = 'block';
+  // Show next slot if available within current limit
+  if (slot < _maxFotoSlot) document.getElementById('fotoSlot' + (slot+1)).style.display = 'block';
 }
 
 function removePhotoSlot(slot) {
@@ -1912,8 +2025,8 @@ function removePhotoSlot(slot) {
   document.getElementById('fotoActions' + slot).style.display = 'none';
   document.getElementById('fotoInput' + slot).value = '';
   document.getElementById('fotoCamInput' + slot).value = '';
-  // Hide subsequent slots and clear them
-  for (let i = slot + 1; i <= 2; i++) {
+  // Hide subsequent slots and clear them up to current max
+  for (let i = slot + 1; i <= _maxFotoSlot; i++) {
     _currentFotos[i] = null;
     document.getElementById('fotoSlot' + i).style.display = 'none';
     document.getElementById('fotoPreview' + i).style.display = 'none';
@@ -1924,8 +2037,8 @@ function removePhotoSlot(slot) {
 
 // Reset foto slots after saving item
 function resetFotoSlots() {
-  _currentFotos = [null, null, null];
-  for (let i = 0; i <= 2; i++) {
+  _currentFotos = Array(10).fill(null);
+  for (let i = 0; i <= 9; i++) {
     const prev = document.getElementById('fotoPreview' + i);
     const ph = document.getElementById('fotoPlaceholder' + i);
     const act = document.getElementById('fotoActions' + i);
@@ -2823,6 +2936,26 @@ function onPrioridadChange(sel, groupId) {
     group.style.display = '';
     if (fc) fc.setAttribute('required', 'required');
   }
+  // Activar/desactivar slots extra solo para el formulario de nuevo ítem
+  if (groupId === 'fechaCompromisoGroup') {
+    const esSO = sel.value === 'S/O';
+    _maxFotoSlot = esSO ? 9 : 2;
+    const title = document.getElementById('fotosSectionTitle');
+    if (title) title.textContent = esSO ? '📷 Fotos (Opcional — máx. 10)' : '📷 Fotos (Opcional — máx. 3)';
+    // Ocultar y limpiar slots que quedan fuera del nuevo límite
+    const nuevoMax = esSO ? 9 : 2;
+    for (let i = nuevoMax + 1; i <= 9; i++) {
+      _currentFotos[i] = null;
+      const sl = document.getElementById('fotoSlot' + i);
+      if (sl) sl.style.display = 'none';
+      const prev = document.getElementById('fotoPreview' + i);
+      const ph = document.getElementById('fotoPlaceholder' + i);
+      const act = document.getElementById('fotoActions' + i);
+      if (prev) prev.style.display = 'none';
+      if (ph) ph.style.display = 'flex';
+      if (act) act.style.display = 'none';
+    }
+  }
 }
 
 function toggleAllItems() {
@@ -3162,10 +3295,14 @@ async function exportarWord() {
     'Las observaciones encontradas deben ser subsanadas progresivamente durante los avances correspondientes.';
 
   const cfg          = items[0]?.config || {};
-  const fechaEmision = cfg.fechaEmision || new Date().toISOString().split('T')[0];
-  const subsistema   = cfg.subsistema || '';
-  const originadoPor = cfg.originadoPor || '';
-  const contrato     = cfg.contrato ? (cfg.contrato.split('/').pop() || cfg.contrato) : '';
+  const fechaEmision     = cfg.fechaEmision || new Date().toISOString().split('T')[0];
+  const subsistema       = cfg.subsistema || '';
+  const originadoPor     = cfg.originadoPor || '';
+  const contrato         = cfg.contrato ? (cfg.contrato.split('/').pop() || cfg.contrato) : '';
+  const wbsNombreW       = await getConfig('wbsNombre') || (await getConfig('wbs') || '');
+  const areaNombreW      = await getConfig('areaNombre') || (await getConfig('area') || '');
+  const subsistemaNombreW= await getConfig('subsistemaNombre') || subsistema;
+  const empresaW         = cfg.empresa || await getConfig('empresa') || '';
   const caminataWord = cfg.caminata || await getConfig('caminata') || 'INSPECCIÓN';
   const esCaminata0W = caminataWord === 'INSPECCIÓN';
   if (esCaminata0W && !resultadoIC) { showToast('Seleccione el Resultado (Cumple/No Cumple)', 'error'); return; }
@@ -3177,6 +3314,8 @@ async function exportarWord() {
     codigo, nombreLabor, planoReferencial, disciplinaIC, resultadoIC,
     nivel, objetivo, desarrollo, observaciones,
     fechaEmision, subsistema, originadoPor, contrato, items,
+    wbsNombre: wbsNombreW, areaNombre: areaNombreW,
+    subsistemaNombre: subsistemaNombreW, empresa: empresaW,
     titulo: tituloWord, esCaminata0: esCaminata0W, firmantes: firmasWord,
     correlativo: correlativoW
   });
@@ -3252,7 +3391,7 @@ function _descargarWord(d) {
       '<td style="border:1px solid #333;width:160px;"><b>C\u00f3digo:</b> ' + d.codigo + '</td></tr>' +
       avisoRow +
       '<tr><td style="border:1px solid #333;"><b>Rev.</b> 1</td></tr>' +
-      '<tr><td style="border:1px solid #333;"><b>P\u00e1g:</b> 1</td></tr></table>' +
+      '<tr><td style="border:1px solid #333;"><b>P\u00e1g:</b> <span style="mso-field-code:PAGE \* MERGEFORMAT">1</span> de <span style="mso-field-code:NUMPAGES \* MERGEFORMAT">1</span></td></tr></table>' +
       '<table>' +
       '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>WBS:</b> ' + (d.wbsNombre || '') + '</td></tr>' +
       '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>\u00c1REA:</b> ' + (d.areaNombre || '') + '</td></tr>' +
@@ -3344,7 +3483,7 @@ function _descargarWord(d) {
     '</tr>' +
     '<tr><td style="border:1px solid #333;"><b>Rev.</b> 1</td></tr>' +
     '<tr><td style="border:1px solid #333;"><b>Fecha:</b> ' + d.fechaEmision + '</td></tr>' +
-    '<tr><td style="border:1px solid #333;"><b>Pág:</b> 1</td></tr>' +
+    '<tr><td style="border:1px solid #333;"><b>Pág:</b> <span style="mso-field-code:PAGE \* MERGEFORMAT">1</span> de <span style="mso-field-code:NUMPAGES \* MERGEFORMAT">1</span></td></tr>' +
     '</table>' +
 
     // Datos proyecto
