@@ -1507,6 +1507,20 @@ textarea { resize: vertical; min-height: 80px; }
     
     <button class="btn btn-primary" onclick="saveConfig()" style="margin-top:16px">💾 Guardar Configuración</button>
     <button class="btn btn-secondary" onclick="confirmarRestablecerNumeracion()" style="margin-top:8px;background:rgba(245,158,11,0.15);border:1px solid var(--warning);color:var(--warning)">🔄 Restablecer Numeración desde #1</button>
+
+    <!-- BORRADORES -->
+    <hr style="border:none;border-top:1px solid var(--slate-lt);margin:20px 0;">
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-weight:600;font-size:14px;">📁 Borradores</span>
+        <span id="borradoresCount" style="font-size:11px;color:var(--text-muted);">0/5</span>
+      </div>
+      <button class="btn btn-secondary" onclick="guardarBorrador()" style="width:100%;margin-bottom:10px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;">
+        💾 Guardar Borrador Actual
+      </button>
+      <div id="listaBorradores" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
     <hr style="border:none;border-top:1px solid var(--slate-lt);margin:20px 0;">
     <button class="btn btn-danger" onclick="confirmarNuevaInspeccion()" style="margin-top:0;background:rgba(239,68,68,0.12);border:1px solid var(--danger);color:var(--danger)">🧹 Nueva Inspección — Limpiar Todo</button>
   </div>
@@ -1816,7 +1830,7 @@ let _selectedWBSRecord = null;
 
 // ==================== INDEXEDDB ====================
 const DB_NAME = 'PunchListDB';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 let db;
 
 function openDB() {
@@ -1837,6 +1851,9 @@ function openDB() {
       }
       if (!database.objectStoreNames.contains('datos_cache')) {
         database.createObjectStore('datos_cache', { keyPath: 'key' });
+      }
+      if (!database.objectStoreNames.contains('borradores')) {
+        database.createObjectStore('borradores', { keyPath: 'id', autoIncrement: true });
       }
     };
   });
@@ -2139,7 +2156,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
     if (tab.dataset.tab === 'lista') renderItems();
-    if (tab.dataset.tab === 'config') setTimeout(actualizarIndicadorWBS, 100);
+    if (tab.dataset.tab === 'config') { setTimeout(actualizarIndicadorWBS, 100); renderBorradores(); }
     if (tab.dataset.tab === 'informe') { renderItemSelector(); actualizarVisibilidadFirmantes(); setTimeout(actualizarChecklist, 300); }
   });
 });
@@ -3904,6 +3921,133 @@ function updateOnlineStatus() {
 
 window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
+
+// ==================== BORRADORES ====================
+const MAX_BORRADORES = 5;
+
+async function _getAllBorradores() {
+  return new Promise((res, rej) => {
+    const tx = db.transaction('borradores', 'readonly');
+    const req = tx.objectStore('borradores').getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+async function guardarBorrador() {
+  try {
+    const todos = await _getAllBorradores();
+    if (todos.length >= MAX_BORRADORES) {
+      showToast('Máximo ' + MAX_BORRADORES + ' borradores. Elimina uno antes de guardar.', 'error');
+      return;
+    }
+    // Leer config actual
+    const cfg = {};
+    const cfgKeys = ['subsistema','wbs','area','top','sistema','contrato','empresa',
+      'originadoPor','respConstruccion','ingSistema','fechaEmision','caminata',
+      'nombreLabor','planoReferencial','wbsNombre','areaNombre','subsistemaNombre'];
+    for (const k of cfgKeys) { cfg[k] = await getConfig(k) || ''; }
+    // Leer ítems actuales
+    const items = await new Promise((res, rej) => {
+      const tx = db.transaction('items', 'readonly');
+      const req = tx.objectStore('items').getAll();
+      req.onsuccess = () => res(req.result || []);
+      req.onerror = () => rej(req.error);
+    });
+    // Leer firmantes
+    const firs = _firmantes.map(f => ({ nombre: f.nombre, cargo: f.cargo, empresa: f.empresa, data: f.data }));
+    const tipo = cfg.caminata || 'INSPECCIÓN';
+    const sub = cfg.subsistema || '—';
+    const fecha = new Date().toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'2-digit' });
+    const nombre = tipo + ' · ' + sub + ' · ' + fecha;
+    const borrador = { nombre, tipo, fechaCreacion: Date.now(), config: cfg, items, firmantes: firs };
+    await new Promise((res, rej) => {
+      const tx = db.transaction('borradores', 'readwrite');
+      const req = tx.objectStore('borradores').add(borrador);
+      req.onsuccess = res; req.onerror = () => rej(req.error);
+    });
+    showToast('Borrador guardado — ' + nombre, 'success');
+    renderBorradores();
+  } catch(e) { showToast('Error al guardar borrador: ' + e.message, 'error'); }
+}
+
+async function cargarBorrador(id) {
+  try {
+    const borrador = await new Promise((res, rej) => {
+      const tx = db.transaction('borradores', 'readonly');
+      const req = tx.objectStore('borradores').get(id);
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+    if (!borrador) { showToast('Borrador no encontrado', 'error'); return; }
+    // Restaurar config en IDB
+    const cfg = borrador.config || {};
+    for (const [k, v] of Object.entries(cfg)) { await setConfig(k, v); }
+    // Restaurar ítems — limpiar primero
+    await new Promise((res, rej) => {
+      const tx = db.transaction('items', 'readwrite');
+      const req = tx.objectStore('items').clear();
+      req.onsuccess = res; req.onerror = () => rej(req.error);
+    });
+    if (borrador.items && borrador.items.length > 0) {
+      for (const item of borrador.items) {
+        const { id: _id, ...rest } = item;
+        await new Promise((res, rej) => {
+          const tx = db.transaction('items', 'readwrite');
+          const req = tx.objectStore('items').add(rest);
+          req.onsuccess = res; req.onerror = () => rej(req.error);
+        });
+      }
+    }
+    // Restaurar firmantes
+    _firmantes = (borrador.firmantes || []).map(f => ({ nombre: f.nombre||'', cargo: f.cargo||'', empresa: f.empresa||'', data: f.data||null }));
+    guardarFirmantesSession();
+    // Recargar UI
+    loadConfig();
+    await renderItems();
+    showToast('Borrador cargado — ' + borrador.nombre, 'success');
+    renderBorradores();
+  } catch(e) { showToast('Error al cargar borrador: ' + e.message, 'error'); }
+}
+
+async function eliminarBorrador(id) {
+  try {
+    await new Promise((res, rej) => {
+      const tx = db.transaction('borradores', 'readwrite');
+      const req = tx.objectStore('borradores').delete(id);
+      req.onsuccess = res; req.onerror = () => rej(req.error);
+    });
+    showToast('Borrador eliminado');
+    renderBorradores();
+  } catch(e) { showToast('Error al eliminar: ' + e.message, 'error'); }
+}
+
+async function renderBorradores() {
+  try {
+    const todos = await _getAllBorradores();
+    const count = document.getElementById('borradoresCount');
+    const lista = document.getElementById('listaBorradores');
+    if (!count || !lista) return;
+    count.textContent = todos.length + '/' + MAX_BORRADORES;
+    if (todos.length === 0) {
+      lista.innerHTML = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px 0;">Sin borradores guardados</p>';
+      return;
+    }
+    lista.innerHTML = todos.map(b => {
+      const fecha = new Date(b.fechaCreacion).toLocaleDateString('es-CL', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+      const nItems = b.items ? b.items.length : 0;
+      const nFirmas = b.firmantes ? b.firmantes.filter(f => f.nombre).length : 0;
+      const detalle = nItems + ' ítems' + (nFirmas > 0 ? ' · ' + nFirmas + ' firmantes' : '');
+      return '<div style="background:var(--coal);border:1px solid var(--slate-lt);border-radius:8px;padding:10px 12px;">' +
+        '<div style="font-size:12px;font-weight:600;margin-bottom:2px;">' + b.nombre + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">' + detalle + ' · ' + fecha + '</div>' +
+        '<div style="display:flex;gap:8px;">' +
+        '<button onclick="cargarBorrador(' + b.id + ')" style="flex:1;padding:6px;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;border-radius:6px;font-size:12px;cursor:pointer;">📂 Cargar</button>' +
+        '<button onclick="eliminarBorrador(' + b.id + ')" style="padding:6px 10px;background:rgba(239,68,68,0.15);border:1px solid var(--danger);color:var(--danger);border-radius:6px;font-size:12px;cursor:pointer;">🗑️</button>' +
+        '</div></div>';
+    }).join('');
+  } catch(e) { console.warn('renderBorradores:', e); }
+}
 
 // ==================== INICIALIZACIÓN ====================
 openDB().then(async () => {
