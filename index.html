@@ -2673,6 +2673,12 @@ async function nuevaInspeccion() {
   // 4. Limpiar firmantes
   _firmantes = [];
   try { sessionStorage.removeItem('_firmantes_session'); } catch(e) {}
+  if (db) {
+    try {
+      const tx = db.transaction('config', 'readwrite');
+      tx.objectStore('config').delete('_firmantes_idb');
+    } catch(e) {}
+  }
   const listaF = document.getElementById('listaFirmantes');
   if (listaF) listaF.innerHTML = '';
 
@@ -3594,27 +3600,50 @@ function actualizarVisibilidadFirmantes() {
     secResultado.style.display = esCaminata0 ? 'block' : 'none';
     if (esCaminata0) setTimeout(initFirmaIC, 100);
   }
-  // Restaurar firmantes desde sessionStorage
+  // Restaurar firmantes desde IDB (con fallback a sessionStorage)
   if (!esCaminata0 && _firmantes.length === 0) {
-    try {
-      const saved = sessionStorage.getItem('_firmantes_session');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        _firmantes = parsed.map(f => ({ nombre: f.nombre||'', cargo: f.cargo||'', empresa: f.empresa||'', data: f.data||null }));
-        if (_firmantes.length > 0) renderFirmantes();
-      }
-    } catch(e) {}
+    const restoreFirmantes = (raw) => {
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.length > 0) {
+          _firmantes = parsed.map(f => ({ nombre: f.nombre||'', cargo: f.cargo||'', empresa: f.empresa||'', data: f.data||null }));
+          renderFirmantes();
+        }
+      } catch(e) {}
+    };
+    // Intentar IDB primero
+    if (db) {
+      try {
+        const tx = db.transaction('config', 'readonly');
+        const req = tx.objectStore('config').get('_firmantes_idb');
+        req.onsuccess = () => {
+          if (req.result?.value) restoreFirmantes(req.result.value);
+          else {
+            // Fallback sessionStorage
+            restoreFirmantes(sessionStorage.getItem('_firmantes_session'));
+          }
+        };
+        req.onerror = () => restoreFirmantes(sessionStorage.getItem('_firmantes_session'));
+      } catch(e) { restoreFirmantes(sessionStorage.getItem('_firmantes_session')); }
+    } else {
+      restoreFirmantes(sessionStorage.getItem('_firmantes_session'));
+    }
   }
   // Actualizar checklist
   setTimeout(actualizarChecklist, 200);
 }
 
 function guardarFirmantesSession() {
-  try {
-    sessionStorage.setItem('_firmantes_session', JSON.stringify(
-      _firmantes.map(f => ({ nombre: f.nombre, cargo: f.cargo, empresa: f.empresa, data: f.data }))
-    ));
-  } catch(e) {}
+  // Persistir en IDB (sobrevive refresh) Y sessionStorage (compat legacy)
+  const data = _firmantes.map(f => ({ nombre: f.nombre, cargo: f.cargo, empresa: f.empresa, data: f.data }));
+  try { sessionStorage.setItem('_firmantes_session', JSON.stringify(data)); } catch(e) {}
+  if (db) {
+    try {
+      const tx = db.transaction('config', 'readwrite');
+      tx.objectStore('config').put({ key: '_firmantes_idb', value: JSON.stringify(data) });
+    } catch(e) {}
+  }
 }
 
 function agregarFirmante() {
@@ -3655,12 +3684,15 @@ function renderFirmantes() {
   // Inicializar canvas de firma para cada firmante
   _firmantes.forEach((f, idx) => {
     initFirmaCanvas(idx);
+    // Restaurar firma dibujada DESPUÉS de initFirmaCanvas (que resetea dimensiones)
     if (f.data) {
       const canvas = document.getElementById(`firma-canvas-${idx}`);
+      if (!canvas) return;
       const img = new Image();
       img.onload = () => {
+        // canvas.width ya fue seteado en initFirmaCanvas — dibujar encima
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         document.getElementById(`firma-hint-${idx}`).style.display = 'none';
       };
       img.src = f.data;
@@ -3671,10 +3703,14 @@ function renderFirmantes() {
 function initFirmaCanvas(idx) {
   const canvas = document.getElementById(`firma-canvas-${idx}`);
   if (!canvas) return;
-  // Ajustar resolución del canvas al tamaño real del elemento
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width || canvas.offsetWidth || 300;
-  canvas.height = 120;
+  // Solo resetear dimensiones si el canvas no tiene firma guardada.
+  // Asignar canvas.width borra el contenido — NO hacerlo si ya hay data.
+  const hasSavedData = _firmantes[idx] && _firmantes[idx].data;
+  if (!hasSavedData) {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width || canvas.offsetWidth || 300;
+    canvas.height = 120;
+  }
   const ctx = canvas.getContext('2d');
   ctx.strokeStyle = '#1a1a1a';
   ctx.lineWidth = 2;
