@@ -4005,6 +4005,7 @@ async function cargarBorrador(id) {
     // Recargar UI
     loadConfig();
     await renderItems();
+    setTimeout(actualizarVisibilidadFirmantes, 200);
     showToast('Borrador cargado — ' + borrador.nombre, 'success');
     renderBorradores();
   } catch(e) { showToast('Error al cargar borrador: ' + e.message, 'error'); }
