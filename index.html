@@ -3005,12 +3005,14 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     : '';
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-    '<style>@page{size:A4;margin:12mm 15mm;}*{box-sizing:border-box;margin:0;padding:0;}' +
+    '<style>@page{size:A4;margin:12mm 15mm 18mm 15mm;' +
+    '@bottom-center{content:' + JSON.stringify(codigo + ' (' + nombreLabor + ') P\u00e1gina ') + ' counter(page) " de " counter(pages);' +
+    'font-size:8pt;font-family:Arial,sans-serif;color:#555;}}' +
+    '*{box-sizing:border-box;margin:0;padding:0;}' +
     'body{font-family:Arial,sans-serif;font-size:10pt;color:#333;}' +
     'table{border-collapse:collapse;}td{vertical-align:middle;}' +
     '.section{margin-bottom:8px;}.section-title{font-weight:bold;font-size:10pt;margin-bottom:3px;}' +
     '.section-content{font-size:9pt;line-height:1.5;white-space:pre-wrap;}' +
-    '.footer{margin-top:12px;font-size:8pt;text-align:center;border-top:1px solid #ccc;padding-top:4px;}' +
     '</style></head><body>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">' +
     '<tr>' +
@@ -3037,7 +3039,7 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     resultadoHTML +
     '<div class="section"><div class="section-title">5. OBSERVACIONES</div><div class="section-content">' + observaciones + '</div></div>' +
     fotosHTML + tablaHTML + firmasBloque +
-    '<div class="footer">' + codigo + ' (' + nombreLabor + ') P\u00e1gina 1 de 1</div>' +
+    '<div class="footer">' + codigo + ' (' + nombreLabor + ')</div>' +
     '</body></html>';
 }
 
@@ -3054,10 +3056,12 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     : '';
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-    '<style>@page{size:A4;margin:12mm 15mm;}*{box-sizing:border-box;margin:0;padding:0;}' +
+    '<style>@page{size:A4;margin:12mm 15mm 18mm 15mm;' +
+    '@bottom-center{content:' + JSON.stringify(codigo + ' (' + subsistemaNombre + ') P\u00e1gina ') + ' counter(page) " de " counter(pages);' +
+    'font-size:8pt;font-family:Arial,sans-serif;color:#555;}}' +
+    '*{box-sizing:border-box;margin:0;padding:0;}' +
     'body{font-family:Arial,sans-serif;font-size:10pt;color:#333;}' +
     'table{border-collapse:collapse;}td{vertical-align:middle;}' +
-    '.footer{margin-top:12px;font-size:8pt;text-align:center;border-top:1px solid #ccc;padding-top:4px;}' +
     '</style></head><body>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">' +
     '<tr>' +
@@ -3078,7 +3082,7 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>FECHA:</b> ' + fechaEmision + '</td></tr>' +
     '</table>' +
     fotosHTML + tablaHTML + firmasBloque +
-    '<div class="footer">' + codigo + ' (' + subsistemaNombre + ') P\u00e1gina 1 de 1</div>' +
+    '<div class="footer">' + codigo + ' (' + subsistemaNombre + ')</div>' +
     '</body></html>';
 }
 
