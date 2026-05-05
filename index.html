@@ -2554,6 +2554,9 @@ async function loadConfig() {
   if (_icF2c) _icF2c.value = await getConfig('icFirma2Cargo') || '';
   const _icF2e = document.getElementById('ic_firma2_empresa');
   if (_icF2e) _icF2e.value = await getConfig('icFirma2Empresa') || '';
+  // V47: Restaurar dataURIs de firmas IC desde IDB (críticas: deben sobrevivir al refresh)
+  _icFirmaData = await getConfig('icFirmaData') || null;
+  _icFirmaConstruccionData = await getConfig('icFirmaConstruccionData') || null;
 
   // Actualizar visibilidad sección firmantes según caminata guardada
   actualizarVisibilidadFirmantes();
@@ -2629,6 +2632,7 @@ async function removeEspecialistaUI(nombre) {
 }
 
 // ── FIRMA RESPONSABLE IC ──────────────────────────────────────
+// V47: Refactorizada — ahora setea + dibuja en una sola operación
 function initFirmaIC() {
   const canvas = document.getElementById('ic-firma-canvas');
   if (!canvas) return;
@@ -2637,20 +2641,42 @@ function initFirmaIC() {
     const el = document.getElementById('ic_firma_nombre');
     if (el) el.textContent = nombre || 'Responsable de Inspección';
   });
+  // Dimensionar canvas (esto LIMPIA su contenido — comportamiento HTML5 estándar)
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width || canvas.offsetWidth || 300;
   canvas.height = 100;
   const ctx = canvas.getContext('2d');
   ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+
+  // V47: si hay firma persistida, dibujarla AHORA (no en otro setTimeout)
+  const hint = document.getElementById('ic-firma-hint');
+  if (_icFirmaData) {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      if (hint) hint.style.display = 'none';
+    };
+    img.src = _icFirmaData;
+  } else {
+    if (hint) hint.style.display = 'flex';
+  }
+
+  // Event listeners para dibujar (V47: persiste en IDB al terminar trazo)
   let drawing = false, lastX = 0, lastY = 0;
   const getPos = (e) => {
     const r = canvas.getBoundingClientRect();
     const src = e.touches ? e.touches[0] : e;
     return { x: (src.clientX - r.left)*(canvas.width/r.width), y: (src.clientY - r.top)*(canvas.height/r.height) };
   };
-  const start = (e) => { e.preventDefault(); drawing = true; const p = getPos(e); lastX=p.x; lastY=p.y; document.getElementById('ic-firma-hint').style.display='none'; };
+  const start = (e) => { e.preventDefault(); drawing = true; const p = getPos(e); lastX=p.x; lastY=p.y; const h = document.getElementById('ic-firma-hint'); if (h) h.style.display='none'; };
   const draw = (e) => { if (!drawing) return; e.preventDefault(); const p=getPos(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; };
-  const stop = () => { if (!drawing) return; drawing=false; _icFirmaData = canvas.toDataURL('image/png'); };
+  const stop = () => {
+    if (!drawing) return;
+    drawing = false;
+    _icFirmaData = canvas.toDataURL('image/png');
+    // V47: persistir firma en IDB para sobrevivir refresh
+    setConfig('icFirmaData', _icFirmaData);
+  };
   canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
   canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', draw, {passive:false}); canvas.addEventListener('touchend', stop, {passive:false});
 }
@@ -2659,11 +2685,13 @@ function limpiarFirmaIC() {
   const canvas = document.getElementById('ic-firma-canvas');
   if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   _icFirmaData = null;
+  // V47: borrar también de IDB para que no vuelva al refresh
+  setConfig('icFirmaData', '');
   const hint = document.getElementById('ic-firma-hint');
   if (hint) hint.style.display = 'flex';
 }
 
-// ── FIRMA RESPONSABLE CONSTRUCCIÓN IC (V44) ──────────────────
+// ── FIRMA RESPONSABLE CONSTRUCCIÓN IC (V44, refactorizada V47) ──────────────────
 function initFirmaIC2() {
   const canvas = document.getElementById('ic-firma-canvas-2');
   if (!canvas) return;
@@ -2672,20 +2700,42 @@ function initFirmaIC2() {
     const el = document.getElementById('ic_firma_nombre_2');
     if (el) el.textContent = nombre || 'Responsable de Construcción';
   });
+  // Dimensionar canvas (esto LIMPIA su contenido)
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width || canvas.offsetWidth || 300;
   canvas.height = 100;
   const ctx = canvas.getContext('2d');
   ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+
+  // V47: si hay firma persistida, dibujarla AHORA
+  const hint = document.getElementById('ic-firma-hint-2');
+  if (_icFirmaConstruccionData) {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      if (hint) hint.style.display = 'none';
+    };
+    img.src = _icFirmaConstruccionData;
+  } else {
+    if (hint) hint.style.display = 'flex';
+  }
+
+  // Event listeners para dibujar
   let drawing = false, lastX = 0, lastY = 0;
   const getPos = (e) => {
     const r = canvas.getBoundingClientRect();
     const src = e.touches ? e.touches[0] : e;
     return { x: (src.clientX - r.left)*(canvas.width/r.width), y: (src.clientY - r.top)*(canvas.height/r.height) };
   };
-  const start = (e) => { e.preventDefault(); drawing = true; const p = getPos(e); lastX=p.x; lastY=p.y; document.getElementById('ic-firma-hint-2').style.display='none'; };
+  const start = (e) => { e.preventDefault(); drawing = true; const p = getPos(e); lastX=p.x; lastY=p.y; const h = document.getElementById('ic-firma-hint-2'); if (h) h.style.display='none'; };
   const draw = (e) => { if (!drawing) return; e.preventDefault(); const p=getPos(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; };
-  const stop = () => { if (!drawing) return; drawing=false; _icFirmaConstruccionData = canvas.toDataURL('image/png'); };
+  const stop = () => {
+    if (!drawing) return;
+    drawing = false;
+    _icFirmaConstruccionData = canvas.toDataURL('image/png');
+    // V47: persistir firma en IDB
+    setConfig('icFirmaConstruccionData', _icFirmaConstruccionData);
+  };
   canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
   canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', draw, {passive:false}); canvas.addEventListener('touchend', stop, {passive:false});
 }
@@ -2694,6 +2744,8 @@ function limpiarFirmaIC2() {
   const canvas = document.getElementById('ic-firma-canvas-2');
   if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
   _icFirmaConstruccionData = null;
+  // V47: borrar también de IDB
+  setConfig('icFirmaConstruccionData', '');
   const hint = document.getElementById('ic-firma-hint-2');
   if (hint) hint.style.display = 'flex';
 }
@@ -3156,8 +3208,8 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     '<div class="section"><div class="section-title">3. DESARROLLO:</div><div class="section-content">' + desarrollo + '</div></div>' +
     resultadoHTML +
     '<div class="section"><div class="section-title">5. OBSERVACIONES</div><div class="section-content">' + observaciones + '</div></div>' +
-    firmasICBloque +
-    fotosHTML + tablaHTML + firmasBloque +
+    fotosHTML + tablaHTML +
+    firmasICBloque + firmasBloque +
     '<div class="footer">' + codigo + ' (' + nombreLabor + ')</div>' +
     '</body></html>';
 }
@@ -4563,6 +4615,10 @@ async function cargarBorrador(id) {
     const firIC = borrador.firmasIC || {};
     _icFirmaData = firIC.inspeccion || null;
     _icFirmaConstruccionData = firIC.construccion || null;
+    // V47: persistir firmas en IDB (crítico: si el usuario refresca después de cargar borrador,
+    // las firmas siguen ahí porque están en IDB, no solo en variables JS globales)
+    await setConfig('icFirmaData', _icFirmaData || '');
+    await setConfig('icFirmaConstruccionData', _icFirmaConstruccionData || '');
     // Recargar UI
     loadConfig();
     await renderItems();
@@ -4581,24 +4637,9 @@ async function cargarBorrador(id) {
       }, 150);
     }
     setTimeout(actualizarVisibilidadFirmantes, 200);
-    // V44: Repintar firmas IC en canvas (se hace después de que initFirmaIC* corran)
-    setTimeout(() => {
-      const repintar = (canvasId, dataUrl, hintId) => {
-        const c = document.getElementById(canvasId);
-        if (!c || !dataUrl) return;
-        const img = new Image();
-        img.onload = () => {
-          const ctx = c.getContext('2d');
-          ctx.clearRect(0, 0, c.width, c.height);
-          ctx.drawImage(img, 0, 0, c.width, c.height);
-          const h = document.getElementById(hintId);
-          if (h) h.style.display = 'none';
-        };
-        img.src = dataUrl;
-      };
-      repintar('ic-firma-canvas', _icFirmaData, 'ic-firma-hint');
-      repintar('ic-firma-canvas-2', _icFirmaConstruccionData, 'ic-firma-hint-2');
-    }, 350);
+    // V47: el repintado de canvas ya no se hace aquí — initFirmaIC e initFirmaIC2 leen
+    // _icFirmaData y _icFirmaConstruccionData (recién seteadas) y dibujan en una sola pasada.
+    // Eso elimina la race condition que tenía el setTimeout de repintado V44.
     showToast('Borrador cargado — ' + borrador.nombre, 'success');
     renderBorradores();
   } catch(e) { showToast('Error al cargar borrador: ' + e.message, 'error'); }
