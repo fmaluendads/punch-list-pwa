@@ -1576,7 +1576,7 @@ textarea { resize: vertical; min-height: 80px; }
           </div>
         </div>
         <div class="form-group">
-          <label>Firma Responsable <span class="ic-badge">IC</span></label>
+          <label>Firma Responsable Inspección <span class="ic-badge">IC</span></label>
           <div class="firmante-card" style="background:var(--surface);padding:10px;">
             <div id="ic_firma_nombre" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;"></div>
             <div class="firma-canvas-wrap" id="ic-firma-wrap">
@@ -1585,6 +1585,23 @@ textarea { resize: vertical; min-height: 80px; }
             </div>
             <div style="display:flex;gap:8px;margin-top:8px;">
               <button type="button" onclick="limpiarFirmaIC()" style="flex:1;padding:7px;font-size:12px;border:none;border-radius:6px;cursor:pointer;background:var(--slate-lt);color:var(--text);font-family:inherit;">🗑️ Limpiar firma</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Firma Responsable Construcción <span class="ic-badge">IC</span></label>
+          <div class="firmante-card" style="background:var(--surface);padding:10px;">
+            <div id="ic_firma_nombre_2" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <input type="text" id="ic_firma2_cargo" placeholder="Cargo" style="padding:7px;font-size:12px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;">
+              <input type="text" id="ic_firma2_empresa" placeholder="Empresa" style="padding:7px;font-size:12px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;">
+            </div>
+            <div class="firma-canvas-wrap" id="ic-firma-wrap-2">
+              <canvas id="ic-firma-canvas-2" height="100"></canvas>
+              <div class="firma-canvas-hint" id="ic-firma-hint-2">Firme aquí con dedo o lápiz</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <button type="button" onclick="limpiarFirmaIC2()" style="flex:1;padding:7px;font-size:12px;border:none;border-radius:6px;cursor:pointer;background:var(--slate-lt);color:var(--text);font-family:inherit;">🗑️ Limpiar firma</button>
             </div>
           </div>
         </div>
@@ -1825,6 +1842,7 @@ let _currentFotos = Array(10).fill(null); // slots 0-9; activos 0-2 normal, 0-9 
 let _maxFotoSlot = 2; // 2=normal (máx 3 fotos), 9=S/O (máx 10 fotos)
 let _currentFotoSlot = 0;
 let _icFirmaData = null; // firma responsable IC
+let _icFirmaConstruccionData = null; // firma responsable construcción IC (V44)
 let _wbsActiveEmpresa = '';
 let _selectedWBSRecord = null;
 
@@ -2522,6 +2540,21 @@ async function loadConfig() {
   document.getElementById('cfg_nombreLabor').value = await getConfig('nombreLabor') || '';
   document.getElementById('cfg_planoReferencial').value = await getConfig('planoReferencial') || '';
 
+  // V44: Restaurar campos IC persistentes (Nivel/Objetivo/Desarrollo/Observaciones)
+  const _icNivel = document.getElementById('ic_nivel');
+  if (_icNivel) _icNivel.value = await getConfig('icNivel') || '';
+  const _icObj = document.getElementById('ic_objetivo');
+  if (_icObj) _icObj.value = await getConfig('icObjetivo') || '';
+  const _icDes = document.getElementById('ic_desarrollo');
+  if (_icDes) _icDes.value = await getConfig('icDesarrollo') || '';
+  const _icObs = document.getElementById('ic_observaciones');
+  if (_icObs) _icObs.value = await getConfig('icObservaciones') || '';
+  // V44: Restaurar cargo/empresa segunda firma IC
+  const _icF2c = document.getElementById('ic_firma2_cargo');
+  if (_icF2c) _icF2c.value = await getConfig('icFirma2Cargo') || '';
+  const _icF2e = document.getElementById('ic_firma2_empresa');
+  if (_icF2e) _icF2e.value = await getConfig('icFirma2Empresa') || '';
+
   // Actualizar visibilidad sección firmantes según caminata guardada
   actualizarVisibilidadFirmantes();
 
@@ -2630,6 +2663,41 @@ function limpiarFirmaIC() {
   if (hint) hint.style.display = 'flex';
 }
 
+// ── FIRMA RESPONSABLE CONSTRUCCIÓN IC (V44) ──────────────────
+function initFirmaIC2() {
+  const canvas = document.getElementById('ic-firma-canvas-2');
+  if (!canvas) return;
+  // Precarga nombre del responsable de construcción
+  getConfig('respConstruccion').then(nombre => {
+    const el = document.getElementById('ic_firma_nombre_2');
+    if (el) el.textContent = nombre || 'Responsable de Construcción';
+  });
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width || canvas.offsetWidth || 300;
+  canvas.height = 100;
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  let drawing = false, lastX = 0, lastY = 0;
+  const getPos = (e) => {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left)*(canvas.width/r.width), y: (src.clientY - r.top)*(canvas.height/r.height) };
+  };
+  const start = (e) => { e.preventDefault(); drawing = true; const p = getPos(e); lastX=p.x; lastY=p.y; document.getElementById('ic-firma-hint-2').style.display='none'; };
+  const draw = (e) => { if (!drawing) return; e.preventDefault(); const p=getPos(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; };
+  const stop = () => { if (!drawing) return; drawing=false; _icFirmaConstruccionData = canvas.toDataURL('image/png'); };
+  canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
+  canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', draw, {passive:false}); canvas.addEventListener('touchend', stop, {passive:false});
+}
+
+function limpiarFirmaIC2() {
+  const canvas = document.getElementById('ic-firma-canvas-2');
+  if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  _icFirmaConstruccionData = null;
+  const hint = document.getElementById('ic-firma-hint-2');
+  if (hint) hint.style.display = 'flex';
+}
+
 function setResultadoICInforme(valor) {
   document.getElementById('ic_toggleCumple').classList.remove('active');
   document.getElementById('ic_toggleNoCumple').classList.remove('active');
@@ -2678,11 +2746,22 @@ async function nuevaInspeccion() {
   await setConfig('nextItemNum', 1);
 
   // 3. Limpiar campos del tab Informe
-  const campos = ['ic_nivel','ic_objetivo','ic_desarrollo','ic_observaciones'];
+  const campos = ['ic_nivel','ic_objetivo','ic_desarrollo','ic_observaciones',
+                  'ic_firma2_cargo','ic_firma2_empresa'];
   campos.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  // V44: borrar también las claves persistidas en IDB (sino vuelven al refrescar)
+  await setConfig('icNivel', '');
+  await setConfig('icObjetivo', '');
+  await setConfig('icDesarrollo', '');
+  await setConfig('icObservaciones', '');
+  await setConfig('icFirma2Cargo', '');
+  await setConfig('icFirma2Empresa', '');
+  // V44: Limpiar firma de Construcción
+  limpiarFirmaIC();
+  limpiarFirmaIC2();
   // Limpiar resultado toggle
   document.getElementById('ic_toggleCumple')?.classList.remove('active');
   document.getElementById('ic_toggleNoCumple')?.classList.remove('active');
@@ -3003,7 +3082,8 @@ function toggleItemCheck(div) {
 // ═══════════════════════════════════════════════════════
 function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     planoReferencial, nivel, nombreLabor, originadoPor, firmaICHTML,
-    objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO, subsistema) {
+    objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO, subsistema,
+    firmaConstruccionData, firmaConstruccionNombre, firmaConstruccionCargo, firmaConstruccionEmpresa) {
   subsistema = subsistema || '';
   const logoSrc = LOGO || '';
   const rowspan = correlativo ? 4 : 3;
@@ -3020,6 +3100,20 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
       '<td style="border:1px solid #333;width:28px;height:28px;text-align:center;font-weight:bold;">' + (resultadoIC === 'nocumple' ? 'X' : '') + '</td></tr>' +
       '</table></div>'
     : '';
+
+  // V44: Bloque firma Construcción al final (estilo similar a firmas de Caminata)
+  const firmaConstr = firmaConstruccionData
+    ? '<img src="' + firmaConstruccionData + '" style="max-width:140px;max-height:55px;object-fit:contain;">'
+    : '<div style="min-height:55px;"></div>';
+  const firmaConstruccionBloque =
+    '<table style="width:60%;border-collapse:collapse;margin:14px 0 6px 0;font-size:9pt;">' +
+    '<tr><td style="border:1px solid #333;padding:6px 8px;text-align:center;vertical-align:bottom;">' +
+    firmaConstr +
+    '<div style="border-top:1px solid #333;margin-top:4px;padding-top:3px;"><b>' + (firmaConstruccionNombre || '—') + '</b></div>' +
+    '<div style="font-size:8pt;color:#555;">' + (firmaConstruccionCargo || '') + '</div>' +
+    '<div style="font-size:8pt;color:#555;">' + (firmaConstruccionEmpresa || '') + '</div>' +
+    '<div style="font-size:8pt;color:#555;font-style:italic;margin-top:2px;">Responsable de Construcción</div>' +
+    '</td></tr></table>';
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<style>@page{size:A4;margin:12mm 15mm 18mm 15mm;' +
@@ -3055,6 +3149,7 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     '<div class="section"><div class="section-title">3. DESARROLLO:</div><div class="section-content">' + desarrollo + '</div></div>' +
     resultadoHTML +
     '<div class="section"><div class="section-title">5. OBSERVACIONES</div><div class="section-content">' + observaciones + '</div></div>' +
+    firmaConstruccionBloque +
     fotosHTML + tablaHTML + firmasBloque +
     '<div class="footer">' + codigo + ' (' + nombreLabor + ')</div>' +
     '</body></html>';
@@ -3155,6 +3250,11 @@ async function generatePDF() {
   const subsistema   = cfg.subsistema   || await getConfig('subsistema')   || '';
   const originadoPor = cfg.originadoPor || await getConfig('originadoPor') || '';
   const pkReferencia = cfg.nombreLabor  || nombreLabor;
+
+  // V44: Datos firma Construcción (segunda firma IC)
+  const firmaConstruccionNombre  = cfg.respConstruccion || await getConfig('respConstruccion') || '';
+  const firmaConstruccionCargo   = (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '';
+  const firmaConstruccionEmpresa = (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '';
 
   let empresa = cfg.empresa || await getConfig('empresa') || '';
   let contrato = cfg.contrato || await getConfig('contrato') || '';
@@ -3269,7 +3369,8 @@ async function generatePDF() {
   const htmlContent = esCaminata0
     ? buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
         planoReferencial, nivel, nombreLabor, originadoPor, firmaICHTML,
-        objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO, subsistema)
+        objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO, subsistema,
+        _icFirmaConstruccionData, firmaConstruccionNombre, firmaConstruccionCargo, firmaConstruccionEmpresa)
     : buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
         wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
         originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO);
@@ -3344,7 +3445,13 @@ async function exportarWord() {
     wbsNombre: wbsNombreW, areaNombre: areaNombreW,
     subsistemaNombre: subsistemaNombreW, empresa: empresaW,
     titulo: tituloWord, esCaminata0: esCaminata0W, firmantes: firmasWord,
-    correlativo: correlativoW
+    correlativo: correlativoW,
+    // V44: firmas IC para Word
+    firmaInspeccion: _icFirmaData || null,
+    firmaConstruccion: _icFirmaConstruccionData || null,
+    firmaConstruccionNombre: cfg.respConstruccion || await getConfig('respConstruccion') || '',
+    firmaConstruccionCargo: (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '',
+    firmaConstruccionEmpresa: (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || ''
   });
 }
 
@@ -3852,6 +3959,53 @@ function _dxBuildBody(d) {
     firmasBlock += _dxTable(rows, { totalW: 9639, gridCols: [colW, colW, 9639 - 2 * colW] });
   }
 
+  // V44: Firmas IC (Inspección + Construcción) — tabla 1×2
+  if (tipo === 'IC') {
+    firmasBlock += _dxPar('', { sz: 18 });
+    firmasBlock += _dxPar('FIRMAS', { bold: true, sz: 20, align: 'center' });
+    const colW = Math.floor(9639 / 2);
+    let picCounter = 900;
+
+    function _icFirmaCell(opts) {
+      let inner = '';
+      if (opts.data) {
+        const img = addImage(opts.data);
+        if (img) {
+          const targetWcm = 4.5;
+          const ratio = img.h / img.w;
+          let cxCm = targetWcm;
+          let cyCm = targetWcm * ratio;
+          if (cyCm > 1.8) { cyCm = 1.8; cxCm = cyCm / ratio; }
+          inner += _dxImg(img.rId, _dxCmToEmu(cxCm), _dxCmToEmu(cyCm), opts.label || 'firmaIC', picCounter++);
+        }
+      } else {
+        inner += _dxPar(' ', { sz: 24 });
+      }
+      inner += _dxPar('____________________________', { align: 'center', sz: 16 });
+      inner += _dxPar(opts.nombre || '—', { align: 'center', bold: true, sz: 16 });
+      if (opts.cargo)   inner += _dxPar(opts.cargo,   { align: 'center', sz: 14 });
+      if (opts.empresa) inner += _dxPar(opts.empresa, { align: 'center', sz: 14 });
+      inner += _dxPar(opts.role, { align: 'center', sz: 14, color: '555555' });
+      return _dxCell(inner, { w: colW, vAlign: 'bottom' });
+    }
+
+    const cellInsp = _icFirmaCell({
+      data: d.firmaInspeccion || null,
+      nombre: d.originadoPor || '',
+      role: 'Responsable Inspección',
+      label: 'firmaInspeccion'
+    });
+    const cellConstr = _icFirmaCell({
+      data: d.firmaConstruccion || null,
+      nombre: d.firmaConstruccionNombre || '',
+      cargo: d.firmaConstruccionCargo || '',
+      empresa: d.firmaConstruccionEmpresa || '',
+      role: 'Responsable Construcción',
+      label: 'firmaConstruccion'
+    });
+    firmasBlock += _dxTable([{ cells: cellInsp + cellConstr }], { totalW: 9639, gridCols: [colW, 9639 - colW] });
+  }
+
   const body =
     headerTable + _dxPar('', { sz: 8 }) +
     datosTable + _dxPar('', { sz: 8 }) +
@@ -4011,6 +4165,7 @@ function actualizarVisibilidadFirmantes() {
   if (secResultado) {
     secResultado.style.display = esCaminata0 ? 'block' : 'none';
     if (esCaminata0) setTimeout(initFirmaIC, 100);
+    if (esCaminata0) setTimeout(initFirmaIC2, 100);
   }
   // Restaurar firmantes desde IDB (con fallback a sessionStorage)
   if (!esCaminata0 && _firmantes.length === 0) {
@@ -4336,7 +4491,10 @@ async function guardarBorrador() {
     const cfg = {};
     const cfgKeys = ['subsistema','wbs','area','top','sistema','contrato','empresa',
       'originadoPor','respConstruccion','ingSistema','fechaEmision','caminata',
-      'nombreLabor','planoReferencial','wbsNombre','areaNombre','subsistemaNombre'];
+      'nombreLabor','planoReferencial','wbsNombre','areaNombre','subsistemaNombre',
+      // V44: campos IC persistentes
+      'icNivel','icObjetivo','icDesarrollo','icObservaciones',
+      'icFirma2Cargo','icFirma2Empresa'];
     for (const k of cfgKeys) { cfg[k] = await getConfig(k) || ''; }
     // Leer ítems actuales
     const items = await new Promise((res, rej) => {
@@ -4347,11 +4505,16 @@ async function guardarBorrador() {
     });
     // Leer firmantes
     const firs = _firmantes.map(f => ({ nombre: f.nombre, cargo: f.cargo, empresa: f.empresa, data: f.data }));
+    // V44: firmas IC (Inspección + Construcción)
+    const firmasIC = {
+      inspeccion: _icFirmaData || null,
+      construccion: _icFirmaConstruccionData || null
+    };
     const tipo = cfg.caminata || 'INSPECCIÓN';
     const sub = cfg.subsistema || '—';
     const fecha = new Date().toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'2-digit' });
     const nombre = tipo + ' · ' + sub + ' · ' + fecha;
-    const borrador = { nombre, tipo, fechaCreacion: Date.now(), config: cfg, items, firmantes: firs };
+    const borrador = { nombre, tipo, fechaCreacion: Date.now(), config: cfg, items, firmantes: firs, firmasIC };
     await new Promise((res, rej) => {
       const tx = db.transaction('borradores', 'readwrite');
       const req = tx.objectStore('borradores').add(borrador);
@@ -4393,6 +4556,10 @@ async function cargarBorrador(id) {
     // Restaurar firmantes
     _firmantes = (borrador.firmantes || []).map(f => ({ nombre: f.nombre||'', cargo: f.cargo||'', empresa: f.empresa||'', data: f.data||null }));
     guardarFirmantesSession();
+    // V44: Restaurar firmas IC (si las trae el borrador)
+    const firIC = borrador.firmasIC || {};
+    _icFirmaData = firIC.inspeccion || null;
+    _icFirmaConstruccionData = firIC.construccion || null;
     // Recargar UI
     loadConfig();
     await renderItems();
@@ -4411,6 +4578,24 @@ async function cargarBorrador(id) {
       }, 150);
     }
     setTimeout(actualizarVisibilidadFirmantes, 200);
+    // V44: Repintar firmas IC en canvas (se hace después de que initFirmaIC* corran)
+    setTimeout(() => {
+      const repintar = (canvasId, dataUrl, hintId) => {
+        const c = document.getElementById(canvasId);
+        if (!c || !dataUrl) return;
+        const img = new Image();
+        img.onload = () => {
+          const ctx = c.getContext('2d');
+          ctx.clearRect(0, 0, c.width, c.height);
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          const h = document.getElementById(hintId);
+          if (h) h.style.display = 'none';
+        };
+        img.src = dataUrl;
+      };
+      repintar('ic-firma-canvas', _icFirmaData, 'ic-firma-hint');
+      repintar('ic-firma-canvas-2', _icFirmaConstruccionData, 'ic-firma-hint-2');
+    }, 350);
     showToast('Borrador cargado — ' + borrador.nombre, 'success');
     renderBorradores();
   } catch(e) { showToast('Error al cargar borrador: ' + e.message, 'error'); }
@@ -4456,9 +4641,33 @@ async function renderBorradores() {
 }
 
 // ==================== INICIALIZACIÓN ====================
+// V44: Wire-up persistencia campos IC con debounce
+function _wireupPersistenciaIC() {
+  const map = [
+    ['ic_nivel',          'icNivel'],
+    ['ic_objetivo',       'icObjetivo'],
+    ['ic_desarrollo',     'icDesarrollo'],
+    ['ic_observaciones',  'icObservaciones'],
+    ['ic_firma2_cargo',   'icFirma2Cargo'],
+    ['ic_firma2_empresa', 'icFirma2Empresa']
+  ];
+  const _t = {}; // timers por id
+  for (const [id, key] of map) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    const handler = () => {
+      clearTimeout(_t[id]);
+      _t[id] = setTimeout(() => { setConfig(key, el.value || ''); }, 400);
+    };
+    el.addEventListener('input', handler);
+    el.addEventListener('change', handler);
+  }
+}
+
 openDB().then(async () => {
   await loadDatos();
   loadConfig();
+  _wireupPersistenciaIC();
   updateOnlineStatus();
   updateWBSContextBanner();
   actualizarIndicadorWBS();
