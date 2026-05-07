@@ -1,4 +1,4 @@
-const CACHE_NAME = 'punch-list-v47';
+const CACHE_NAME = 'punch-list-v50';
 const URLS_TO_CACHE = [
   './',
   './index.html',

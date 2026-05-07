@@ -1381,7 +1381,13 @@ textarea { resize: vertical; min-height: 80px; }
             <span id="wbsSyncIcon">⏳</span>
             <span id="wbsSyncText" style="flex:1;">Verificando datos WBS...</span>
           </div>
-          <label>N° SubSistema <span class="required">*</span></label>
+          <!-- V50: Toggle "Inspección sin SS" -->
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--coal);border-radius:6px;margin-bottom:10px;cursor:pointer;font-size:13px;border:1px solid var(--slate-lt);">
+            <input type="checkbox" id="cfg_sinSS" onchange="onSinSSChange()" style="width:16px;height:16px;cursor:pointer;">
+            <span style="flex:1;">📦 Inspección sin SubSistema</span>
+            <span style="font-size:10px;color:var(--text-muted);">No requiere WBS</span>
+          </label>
+          <label>N° SubSistema <span class="required" id="ssRequiredMark">*</span></label>
           <button type="button" class="wbs-select-btn" id="wbsSelectBtn" onclick="openWBSSearch()">
             <div class="wbs-btn-label">
               <div class="wbs-btn-placeholder" id="wbsBtnPlaceholder">Seleccionar SubSistema...</div>
@@ -1591,7 +1597,7 @@ textarea { resize: vertical; min-height: 80px; }
         <div class="form-group">
           <label>Firma Responsable Construcción <span class="ic-badge">IC</span></label>
           <div class="firmante-card" style="background:var(--surface);padding:10px;">
-            <div id="ic_firma_nombre_2" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;"></div>
+            <input type="text" id="ic_firma2_nombre" placeholder="Nombre del responsable" style="width:100%;padding:7px;font-size:12px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;font-weight:600;margin-bottom:8px;">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
               <input type="text" id="ic_firma2_cargo" placeholder="Cargo" style="padding:7px;font-size:12px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;">
               <input type="text" id="ic_firma2_empresa" placeholder="Empresa" style="padding:7px;font-size:12px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;">
@@ -2192,23 +2198,27 @@ descripcionInput.addEventListener('input', () => {
 document.getElementById('itemForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
+  // V50: leer flag "Inspección sin SS"
+  const sinSSActivo = await getConfig('sinSS') === true || await getConfig('sinSS') === 'true';
+
   const config = {
     wbs: await getConfig('wbs') || '',
     area: await getConfig('area') || '',
     top: await getConfig('top') || '',
     sistema: await getConfig('sistema') || '',
-    subsistema: await getConfig('subsistema') || '',
+    subsistema: sinSSActivo ? '' : (await getConfig('subsistema') || ''),
     empresa: await getConfig('empresa') || '',
     contrato: await getConfig('contrato') || '',
     originadoPor: await getConfig('originadoPor') || '',
     respConstruccion: await getConfig('respConstruccion') || '',
     ingSistema: await getConfig('ingSistema') || '',
     fechaEmision: await getConfig('fechaEmision') || '',
-    caminata: await getConfig('caminata') || 'INSPECCIÓN'
+    caminata: await getConfig('caminata') || 'INSPECCIÓN',
+    sinSS: sinSSActivo // V50: flag explícito en cada ítem
   };
 
-  // ⑤ Validación: avisar si WBS no está configurado
-  if (!config.subsistema) {
+  // V50: solo avisar si NO se marcó "sin SS" expresamente
+  if (!config.subsistema && !sinSSActivo) {
     showToast('⚠️ SubSistema no configurado — ítem guardado sin WBS', 'warn');
   }
   
@@ -2265,8 +2275,10 @@ async function renderItems() {
   
   container.innerHTML = items.map(item => {
     const cfg = item.config || {};
-    const wbsMeta = (cfg.empresa || cfg.subsistema)
-      ? `<div class="item-wbs-meta">🏢 ${cfg.empresa || '—'} &nbsp;|&nbsp; 📦 ${cfg.subsistema || '—'}</div>`
+    // V50: mostrar "SIN SUBSISTEMA" si el ítem fue creado con flag sinSS
+    const ssDisplay = cfg.sinSS ? 'SIN SUBSISTEMA' : (cfg.subsistema || '—');
+    const wbsMeta = (cfg.empresa || cfg.subsistema || cfg.sinSS)
+      ? `<div class="item-wbs-meta">🏢 ${cfg.empresa || '—'} &nbsp;|&nbsp; 📦 ${ssDisplay}</div>`
       : '';
     return `
     <div class="item-card ${item.prioridad.toLowerCase()}">
@@ -2549,7 +2561,9 @@ async function loadConfig() {
   if (_icDes) _icDes.value = await getConfig('icDesarrollo') || '';
   const _icObs = document.getElementById('ic_observaciones');
   if (_icObs) _icObs.value = await getConfig('icObservaciones') || '';
-  // V44: Restaurar cargo/empresa segunda firma IC
+  // V44: Restaurar cargo/empresa segunda firma IC + V49: nombre
+  const _icF2n = document.getElementById('ic_firma2_nombre');
+  if (_icF2n) _icF2n.value = await getConfig('icFirma2Nombre') || '';
   const _icF2c = document.getElementById('ic_firma2_cargo');
   if (_icF2c) _icF2c.value = await getConfig('icFirma2Cargo') || '';
   const _icF2e = document.getElementById('ic_firma2_empresa');
@@ -2598,6 +2612,15 @@ async function loadEspecialistas() {
   selResp.value = savedResp;
   selIng.value = savedIng;
 
+  // V50: Restaurar checkbox "Inspección sin SS" desde IDB
+  const sinSS = await getConfig('sinSS');
+  const chkSinSS = document.getElementById('cfg_sinSS');
+  if (chkSinSS) {
+    chkSinSS.checked = sinSS === true || sinSS === 'true';
+    // Aplicar el estado visual (deshabilitar selector si está activo)
+    onSinSSChange();
+  }
+
   const list = document.getElementById('especialistasList');
   const custom = await getConfig('customEspecialistas') || [];
   document.getElementById('especialistasCount').textContent = custom.length;
@@ -2629,6 +2652,44 @@ async function removeEspecialistaUI(nombre) {
   await removeCustomEspecialista(nombre);
   await loadEspecialistas();
   showToast('Especialista eliminado');
+}
+
+// V50: Toggle "Inspección sin SS" — gestiona persistencia y UI condicional
+async function onSinSSChange() {
+  const chk = document.getElementById('cfg_sinSS');
+  if (!chk) return;
+  const activo = chk.checked;
+  await setConfig('sinSS', activo);
+  // Deshabilitar/habilitar el botón selector y la marca de required
+  const btn = document.getElementById('wbsSelectBtn');
+  const reqMark = document.getElementById('ssRequiredMark');
+  if (btn) {
+    btn.disabled = activo;
+    btn.style.opacity = activo ? '0.4' : '1';
+    btn.style.cursor = activo ? 'not-allowed' : 'pointer';
+  }
+  if (reqMark) reqMark.style.display = activo ? 'none' : 'inline';
+  // Si se activa, limpiar el SS visualmente y los campos derivados
+  if (activo) {
+    document.getElementById('wbsBtnPlaceholder').style.display = 'block';
+    document.getElementById('wbsBtnSelected').style.display = 'none';
+    document.getElementById('wbsBtnPlaceholder').textContent = 'No requerido (inspección sin SS)';
+    btn?.classList.remove('selected');
+    // Borrar campos derivados de la UI (sin tocar IDB del WBS por si vuelve a destildar)
+    ['derived_contrato','derived_sistema','derived_top','derived_area','derived_wbs'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '—';
+    });
+  } else {
+    // Restaurar placeholder normal
+    document.getElementById('wbsBtnPlaceholder').textContent = 'Seleccionar SubSistema...';
+    // Si había un SS guardado, lo restauramos (loadConfig lo hace al boot, acá solo en runtime)
+    const ssGuardado = await getConfig('subsistema');
+    if (ssGuardado) {
+      const rec = (window.DATOS?.wbsData || []).find(r => r.ss_id === ssGuardado);
+      if (rec) applyWBSRecord(rec, false);
+    }
+  }
 }
 
 // ── FIRMA RESPONSABLE IC ──────────────────────────────────────
@@ -2695,11 +2756,13 @@ function limpiarFirmaIC() {
 function initFirmaIC2() {
   const canvas = document.getElementById('ic-firma-canvas-2');
   if (!canvas) return;
-  // Precarga nombre del responsable de construcción
-  getConfig('respConstruccion').then(nombre => {
-    const el = document.getElementById('ic_firma_nombre_2');
-    if (el) el.textContent = nombre || 'Responsable de Construcción';
-  });
+  // V49: precarga nombre en el input solo si está vacío (sugerencia de Config)
+  const nombreInput = document.getElementById('ic_firma2_nombre');
+  if (nombreInput && !nombreInput.value) {
+    getConfig('respConstruccion').then(nombre => {
+      if (nombre && !nombreInput.value) nombreInput.value = nombre;
+    });
+  }
   // Dimensionar canvas (esto LIMPIA su contenido)
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width || canvas.offsetWidth || 300;
@@ -2799,7 +2862,7 @@ async function nuevaInspeccion() {
 
   // 3. Limpiar campos del tab Informe
   const campos = ['ic_nivel','ic_objetivo','ic_desarrollo','ic_observaciones',
-                  'ic_firma2_cargo','ic_firma2_empresa'];
+                  'ic_firma2_nombre','ic_firma2_cargo','ic_firma2_empresa'];
   campos.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -2809,8 +2872,16 @@ async function nuevaInspeccion() {
   await setConfig('icObjetivo', '');
   await setConfig('icDesarrollo', '');
   await setConfig('icObservaciones', '');
+  await setConfig('icFirma2Nombre', '');
   await setConfig('icFirma2Cargo', '');
   await setConfig('icFirma2Empresa', '');
+  // V50: resetear flag inspección sin SS
+  await setConfig('sinSS', false);
+  const _chkSinSS = document.getElementById('cfg_sinSS');
+  if (_chkSinSS) {
+    _chkSinSS.checked = false;
+    onSinSSChange();
+  }
   // V44: Limpiar firma de Construcción
   limpiarFirmaIC();
   limpiarFirmaIC2();
@@ -3279,8 +3350,13 @@ async function generatePDF() {
   const noCumpleActive = document.getElementById('ic_toggleNoCumple').classList.contains('active');
   const resultadoIC = cumpleActive ? 'cumple' : (noCumpleActive ? 'nocumple' : '');
 
-  if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
-  if (!planoReferencial) { showToast('Configure Plano Referencial en Config', 'error'); return; }
+  // V48: validaciones SOLO aplican a IC. Las caminatas no requieren plano ni labor.
+  // Detectamos tipo desde DOM (más fresco que IDB) para evitar falsos positivos
+  const _esIC_pre = (document.getElementById('cfg_caminata')?.value || _tipoCam) === 'INSPECCIÓN';
+  if (_esIC_pre) {
+    if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
+    if (!planoReferencial) { showToast('Configure Plano Referencial en Config', 'error'); return; }
+  }
   // resultadoIC validation deferred to after caminata detection
 
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
@@ -3306,12 +3382,15 @@ async function generatePDF() {
 
   const cfg = items[0]?.config || {};
   const fechaEmision = formatDate(cfg.fechaEmision || await getConfig('fechaEmision') || new Date().toISOString().split('T')[0]);
-  const subsistema   = cfg.subsistema   || await getConfig('subsistema')   || '';
+  // V50: si la inspección es "sin SS", el subsistema se reemplaza por placeholder
+  const _sinSS_pdf = cfg.sinSS === true || (await getConfig('sinSS') === true || await getConfig('sinSS') === 'true');
+  const subsistema   = _sinSS_pdf ? 'SIN SUBSISTEMA' : (cfg.subsistema   || await getConfig('subsistema')   || '');
   const originadoPor = cfg.originadoPor || await getConfig('originadoPor') || '';
   const pkReferencia = cfg.nombreLabor  || nombreLabor;
 
-  // V44: Datos firma Construcción (segunda firma IC)
-  const firmaConstruccionNombre  = cfg.respConstruccion || await getConfig('respConstruccion') || '';
+  // V44/V49: Datos firma Construcción (segunda firma IC)
+  // V49: nombre ahora es input editable (con fallback a Config si está vacío)
+  const firmaConstruccionNombre  = (document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '';
   const firmaConstruccionCargo   = (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '';
   const firmaConstruccionEmpresa = (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '';
 
@@ -3393,9 +3472,10 @@ async function generatePDF() {
   </table>`;
 
   // Leer datos adicionales para Acta de Caminata
-  const wbsNombre        = await getConfig('wbsNombre') || (await getConfig('wbs') || '');
-  const areaNombre       = await getConfig('areaNombre') || (await getConfig('area') || '');
-  const subsistemaNombre = await getConfig('subsistemaNombre') || subsistema;
+  // V50: si "sin SS", todos los identificadores WBS muestran SIN SUBSISTEMA
+  const wbsNombre        = _sinSS_pdf ? 'SIN SUBSISTEMA' : (await getConfig('wbsNombre') || (await getConfig('wbs') || ''));
+  const areaNombre       = _sinSS_pdf ? 'SIN SUBSISTEMA' : (await getConfig('areaNombre') || (await getConfig('area') || ''));
+  const subsistemaNombre = _sinSS_pdf ? 'SIN SUBSISTEMA' : (await getConfig('subsistemaNombre') || subsistema);
 
   const tablaRows5col = items.map(it => {
     const num = it.numero || it.id;
@@ -3463,7 +3543,11 @@ async function exportarWord() {
   const noCumpleActive = document.getElementById('ic_toggleNoCumple').classList.contains('active');
   const resultadoIC = cumpleActive ? 'cumple' : (noCumpleActive ? 'nocumple' : '');
 
-  if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
+  // V48: validaciones SOLO aplican a IC (mismo patrón que generatePDF)
+  const _esIC_preW = (document.getElementById('cfg_caminata')?.value || _tipoCamW) === 'INSPECCIÓN';
+  if (_esIC_preW) {
+    if (!nombreLabor) { showToast('Configure Nombre Labor en Config', 'error'); return; }
+  }
   // resultadoIC se valida después de conocer la caminata
 
   const selectedIds = Array.from(document.querySelectorAll('#itemSelectorList input[type="checkbox"]:checked'))
@@ -3482,12 +3566,14 @@ async function exportarWord() {
 
   const cfg          = items[0]?.config || {};
   const fechaEmision     = cfg.fechaEmision || new Date().toISOString().split('T')[0];
-  const subsistema       = cfg.subsistema || '';
+  // V50: detectar si la inspección es "sin SS"
+  const _sinSS_word = cfg.sinSS === true || (await getConfig('sinSS') === true || await getConfig('sinSS') === 'true');
+  const subsistema       = _sinSS_word ? 'SIN SUBSISTEMA' : (cfg.subsistema || '');
   const originadoPor     = cfg.originadoPor || '';
   const contrato         = cfg.contrato ? (cfg.contrato.split('/').pop() || cfg.contrato) : '';
-  const wbsNombreW       = await getConfig('wbsNombre') || (await getConfig('wbs') || '');
-  const areaNombreW      = await getConfig('areaNombre') || (await getConfig('area') || '');
-  const subsistemaNombreW= await getConfig('subsistemaNombre') || subsistema;
+  const wbsNombreW       = _sinSS_word ? 'SIN SUBSISTEMA' : (await getConfig('wbsNombre') || (await getConfig('wbs') || ''));
+  const areaNombreW      = _sinSS_word ? 'SIN SUBSISTEMA' : (await getConfig('areaNombre') || (await getConfig('area') || ''));
+  const subsistemaNombreW= _sinSS_word ? 'SIN SUBSISTEMA' : (await getConfig('subsistemaNombre') || subsistema);
   const empresaW         = cfg.empresa || await getConfig('empresa') || '';
   const caminataWord = cfg.caminata || await getConfig('caminata') || 'INSPECCIÓN';
   const esCaminata0W = caminataWord === 'INSPECCIÓN';
@@ -3507,7 +3593,7 @@ async function exportarWord() {
     // V44: firmas IC para Word
     firmaInspeccion: _icFirmaData || null,
     firmaConstruccion: _icFirmaConstruccionData || null,
-    firmaConstruccionNombre: cfg.respConstruccion || await getConfig('respConstruccion') || '',
+    firmaConstruccionNombre: (document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '',
     firmaConstruccionCargo: (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '',
     firmaConstruccionEmpresa: (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || ''
   });
@@ -4549,7 +4635,9 @@ async function guardarBorrador() {
       'nombreLabor','planoReferencial','wbsNombre','areaNombre','subsistemaNombre',
       // V44: campos IC persistentes
       'icNivel','icObjetivo','icDesarrollo','icObservaciones',
-      'icFirma2Cargo','icFirma2Empresa'];
+      'icFirma2Nombre','icFirma2Cargo','icFirma2Empresa',
+      // V50: flag inspección sin SS
+      'sinSS'];
     for (const k of cfgKeys) { cfg[k] = await getConfig(k) || ''; }
     // Leer ítems actuales
     const items = await new Promise((res, rej) => {
@@ -4692,6 +4780,7 @@ function _wireupPersistenciaIC() {
     ['ic_objetivo',       'icObjetivo'],
     ['ic_desarrollo',     'icDesarrollo'],
     ['ic_observaciones',  'icObservaciones'],
+    ['ic_firma2_nombre',  'icFirma2Nombre'],
     ['ic_firma2_cargo',   'icFirma2Cargo'],
     ['ic_firma2_empresa', 'icFirma2Empresa']
   ];
