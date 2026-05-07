@@ -1594,9 +1594,15 @@ textarea { resize: vertical; min-height: 80px; }
             </div>
           </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="firmaConstruccionWrap">
+          <!-- V51: Toggle "Sin Responsable Construcción" -->
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--coal);border-radius:6px;margin-bottom:10px;cursor:pointer;font-size:13px;border:1px solid var(--slate-lt);">
+            <input type="checkbox" id="cfg_sinRespConstr" onchange="onSinRespConstrChange()" style="width:16px;height:16px;cursor:pointer;">
+            <span style="flex:1;">🚫 Sin Responsable Construcción</span>
+            <span style="font-size:10px;color:var(--text-muted);">No aplica</span>
+          </label>
           <label>Firma Responsable Construcción <span class="ic-badge">IC</span></label>
-          <div class="firmante-card" style="background:var(--surface);padding:10px;">
+          <div class="firmante-card" id="firmaConstruccionCard" style="background:var(--surface);padding:10px;">
             <input type="text" id="ic_firma2_nombre" placeholder="Nombre del responsable" style="width:100%;padding:7px;font-size:12px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;font-weight:600;margin-bottom:8px;">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
               <input type="text" id="ic_firma2_cargo" placeholder="Cargo" style="padding:7px;font-size:12px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;">
@@ -2620,6 +2626,13 @@ async function loadEspecialistas() {
     // Aplicar el estado visual (deshabilitar selector si está activo)
     onSinSSChange();
   }
+  // V51: Restaurar checkbox "Sin Responsable Construcción"
+  const sinRespC = await getConfig('sinRespConstr');
+  const chkSinRC = document.getElementById('cfg_sinRespConstr');
+  if (chkSinRC) {
+    chkSinRC.checked = sinRespC === true || sinRespC === 'true';
+    onSinRespConstrChange();
+  }
 
   const list = document.getElementById('especialistasList');
   const custom = await getConfig('customEspecialistas') || [];
@@ -2689,6 +2702,18 @@ async function onSinSSChange() {
       const rec = (window.DATOS?.wbsData || []).find(r => r.ss_id === ssGuardado);
       if (rec) applyWBSRecord(rec, false);
     }
+  }
+}
+
+// V51: Toggle "Sin Responsable Construcción" — oculta tarjeta UI + bloque PDF/Word
+async function onSinRespConstrChange() {
+  const chk = document.getElementById('cfg_sinRespConstr');
+  if (!chk) return;
+  const activo = chk.checked;
+  await setConfig('sinRespConstr', activo);
+  const card = document.getElementById('firmaConstruccionCard');
+  if (card) {
+    card.style.display = activo ? 'none' : 'block';
   }
 }
 
@@ -2881,6 +2906,13 @@ async function nuevaInspeccion() {
   if (_chkSinSS) {
     _chkSinSS.checked = false;
     onSinSSChange();
+  }
+  // V51: resetear flag sin Responsable Construcción
+  await setConfig('sinRespConstr', false);
+  const _chkSinRC = document.getElementById('cfg_sinRespConstr');
+  if (_chkSinRC) {
+    _chkSinRC.checked = false;
+    onSinRespConstrChange();
   }
   // V44: Limpiar firma de Construcción
   limpiarFirmaIC();
@@ -3206,7 +3238,8 @@ function toggleItemCheck(div) {
 function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     planoReferencial, nivel, nombreLabor, originadoPor, firmaInspeccionData,
     objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO, subsistema,
-    firmaConstruccionData, firmaConstruccionNombre, firmaConstruccionCargo, firmaConstruccionEmpresa) {
+    firmaConstruccionData, firmaConstruccionNombre, firmaConstruccionCargo, firmaConstruccionEmpresa,
+    sinRespConstr) {
   subsistema = subsistema || '';
   const logoSrc = LOGO || '';
   const rowspan = correlativo ? 4 : 3;
@@ -3230,6 +3263,16 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
   const _imgFirmaConstr = firmaConstruccionData
     ? '<img src="' + firmaConstruccionData + '" style="max-width:140px;max-height:55px;object-fit:contain;">'
     : '<div style="min-height:55px;"></div>';
+  // V51: si sinRespConstr=true, omitir la segunda fila (firma Construcción)
+  const _filaFirmaConstr = sinRespConstr
+    ? ''
+    : '<tr><td style="border:1px solid #333;padding:6px 8px;text-align:center;vertical-align:bottom;">' +
+      _imgFirmaConstr +
+      '<div style="border-top:1px solid #333;margin-top:4px;padding-top:3px;"><b>' + (firmaConstruccionNombre || '—') + '</b></div>' +
+      '<div style="font-size:8pt;color:#555;">' + (firmaConstruccionCargo || '') + '</div>' +
+      '<div style="font-size:8pt;color:#555;">' + (firmaConstruccionEmpresa || '') + '</div>' +
+      '<div style="font-size:8pt;color:#555;font-style:italic;margin-top:2px;">Responsable de Construcción</div>' +
+      '</td></tr>';
   const firmasICBloque =
     '<table style="width:60%;border-collapse:collapse;margin:14px 0 6px 0;font-size:9pt;">' +
     '<tr><td style="border:1px solid #333;padding:6px 8px;text-align:center;vertical-align:bottom;">' +
@@ -3237,13 +3280,8 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     '<div style="border-top:1px solid #333;margin-top:4px;padding-top:3px;"><b>' + (originadoPor || '—') + '</b></div>' +
     '<div style="font-size:8pt;color:#555;font-style:italic;">Responsable Inspección</div>' +
     '</td></tr>' +
-    '<tr><td style="border:1px solid #333;padding:6px 8px;text-align:center;vertical-align:bottom;">' +
-    _imgFirmaConstr +
-    '<div style="border-top:1px solid #333;margin-top:4px;padding-top:3px;"><b>' + (firmaConstruccionNombre || '—') + '</b></div>' +
-    '<div style="font-size:8pt;color:#555;">' + (firmaConstruccionCargo || '') + '</div>' +
-    '<div style="font-size:8pt;color:#555;">' + (firmaConstruccionEmpresa || '') + '</div>' +
-    '<div style="font-size:8pt;color:#555;font-style:italic;margin-top:2px;">Responsable de Construcción</div>' +
-    '</td></tr></table>';
+    _filaFirmaConstr +
+    '</table>';
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<style>@page{size:A4;margin:12mm 15mm 18mm 15mm;' +
@@ -3390,9 +3428,11 @@ async function generatePDF() {
 
   // V44/V49: Datos firma Construcción (segunda firma IC)
   // V49: nombre ahora es input editable (con fallback a Config si está vacío)
-  const firmaConstruccionNombre  = (document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '';
-  const firmaConstruccionCargo   = (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '';
-  const firmaConstruccionEmpresa = (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '';
+  // V51: si flag sinRespConstr activo, no se renderiza el bloque
+  const _sinRespConstr_pdf = await getConfig('sinRespConstr') === true || await getConfig('sinRespConstr') === 'true';
+  const firmaConstruccionNombre  = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '');
+  const firmaConstruccionCargo   = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '');
+  const firmaConstruccionEmpresa = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '');
 
   let empresa = cfg.empresa || await getConfig('empresa') || '';
   let contrato = cfg.contrato || await getConfig('contrato') || '';
@@ -3508,7 +3548,8 @@ async function generatePDF() {
     ? buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
         planoReferencial, nivel, nombreLabor, originadoPor, _icFirmaData,
         objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO, subsistema,
-        _icFirmaConstruccionData, firmaConstruccionNombre, firmaConstruccionCargo, firmaConstruccionEmpresa)
+        _icFirmaConstruccionData, firmaConstruccionNombre, firmaConstruccionCargo, firmaConstruccionEmpresa,
+        _sinRespConstr_pdf)
     : buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
         wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
         originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO);
@@ -3595,7 +3636,9 @@ async function exportarWord() {
     firmaConstruccion: _icFirmaConstruccionData || null,
     firmaConstruccionNombre: (document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '',
     firmaConstruccionCargo: (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '',
-    firmaConstruccionEmpresa: (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || ''
+    firmaConstruccionEmpresa: (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '',
+    // V51: flag para omitir bloque de firma Construcción
+    sinRespConstr: await getConfig('sinRespConstr') === true || await getConfig('sinRespConstr') === 'true'
   });
 }
 
@@ -4135,16 +4178,22 @@ function _dxBuildBody(d) {
       role: 'Responsable Inspección',
       label: 'firmaInspeccion'
     });
-    const cellConstr = _icFirmaCell({
-      data: d.firmaConstruccion || null,
-      nombre: d.firmaConstruccionNombre || '',
-      cargo: d.firmaConstruccionCargo || '',
-      empresa: d.firmaConstruccionEmpresa || '',
-      role: 'Responsable Construcción',
-      label: 'firmaConstruccion'
-    });
-    // V45: 2 filas de 1 columna cada una → firmas apiladas verticalmente
-    firmasBlock += _dxTable([{ cells: cellInsp }, { cells: cellConstr }], { totalW: tblW, gridCols: [tblW] });
+    // V51: solo crear/incluir cellConstr si sinRespConstr no está activo
+    if (d.sinRespConstr) {
+      // Solo firma de Inspección — tabla de 1 fila
+      firmasBlock += _dxTable([{ cells: cellInsp }], { totalW: tblW, gridCols: [tblW] });
+    } else {
+      const cellConstr = _icFirmaCell({
+        data: d.firmaConstruccion || null,
+        nombre: d.firmaConstruccionNombre || '',
+        cargo: d.firmaConstruccionCargo || '',
+        empresa: d.firmaConstruccionEmpresa || '',
+        role: 'Responsable Construcción',
+        label: 'firmaConstruccion'
+      });
+      // V45: 2 filas de 1 columna cada una → firmas apiladas verticalmente
+      firmasBlock += _dxTable([{ cells: cellInsp }, { cells: cellConstr }], { totalW: tblW, gridCols: [tblW] });
+    }
   }
 
   const body =
@@ -4637,7 +4686,9 @@ async function guardarBorrador() {
       'icNivel','icObjetivo','icDesarrollo','icObservaciones',
       'icFirma2Nombre','icFirma2Cargo','icFirma2Empresa',
       // V50: flag inspección sin SS
-      'sinSS'];
+      'sinSS',
+      // V51: flag sin Responsable Construcción
+      'sinRespConstr'];
     for (const k of cfgKeys) { cfg[k] = await getConfig(k) || ''; }
     // Leer ítems actuales
     const items = await new Promise((res, rej) => {
