@@ -9,6 +9,41 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 ---
 
 
+---
+
+## [V53] - 2026-05-11
+
+### Fixed
+- **Crítico — pérdida de fotos al editar ítem**: El modal de edición solo cargaba la primera foto y al guardar sobrescribía el array completo con esa única foto. Si un ítem tenía 3-10 fotos, al editarlo (incluso solo para corregir un texto) perdía 2-9 fotos. Causa raíz: el modal de edición fue diseñado en una versión temprana para 1 foto y nunca se actualizó cuando se agregó soporte multi-foto en V42 (S/O = 10 fotos).
+
+### Added
+- **Grilla multi-foto en modal de edición** (paridad con modal de creación). Los slots `editFotoSlot0..9` se muestran dinámicamente según prioridad (3 normal / 10 S/O).
+- Funciones nuevas: `poblarEditFotos(fotos)`, `actualizarTituloFotosEdit()`, `handleEditFotoSlot(event)`, `removeEditPhotoSlot(slot)`.
+- Variable global `_editingItemId` que rastrea si estamos creando o editando (flag para reutilizar UI de fotos con `_currentFotos` compartido).
+
+### Changed
+- **Límite de borradores subido de 5 a 10**: `MAX_BORRADORES = 10`. Permite mantener más inspecciones simultáneas sin tener que descartar trabajo pendiente. Soluciona reporte del equipo: "instalo la app múltiples veces para tener más espacios de trabajo".
+- **Renombrado UI "Borrador" → "Inspección Guardada"** (solo textos visibles al usuario, sin tocar código interno):
+  - `📁 Borradores` → `📁 Inspecciones Guardadas`
+  - `💾 Guardar Borrador Actual` → `💾 Guardar Inspección Actual`
+  - Toasts: `Borrador guardado/cargado/eliminado` → `Inspección guardada/cargada/eliminada`
+  - Contador: `0/5` → `0/10`
+  - Mensaje vacío: `Sin borradores guardados` → `Sin inspecciones guardadas`
+- Funciones obsoletas eliminadas: `handleEditPhotoSelect`, `removeEditPhoto` (reemplazadas por las multi-slot).
+
+### Removed
+- HTML obsoleto del modal de edición: bloque single-photo (`editPhotoUpload`, `editPhotoPreview`, `editPhotoActions`) reemplazado por grilla de 10 slots.
+
+### Notas técnicas
+- El flag `_editingItemId` evita necesidad de duplicar funciones de fotos entre modal de creación y edición. La variable `_currentFotos` se comparte; el handler decide en qué slot escribe según el contexto activo.
+- Compatibilidad con formato legacy: `item.foto` (single string) y `item.fotos[]` (array). Al guardar, ambos campos se actualizan (`item.fotos = fotosLimpias`, `item.foto = fotosLimpias[0]`) para no romper código que lee el formato viejo.
+- `editFotoInput` y `editFotoCamInput` son inputs únicos compartidos entre los 10 slots (vs. modal de creación que tiene 10 pares de inputs `fotoInput0..9`). Esto reduce HTML pero requiere usar `_fotoModoSlot` para saber qué slot está activo.
+- Sin migración de datos: ítems creados pre-V53 con formato `item.foto` o `item.fotos = [una sola]` se cargan correctamente en el modal nuevo.
+
+### Roadmap
+- V53 cierra **Fase 1** del plan multi-sesión: alivio inmediato (10 borradores) + fix pérdida fotos + cambio terminológico.
+- **Fase 2 (V54-V55)** queda pendiente: implementar selector global de inspección activa en header (multi-sesión real) según diseño de ARQUITECTURA.md.
+
 ## [V52] - 2026-05-11
 
 ### Fixed
