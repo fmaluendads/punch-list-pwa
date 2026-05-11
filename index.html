@@ -1529,6 +1529,10 @@ textarea { resize: vertical; min-height: 80px; }
 
     <hr style="border:none;border-top:1px solid var(--slate-lt);margin:20px 0;">
     <button class="btn btn-danger" onclick="confirmarNuevaInspeccion()" style="margin-top:0;background:rgba(239,68,68,0.12);border:1px solid var(--danger);color:var(--danger)">🧹 Nueva Inspección — Limpiar Todo</button>
+    <!-- V52: Indicador de versión visible — debe coincidir con CACHE_NAME en sw.js -->
+    <div style="text-align:center;font-size:10px;color:#666;margin-top:24px;padding:10px;border-top:1px solid var(--slate-lt);">
+      Punch List PWA · <span id="appVersionLabel">V52</span> · WBS Sync: <span id="appLastSync">—</span>
+    </div>
   </div>
 
   <!-- TAB: INFORME -->
@@ -1857,6 +1861,10 @@ let _icFirmaData = null; // firma responsable IC
 let _icFirmaConstruccionData = null; // firma responsable construcción IC (V44)
 let _wbsActiveEmpresa = '';
 let _selectedWBSRecord = null;
+// V52: flag para deshabilitar listeners de persistencia durante cargarBorrador (evita pisar datos)
+let _loadingBorrador = false;
+// V52: versión visible en la UI — debe coincidir con CACHE_NAME en sw.js
+const APP_VERSION = 'V52';
 
 // ==================== INDEXEDDB ====================
 const DB_NAME = 'PunchListDB';
@@ -1976,6 +1984,25 @@ async function setConfig(key, value) {
     const request = store.put({ key, value });
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
+  });
+}
+
+// V52: Helper para leer booleanos de IDB de forma consistente
+// Maneja casos: true (boolean), 'true' (string), 1 (number), '1' (string), false/'false'/0/null/undefined
+async function _getBool(key) {
+  const v = await getConfig(key);
+  return v === true || v === 'true' || v === 1 || v === '1';
+}
+
+// V52: Batch write a config — 1 sola transacción IDB en lugar de N (más rápido y atómico)
+async function setConfigBatch(obj) {
+  const tx = db.transaction('config', 'readwrite');
+  const store = tx.objectStore('config');
+  Object.entries(obj).forEach(([k, v]) => store.put({ key: k, value: v }));
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
   });
 }
 
@@ -2205,7 +2232,7 @@ document.getElementById('itemForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
   // V50: leer flag "Inspección sin SS"
-  const sinSSActivo = await getConfig('sinSS') === true || await getConfig('sinSS') === 'true';
+  const sinSSActivo = await _getBool('sinSS');
 
   const config = {
     wbs: await getConfig('wbs') || '',
@@ -2618,19 +2645,16 @@ async function loadEspecialistas() {
   selResp.value = savedResp;
   selIng.value = savedIng;
 
-  // V50: Restaurar checkbox "Inspección sin SS" desde IDB
-  const sinSS = await getConfig('sinSS');
+  // V50/V52: Restaurar checkbox "Inspección sin SS" desde IDB
   const chkSinSS = document.getElementById('cfg_sinSS');
   if (chkSinSS) {
-    chkSinSS.checked = sinSS === true || sinSS === 'true';
-    // Aplicar el estado visual (deshabilitar selector si está activo)
+    chkSinSS.checked = await _getBool('sinSS');
     onSinSSChange();
   }
-  // V51: Restaurar checkbox "Sin Responsable Construcción"
-  const sinRespC = await getConfig('sinRespConstr');
+  // V51/V52: Restaurar checkbox "Sin Responsable Construcción"
   const chkSinRC = document.getElementById('cfg_sinRespConstr');
   if (chkSinRC) {
-    chkSinRC.checked = sinRespC === true || sinRespC === 'true';
+    chkSinRC.checked = await _getBool('sinRespConstr');
     onSinRespConstrChange();
   }
 
@@ -2941,6 +2965,9 @@ async function nuevaInspeccion() {
   // 6. Refrescar listas
   await renderItems();
   await renderItemSelector();
+
+  // V52: recargar config para limpiar la UI completamente (FIX bug #6)
+  await loadConfig();
 
   showToast('Nueva inspección lista — ítems y campos limpiados', 'success');
 }
@@ -3421,7 +3448,7 @@ async function generatePDF() {
   const cfg = items[0]?.config || {};
   const fechaEmision = formatDate(cfg.fechaEmision || await getConfig('fechaEmision') || new Date().toISOString().split('T')[0]);
   // V50: si la inspección es "sin SS", el subsistema se reemplaza por placeholder
-  const _sinSS_pdf = cfg.sinSS === true || (await getConfig('sinSS') === true || await getConfig('sinSS') === 'true');
+  const _sinSS_pdf = cfg.sinSS === true || (await _getBool('sinSS'));
   const subsistema   = _sinSS_pdf ? 'SIN SUBSISTEMA' : (cfg.subsistema   || await getConfig('subsistema')   || '');
   const originadoPor = cfg.originadoPor || await getConfig('originadoPor') || '';
   const pkReferencia = cfg.nombreLabor  || nombreLabor;
@@ -3429,7 +3456,7 @@ async function generatePDF() {
   // V44/V49: Datos firma Construcción (segunda firma IC)
   // V49: nombre ahora es input editable (con fallback a Config si está vacío)
   // V51: si flag sinRespConstr activo, no se renderiza el bloque
-  const _sinRespConstr_pdf = await getConfig('sinRespConstr') === true || await getConfig('sinRespConstr') === 'true';
+  const _sinRespConstr_pdf = await _getBool('sinRespConstr');
   const firmaConstruccionNombre  = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '');
   const firmaConstruccionCargo   = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '');
   const firmaConstruccionEmpresa = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '');
@@ -3608,7 +3635,7 @@ async function exportarWord() {
   const cfg          = items[0]?.config || {};
   const fechaEmision     = cfg.fechaEmision || new Date().toISOString().split('T')[0];
   // V50: detectar si la inspección es "sin SS"
-  const _sinSS_word = cfg.sinSS === true || (await getConfig('sinSS') === true || await getConfig('sinSS') === 'true');
+  const _sinSS_word = cfg.sinSS === true || (await _getBool('sinSS'));
   const subsistema       = _sinSS_word ? 'SIN SUBSISTEMA' : (cfg.subsistema || '');
   const originadoPor     = cfg.originadoPor || '';
   const contrato         = cfg.contrato ? (cfg.contrato.split('/').pop() || cfg.contrato) : '';
@@ -3638,7 +3665,7 @@ async function exportarWord() {
     firmaConstruccionCargo: (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '',
     firmaConstruccionEmpresa: (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '',
     // V51: flag para omitir bloque de firma Construcción
-    sinRespConstr: await getConfig('sinRespConstr') === true || await getConfig('sinRespConstr') === 'true'
+    sinRespConstr: await _getBool('sinRespConstr')
   });
 }
 
@@ -4573,9 +4600,14 @@ async function actualizarIndicadorWBS() {
   const icon = document.getElementById('wbsSyncIcon');
   const text = document.getElementById('wbsSyncText');
   const box  = document.getElementById('wbsSyncIndicator');
-  if (!icon || !text || !box) return;
+  // V52: también actualizar el footer de versión (puede no existir si Config no se renderizó aún)
+  const verLabel = document.getElementById('appVersionLabel');
+  const verSync  = document.getElementById('appLastSync');
+  if (verLabel) verLabel.textContent = APP_VERSION;
+
   const wbsCount = DATOS.wbsData?.length || 0;
   let tsText = '';
+  let tsShort = '—';
   try {
     if (db) {
       const cached = await loadDatosIDB();
@@ -4583,9 +4615,14 @@ async function actualizarIndicadorWBS() {
         const d = new Date(cached.ts);
         tsText = ' · Sync: ' + d.toLocaleDateString('es-CL') + ' ' +
           d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        tsShort = d.toLocaleDateString('es-CL') + ' ' +
+          d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
       }
     }
   } catch(e) {}
+  if (verSync) verSync.textContent = tsShort;
+
+  if (!icon || !text || !box) return;
   if (wbsCount === 0) {
     box.style.cssText += ';background:rgba(239,68,68,0.12);border:1px solid var(--danger);';
     icon.textContent = '❌'; text.style.color = 'var(--danger)';
@@ -4719,8 +4756,11 @@ async function guardarBorrador() {
   } catch(e) { showToast('Error al guardar borrador: ' + e.message, 'error'); }
 }
 
+// V52: Refactor completo — flujo atómico secuencial, sin race conditions
 async function cargarBorrador(id) {
+  _loadingBorrador = true; // bloquear listeners debounce mientras restauramos
   try {
+    // 1. Leer borrador del IDB
     const borrador = await new Promise((res, rej) => {
       const tx = db.transaction('borradores', 'readonly');
       const req = tx.objectStore('borradores').get(id);
@@ -4728,60 +4768,107 @@ async function cargarBorrador(id) {
       req.onerror = () => rej(req.error);
     });
     if (!borrador) { showToast('Borrador no encontrado', 'error'); return; }
-    // Restaurar config en IDB
     const cfg = borrador.config || {};
-    for (const [k, v] of Object.entries(cfg)) { await setConfig(k, v); }
-    // Restaurar ítems — limpiar primero
-    await new Promise((res, rej) => {
-      const tx = db.transaction('items', 'readwrite');
-      const req = tx.objectStore('items').clear();
-      req.onsuccess = res; req.onerror = () => rej(req.error);
-    });
-    if (borrador.items && borrador.items.length > 0) {
-      for (const item of borrador.items) {
-        const { id: _id, ...rest } = item;
-        await new Promise((res, rej) => {
-          const tx = db.transaction('items', 'readwrite');
-          const req = tx.objectStore('items').add(rest);
-          req.onsuccess = res; req.onerror = () => rej(req.error);
-        });
-      }
-    }
-    // Restaurar firmantes
-    _firmantes = (borrador.firmantes || []).map(f => ({ nombre: f.nombre||'', cargo: f.cargo||'', empresa: f.empresa||'', data: f.data||null }));
-    guardarFirmantesSession();
-    // V44: Restaurar firmas IC (si las trae el borrador)
+
+    // 2. Persistir TODO el config a IDB en 1 sola transacción (atómico, rápido)
     const firIC = borrador.firmasIC || {};
+    const configBatch = Object.assign({}, cfg, {
+      icFirmaData: firIC.inspeccion || '',
+      icFirmaConstruccionData: firIC.construccion || ''
+    });
+    await setConfigBatch(configBatch);
+
+    // 3. Setear variables JS globales (memoria) sincrónicamente
     _icFirmaData = firIC.inspeccion || null;
     _icFirmaConstruccionData = firIC.construccion || null;
-    // V47: persistir firmas en IDB (crítico: si el usuario refresca después de cargar borrador,
-    // las firmas siguen ahí porque están en IDB, no solo en variables JS globales)
-    await setConfig('icFirmaData', _icFirmaData || '');
-    await setConfig('icFirmaConstruccionData', _icFirmaConstruccionData || '');
-    // Recargar UI
-    loadConfig();
-    await renderItems();
-    // Forzar empresa y contrato del borrador DESPUÉS de loadConfig
-    // (loadConfig puede sobreescribirlos via applyWBSRecord)
-    if (cfg.empresa) {
-      setTimeout(async () => {
-        const selEmp = document.getElementById('cfg_empresaWbs');
-        if (selEmp) selEmp.value = cfg.empresa;
-        await setConfig('empresa', cfg.empresa);
-        if (cfg.contrato) {
-          const dContrato = document.getElementById('derived_contrato');
-          if (dContrato) dContrato.textContent = cfg.contrato;
-          await setConfig('contrato', cfg.contrato);
+    _firmantes = (borrador.firmantes || []).map(f => ({
+      nombre: f.nombre || '', cargo: f.cargo || '',
+      empresa: f.empresa || '', data: f.data || null
+    }));
+    guardarFirmantesSession();
+
+    // 4. Limpiar y restaurar items (1 transacción para clear + multiple add)
+    await new Promise((res, rej) => {
+      const tx = db.transaction('items', 'readwrite');
+      const store = tx.objectStore('items');
+      store.clear();
+      if (borrador.items?.length) {
+        for (const it of borrador.items) {
+          const { id: _id, ...rest } = it;
+          store.add(rest);
         }
-      }, 150);
+      }
+      tx.oncomplete = res;
+      tx.onerror = () => rej(tx.error);
+    });
+
+    // 5. await loadConfig — refresca la UI desde IDB (FIX bug crítico #2)
+    await loadConfig();
+
+    // 6. Fallback derived_*: si el SS del borrador no existe en data.json actual,
+    //    restaurar derived desde lo guardado en el cfg (FIX bug #5)
+    if (cfg.subsistema) {
+      const rec = (window.DATOS?.wbsData || []).find(r => r.ss_id === cfg.subsistema);
+      if (!rec) {
+        // SS no existe en catálogo actual → restaurar derived manualmente desde cfg
+        const derivedMap = {
+          'derived_contrato': cfg.contrato,
+          'derived_sistema':  cfg.sistema,
+          'derived_top':      cfg.top,
+          'derived_area':     cfg.area,
+          'derived_wbs':      cfg.wbs
+        };
+        for (const [id, val] of Object.entries(derivedMap)) {
+          const el = document.getElementById(id);
+          if (el && val) el.textContent = val;
+        }
+        // También repintar el botón WBS para que muestre el SS aunque no esté en catálogo
+        const btnPlace = document.getElementById('wbsBtnPlaceholder');
+        const btnSel = document.getElementById('wbsBtnSelected');
+        const btnId  = document.getElementById('wbsBtnId');
+        const btnName= document.getElementById('wbsBtnName');
+        if (btnPlace) btnPlace.style.display = 'none';
+        if (btnSel) btnSel.style.display = 'block';
+        if (btnId) btnId.textContent = cfg.subsistema;
+        if (btnName) btnName.textContent = cfg.subsistemaNombre || '(catálogo no actualizado)';
+      }
     }
-    setTimeout(actualizarVisibilidadFirmantes, 200);
-    // V47: el repintado de canvas ya no se hace aquí — initFirmaIC e initFirmaIC2 leen
-    // _icFirmaData y _icFirmaConstruccionData (recién seteadas) y dibujan en una sola pasada.
-    // Eso elimina la race condition que tenía el setTimeout de repintado V44.
+
+    // 7. Renderizar items y firmantes (FIX bug crítico #1)
+    await renderItems();
+    renderFirmantes(); // ← antes no se llamaba, por eso había que apretar "Agregar firma"
+
+    // 8. Repintar canvas de firmas CAM (la dataURI está en _firmantes[i].data)
+    setTimeout(() => {
+      _firmantes.forEach((f, idx) => {
+        if (!f.data) return;
+        const canvas = document.getElementById('firma-canvas-' + idx);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const hint = document.getElementById('firma-hint-' + idx);
+          if (hint) hint.style.display = 'none';
+        };
+        img.src = f.data;
+      });
+    }, 150);
+
+    // 9. UNA SOLA llamada a actualizarVisibilidadFirmantes (FIX bug #3)
+    //    NOTA: loadConfig() ya la llamó internamente. Si volvemos a llamarla acá sería duplicado.
+    //    No la llamamos: loadConfig se encargó.
+
     showToast('Borrador cargado — ' + borrador.nombre, 'success');
     renderBorradores();
-  } catch(e) { showToast('Error al cargar borrador: ' + e.message, 'error'); }
+  } catch (e) {
+    showToast('Error al cargar borrador: ' + e.message, 'error');
+    console.error('cargarBorrador:', e);
+  } finally {
+    // CRÍTICO: reactivar listeners DESPUÉS de que toda la UI esté establecida
+    setTimeout(() => { _loadingBorrador = false; }, 500);
+  }
 }
 
 async function eliminarBorrador(id) {
@@ -4840,8 +4927,14 @@ function _wireupPersistenciaIC() {
     const el = document.getElementById(id);
     if (!el) continue;
     const handler = () => {
+      // V52: si está cargando borrador, no persistir (evita pisar datos restaurados)
+      if (_loadingBorrador) return;
       clearTimeout(_t[id]);
-      _t[id] = setTimeout(() => { setConfig(key, el.value || ''); }, 400);
+      _t[id] = setTimeout(() => {
+        // V52: doble check al disparar el timer (por si el borrador llegó durante debounce)
+        if (_loadingBorrador) return;
+        setConfig(key, el.value || '');
+      }, 400);
     };
     el.addEventListener('input', handler);
     el.addEventListener('change', handler);
