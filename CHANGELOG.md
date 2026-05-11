@@ -1,0 +1,270 @@
+# Changelog
+
+Todas las versiones notables del proyecto **Punch List PWA** quedan documentadas en este archivo.
+
+El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado usa numeración secuencial simple (V42, V43, V44...).
+
+Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como invalidación del Service Worker.
+
+---
+
+
+## [V52] - 2026-05-11
+
+### Fixed
+- **Crítico**: Firmas CAM no aparecían al cargar borrador hasta apretar "Agregar firma" (faltaba `renderFirmantes()` después de restaurar `_firmantes`).
+- **Crítico**: `loadConfig()` se llamaba SIN `await` dentro de `cargarBorrador`, causando race conditions con el repintado de firmas IC y campos del DOM.
+- **Crítico**: Pérdida de `planoReferencial` y `nombreLabor` al cargar borrador. Causa: listeners debounce 400ms de `_wireupPersistenciaIC` se disparaban DURANTE la carga, sobrescribiendo con valores parciales del DOM.
+- **Alto**: `actualizarVisibilidadFirmantes` se llamaba 2 veces tras cargar borrador (una desde `loadConfig`, otra desde `setTimeout` redundante).
+- **Alto**: Campos derived_* (Sistema, TOP, Área, WBS) quedaban en "—" si el SS del borrador no existía en el `data.json` actualizado. Ahora se restauran desde el cfg del borrador como fallback.
+- **Medio**: `nuevaInspeccion()` limpiaba IDB pero no recargaba la UI, dejando dropdowns con valores fantasma.
+
+### Added
+- Flag global `_loadingBorrador` que deshabilita listeners de persistencia durante carga de borrador.
+- Helper `_getBool(key)` que normaliza booleanos de IDB (maneja `true`/`'true'`/`1`/`'1'` de forma consistente).
+- Helper `setConfigBatch(obj)` que escribe múltiples claves en 1 sola transacción IDB (10× más rápido, atómico).
+- **Indicador de versión visible** en el footer del Config: `Punch List PWA · V52 · WBS Sync: [fecha]`. Permite verificar de un vistazo qué versión está corriendo en cada dispositivo — clave para troubleshoot de cache en iOS.
+- `APP_VERSION` constante en JS sincronizada con `CACHE_NAME`.
+- **`ARQUITECTURA.md`**: documento técnico de referencia con análisis arquitectónico, fuentes de verdad, race conditions, roadmap V53-V56 (Nivel 1).
+
+### Changed
+- Refactor completo de `cargarBorrador()`: flujo atómico secuencial sin race conditions. Estructura: flag loading → batch IDB write → set memoria → await loadConfig → render UI → repintar canvas → flag off.
+- Reemplazadas 4 lecturas booleanas inconsistentes (`getConfig === true || === 'true'`) por `_getBool()`.
+
+### Notas técnicas
+- El refactor no toca el generador OOXML (`generarDocx`) ni el flujo de PDF — solo arregla el ciclo de vida de borradores.
+- Smoke test de regresión con `python-docx` confirma que el Word IC sigue generando correctamente (5 tablas, firmas 2×1 apiladas).
+- Próxima evolución planeada (V53): empezar Nivel 1 con `AppState` centralizado.
+
+### Razones
+El equipo en terreno reportaba: errores entre borradores, pérdida de información (firmas, planos), y necesidad de apretar "Agregar firma" para refrescar UI al cargar borrador. Esta versión elimina las causas raíz (6 bugs documentados) sin cambiar el stack tecnológico.
+
+## [V51] - 2026-05-07
+
+### Added
+- **Toggle "🚫 Sin Responsable Construcción"** en Config (justo arriba de la tarjeta de firma 2 IC).
+- Nueva clave IDB `sinRespConstr` (boolean) persistida con el resto del config.
+- Flag se incluye en snapshot de borradores y se resetea al hacer "Nueva Inspección".
+
+### Changed
+- **Cuando el toggle está activo**:
+  - La tarjeta UI de firma 2 (nombre, cargo, empresa, canvas) se oculta completamente.
+  - El bloque de firmas en el PDF muestra **solo la firma de Inspección** (tabla de 1 fila en lugar de 2).
+  - El bloque de firmas en el Word muestra **solo la firma de Inspección** (tabla 1×1 en lugar de 2×1).
+  - Los datos de nombre/cargo/empresa/firma de Construcción se ignoran al exportar (no aparecen en ningún lado).
+- **Cuando el toggle está desactivado** (default): comportamiento idéntico a V50 — ambas firmas apiladas verticalmente.
+
+### Razón del cambio
+Para inspecciones de bodega o procesos generales no aplica un Responsable de Construcción. Antes el bloque de firma 2 aparecía en el documento con la línea vacía y el nombre vacío, generando confusión sobre si "faltaba firmar" o "no correspondía".
+
+### Notas técnicas
+- `buildHTMLInspeccion` recibe nuevo parámetro `sinRespConstr` (último, opcional).
+- En Word el builder OOXML detecta `d.sinRespConstr` y arma la tabla con 1 o 2 filas según corresponda.
+- Toggle es independiente de `sinSS`: las 4 combinaciones funcionan (con/sin SS × con/sin Resp Construcción).
+
+
+## [V50] - 2026-05-07
+
+### Added
+- **Toggle "📦 Inspección sin SubSistema"** en Config: permite generar inspecciones que no requieren un SS asociado (bodega de materiales, inspecciones de proceso, etc.).
+- Nueva clave IDB `sinSS` (boolean) que se persiste en config.
+- Flag `sinSS` se guarda en cada ítem (en `item.config.sinSS`) — registro permanente del modo de inspección.
+
+### Changed
+- Cuando el toggle está activo:
+  - El selector "N° SubSistema" se deshabilita visualmente.
+  - La marca de obligatoriedad (`*`) desaparece del label.
+  - El placeholder dice "No requerido (inspección sin SS)".
+  - Los campos derivados (Contrato, Sistema, TOP, Área, WBS) se muestran como "—".
+  - El warning toast "⚠️ SubSistema no configurado" deja de aparecer al crear ítems.
+- En la lista de ítems: card muestra "SIN SUBSISTEMA" en lugar del código vacío.
+- En PDF y Word: campos `subsistema`, `subsistemaNombre`, `wbsNombre`, `areaNombre` aparecen como "SIN SUBSISTEMA".
+
+### Razón del cambio
+Hay inspecciones legítimas sin SS asociado (bodega, materiales, procesos generales). Antes se forzaba seleccionar uno cualquiera y quedaba inconsistente, o el warning toast aparecía constantemente.
+
+### Fixed
+- Hallazgo lateral: el botón "🗑️ Limpiar" de la pestaña Lista borraba ítems pero no el config. Si se creaba un ítem nuevo, heredaba el SS de la inspección previa. Con V50 el flag `sinSS` queda en el ítem al momento de crear, así que aunque el config tenga otro SS, la card y los exports respetan la decisión original del ítem.
+
+## [V49] - 2026-05-07
+
+### Changed
+- **Nombre del Responsable de Construcción** en la firma 2 de IC ahora es un **input editable** (antes era display de solo lectura tomado del dropdown `respConstruccion` de Config).
+- Se mantiene auto-rellenado: si el input está vacío al entrar a IC, se sugiere el nombre del responsable seleccionado en Config. Una vez que el usuario tipea, su valor queda persistido en IDB y no se sobrescribe.
+
+### Added
+- Nueva clave IDB `icFirma2Nombre` (mismo patrón que `icFirma2Cargo` e `icFirma2Empresa` desde V44).
+- Incluida en snapshot de borradores y en limpieza de `nuevaInspeccion()`.
+
+### Razón del cambio
+Cuando llega un responsable de construcción nuevo (no listado en `data.json`), el equipo necesitaba poder firmarlo sin esperar deploy de versión actualizada de la PWA. Ahora cualquier nombre se puede escribir directamente.
+
+### Sin cambios
+- La firma 1 (Responsable Inspección) se mantiene como dropdown de Config.
+- El subsistema sigue siendo opcional para CAM (ya estaba desde V48). No se agregó modo "input libre".
+
+---
+
+## [V48] - 2026-05-06
+
+### Fixed
+- Las Caminatas (CAM-REC y CAM-ENT) ya no exigen `Plano Referencial` ni `Nombre Labor` para generar PDF o Word. Ambas validaciones quedan condicionales: solo se aplican a IC.
+
+### Notas técnicas
+- `generatePDF()` y `exportarWord()` detectan tipo de documento desde DOM (no IDB) antes de validar.
+- Footers (PDF y Word) ya distinguían IC de CAM correctamente desde V43 — sin cambios en esta versión.
+
+---
+
+## [V47] - 2026-05-05
+
+### Fixed
+- **Crítico**: Las firmas IC desaparecían al hacer refresh del navegador (vivían solo en variables JS en memoria).
+- **Crítico**: Las firmas IC desaparecían al cargar un borrador (race condition entre `initFirmaIC` que reseteaba el canvas y `setTimeout(repintar, 350ms)` que dibujaba).
+- **Crítico**: Las firmas IC desaparecían tras refrescar después de cargar un borrador (el snapshot rellenaba la variable JS pero no IDB).
+- Canvas de firma se borraba al asignar `canvas.width` sin repintarse.
+
+### Changed
+- Las firmas IC en el PDF se movieron al **final del documento** (después de la tabla de hallazgos), igual que en Caminata y en el Word — paridad estructural.
+- `initFirmaIC()` y `initFirmaIC2()` refactorizadas: ahora dimensionan el canvas Y dibujan la dataURI en una sola pasada, sin race conditions.
+
+### Added
+- Persistencia de firmas IC en IndexedDB (claves `icFirmaData` e `icFirmaConstruccionData`). Triple respaldo: variable JS + IDB + snapshot de borrador.
+- `cargarBorrador()` ahora también escribe firmas a IDB para sobrevivir refresh post-carga.
+
+### Removed
+- `setTimeout(() => { repintar(...) }, 350)` obsoleto en `cargarBorrador` — el repintado ahora lo hace `initFirmaIC*` directamente.
+
+---
+
+## [V46] - 2026-05-05
+
+### Changed
+- **Paridad estricta PDF↔Word**: el `.docx` exportable ahora tiene **idéntica estructura de tablas** que el PDF.
+  - Word IC pasó de 5 → 6 columnas en tabla de hallazgos: `ID | UBICACIÓN | DISCIPLINA | DESCRIPCIÓN | FECHA COMPR. CIERRE | PRIORIDAD`.
+  - Word CAM: header `PRIOR.` → `PRIORIDAD` (texto completo).
+  - Word CAM: header `FECHA` → `FECHA COMPR. CIERRE`.
+- Anchos de columnas idénticos en PDF y Word (4/16/11/41/14/14).
+
+### Razón
+El Word es ahora la herramienta de edición/corrección oficial del equipo. Cualquier diferencia estructural con el PDF generaba confusión al editar.
+
+---
+
+## [V45] - 2026-05-05
+
+### Added
+- **Columna DISCIPLINA** en tablas de hallazgos del PDF y Word (IC y CAM). El campo `it.disciplina` ya existía en cada ítem, solo faltaba renderizarlo.
+- Anchos de columnas reorganizados: 4/16/11/41/14/14 (PDF y Word, IC y CAM).
+
+### Changed
+- **Firmas IC apiladas verticalmente** (en lugar de lado a lado) tanto en PDF como en Word. Tabla 2 filas × 1 columna, ancho 60% del útil.
+- En PDF: la fila "RESPONSABLE INSPECCIÓN" en la tabla de datos ahora ocupa el ancho completo (la celda donde estaba la firma chica se mergeó).
+- En Word: tabla de firmas IC pasó de 1×2 horizontal a 2×1 vertical.
+
+### Data
+- `data.json`: actualizada hoja WBS desde `Auxiliar_V2_FELIPE.xlsx`. Pasa de 760 a **770 registros** WBS (+11 nuevos).
+- 1 ss_id duplicado conocido: `225310F-03-01` aparece dos veces (GEOVITA y MASTER DRILLING - BESALCO). Decisión: cargar ambos. El segundo no se podrá seleccionar desde el dropdown porque `find()` toma el primero — aceptado porque MDB no tiene más inspecciones en ese subsistema.
+- Otros arrays (empresasContratos, especialistasBase, responsablesConstruccion, ingenierosSistema) sin cambios.
+
+### Notas técnicas
+- Fila 718 del Excel tenía `\n` interno en SubSistema. Normalizado automáticamente en el parseo Python.
+
+---
+
+## [V44] - 2026-05-04
+
+### Added
+- **Segunda firma IC**: nueva tarjeta "Firma Responsable Construcción" debajo de la firma de Inspección.
+  - Nombre auto-leído de `respConstruccion` (Config).
+  - Inputs editables para Cargo y Empresa (también persistentes en IDB con claves `icFirma2Cargo`, `icFirma2Empresa`).
+  - Variable global `_icFirmaConstruccionData`, funciones `initFirmaIC2()` / `limpiarFirmaIC2()`.
+- **Persistencia de campos IC**: ahora se guardan en IDB con debounce 400ms al escribir.
+  - Claves nuevas: `icNivel`, `icObjetivo`, `icDesarrollo`, `icObservaciones`.
+  - Función helper `_wireupPersistenciaIC()` se invoca al boot.
+  - Se incluyen en snapshot de borradores (al guardar y restaurar).
+- **Bloque firmas IC en Word**: cierre del gap. El export Word ahora incluye también la firma IC (PDF ya la tenía).
+- En PDF IC: bloque dedicado al final con línea + nombre + cargo + empresa + rol "Responsable de Construcción".
+
+### Fixed
+- **Bug pérdida campos IC al refresh**: los `<textarea>` de Nivel, Objetivo, Desarrollo, Observaciones ya no se borran al recargar la página. Antes solo se persistían al generar PDF.
+- **Bug borradores incompletos**: el snapshot ahora incluye los 4 campos IC y ambas firmas IC.
+
+### Notas técnicas
+- Bug agnóstico de plataforma. Se reportaba más en Android porque ese navegador limpia más agresivamente.
+
+---
+
+## [V43] - 2026-05-04
+
+### Added
+- **Generador `.docx` OOXML real desde cero**, ~600 líneas, 100% offline, sin librerías externas.
+  - Mini ZIP STORE writer (signatures little-endian, CRC32 lookup table).
+  - Builders OOXML: tablas con anchos en `dxa`, imágenes con dimensiones EMU explícitas, paginación con `<w:fldChar>` PAGE/NUMPAGES.
+  - Helpers prefijo `_dx*` para evitar colisiones (`_dxCrc32`, `_dxZipStore`, `_dxBuildBody`, etc.).
+  - API principal: `generarDocx(d)` retorna `Uint8Array` empaquetable.
+  - MIME oficial `application/vnd.openxmlformats-officedocument.wordprocessingml.document`.
+  - Imágenes embebidas como bytes reales en `word/media/imageN.{jpeg,png}`, referenciadas por `rId`.
+  - Footer con código + subsistema (CAM) o nombre labor (IC).
+
+### Changed
+- `_descargarWord()` reemplazada: ahora invoca `generarDocx()` y descarga `.docx` real, en lugar del `.doc` HTML del V42.
+
+### Fixed
+- Imágenes en Word ya no salen "desconfiguradas" como en V42.
+  - Causa raíz V42: `<div display:inline-block; width:45%>` reflowaba como párrafo en Word, `object-fit:contain` ignorado, data-URIs re-encoded.
+  - Solución V43: bytes reales + dimensiones físicas en EMU + tabla 2 columnas con anchos fijos.
+
+### Notas técnicas
+- Validación con `python-docx` y LibreOffice (`--convert-to pdf`) confirma estructura correcta antes del deploy.
+
+---
+
+## [V42] - 2026-04-XX
+
+### Added
+- **Sistema de borradores**: guardar/cargar/eliminar hasta 5 borradores con snapshot completo (config + items + firmantes).
+  - Nuevo store IDB `borradores`.
+  - DB_VERSION bumpeada de 4 → 5.
+  - UI con botones en Config para gestionar borradores.
+- **Firmas Caminata persistentes en IDB** (antes vivían solo en `sessionStorage`).
+- **Paginación PDF correcta** con CSS `@page @bottom-center` + `counter(page)` / `counter(pages)`.
+- **Word Caminata** ahora incluye campos WBS, ÁREA, EMPRESA en el header (antes faltaban).
+
+### Changed
+- `buildWordIC` y `buildWordCaminata` separados como funciones distintas (antes era una sola con if/else interno).
+- Códigos PDF: `IC-GOMS-DCH` (Inspección), `CAM-REC` (Caminata Recepción), `CAM-ENT` (Caminata Entrega).
+- Label "Aviso" reemplaza "Correlativo" en formularios de Caminata.
+- S/O priority pasa de 3 a 10 fotos máximo (variable dinámica `_maxFotoSlot`).
+- "RESPONSABLE" eliminado del encabezado de Caminatas.
+
+### Fixed
+- Edición de fotos en modal: maneja correctamente legacy `foto` (string) vs `fotos[]` (array).
+
+### Data
+- `data.json`: 760 registros WBS, 8 empresas.
+
+---
+
+## Reglas del proyecto
+
+Estas reglas se aplican en todas las versiones:
+
+1. **CSV de 20 columnas**: NUNCA modificar formato, sin importar UI o data source.
+2. **JS brace balance**: debe ser exactamente 0 después de cada cambio. Verificar con `node --check`.
+3. **Strings en `buildHTML*` / `buildWord*`**: usar concatenación con `+`, NUNCA template literals (`` ` ``). Esto evita escapes complicados de `${}` cuando el código se procesa por scripts Python.
+4. **Análisis previo obligatorio**: siempre evaluar y proponer ANTES de ejecutar cambios. Felipe confirma explícitamente antes de implementar.
+5. **Entregable estándar**: ZIP o paquete con los 3 archivos `index.html`, `sw.js`, `data.json` (más `pdf_to_docx.py` cuando corresponda).
+6. **Bumpeo de `CACHE_NAME`** en cada release (clave para invalidación del Service Worker en cliente).
+7. **Versiones numeradas secuencialmente** (V42, V43, V44, ...) sin sub-versiones (no hay V44.1).
+
+---
+
+## Workflow oficial Word
+
+Establecido en V47:
+
+1. Inspecciones nuevas → usar **`exportarWord()` de la PWA** (genera OOXML nativo de calidad).
+2. Editar el `.docx` en Microsoft Word para corregir contenido.
+3. Cuando está aprobado → exportar a PDF desde Word (`Archivo → Guardar como PDF`).
+4. El script `pdf_to_docx.py` queda **solo para PDFs históricos** sin versión digital. Calidad mediocre con layouts complejos, requiere retoque manual.
