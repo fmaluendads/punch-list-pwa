@@ -393,6 +393,34 @@
       "empresa": "CODELCO GOMS"
     },
     {
+      "ss_id": "221810F-01-01",
+      "ss_name": "RAMPA BY-PASS 01 TRAMO 01",
+      "si_id": "221810F-01",
+      "si_name": "RAMPA BY-PASS 01",
+      "t_id": "221810F",
+      "t_name": "RAMPA DE EXPLORACIONES",
+      "a_id": "221800",
+      "a_name": "SULFUROS PROFUNDOS",
+      "w_id": "221000",
+      "w_name": "INFRAESTRUCTURA DE NIVEL",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
+    },
+    {
+      "ss_id": "221810F-01-02",
+      "ss_name": "RAMPA BY-PASS 01 TRAMO 02",
+      "si_id": "221810F-01",
+      "si_name": "RAMPA BY-PASS 01",
+      "t_id": "221810F",
+      "t_name": "RAMPA DE EXPLORACIONES",
+      "a_id": "221800",
+      "a_name": "SULFUROS PROFUNDOS",
+      "w_id": "221000",
+      "w_name": "INFRAESTRUCTURA DE NIVEL",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
+    },
+    {
       "ss_id": "222420-01-07",
       "ss_name": "PUERTA DE VENTILACION 222422-PRT-007 CS-664",
       "si_id": "222420-01",
@@ -1513,6 +1541,20 @@
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
     },
     {
+      "ss_id": "222540-01-01.",
+      "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-001",
+      "si_id": "222540-01",
+      "si_name": "SISTEMA DE VENTILACION SNV. EXTRACCION N42",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
+    },
+    {
       "ss_id": "222540-01-02",
       "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-002",
       "si_id": "222540-01",
@@ -1525,6 +1567,20 @@
       "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
       "contrato": "4600029422/GCC-002",
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
+    },
+    {
+      "ss_id": "222540-01-02.",
+      "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-002",
+      "si_id": "222540-01",
+      "si_name": "SISTEMA DE VENTILACION SNV. EXTRACCION N42",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
     },
     {
       "ss_id": "222540-01-03",
@@ -1541,6 +1597,20 @@
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
     },
     {
+      "ss_id": "222540-01-03.",
+      "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-003",
+      "si_id": "222540-01",
+      "si_name": "SISTEMA DE VENTILACION SNV. EXTRACCION N42",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
+    },
+    {
       "ss_id": "222540-01-04",
       "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-004",
       "si_id": "222540-01",
@@ -1553,6 +1623,20 @@
       "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
       "contrato": "4600029422/GCC-002",
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
+    },
+    {
+      "ss_id": "222540-01-04.",
+      "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-004",
+      "si_id": "222540-01",
+      "si_name": "SISTEMA DE VENTILACION SNV. EXTRACCION N42",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
     },
     {
       "ss_id": "222540-01-05",
@@ -1569,6 +1653,20 @@
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
     },
     {
+      "ss_id": "222540-01-05.",
+      "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-005",
+      "si_id": "222540-01",
+      "si_name": "SISTEMA DE VENTILACION SNV. EXTRACCION N42",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
+    },
+    {
       "ss_id": "222540-01-06",
       "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-006",
       "si_id": "222540-01",
@@ -1581,6 +1679,20 @@
       "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
       "contrato": "4600029422/GCC-002",
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
+    },
+    {
+      "ss_id": "222540-01-06.",
+      "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-006",
+      "si_id": "222540-01",
+      "si_name": "SISTEMA DE VENTILACION SNV. EXTRACCION N42",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
     },
     {
       "ss_id": "222540-01-07",
@@ -1597,6 +1709,20 @@
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
     },
     {
+      "ss_id": "222540-01-07.",
+      "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-007",
+      "si_id": "222540-01",
+      "si_name": "SISTEMA DE VENTILACION SNV. EXTRACCION N42",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
+    },
+    {
       "ss_id": "222540-01-08",
       "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-008",
       "si_id": "222540-01",
@@ -1609,6 +1735,20 @@
       "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
       "contrato": "4600029422/GCC-002",
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
+    },
+    {
+      "ss_id": "222540-01-08.",
+      "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-008",
+      "si_id": "222540-01",
+      "si_name": "SISTEMA DE VENTILACION SNV. EXTRACCION N42",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
     },
     {
       "ss_id": "222540-01-09",
@@ -1625,6 +1765,20 @@
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
     },
     {
+      "ss_id": "222540-01-09.",
+      "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-009B",
+      "si_id": "222540-01",
+      "si_name": "SISTEMA DE VENTILACION SNV. EXTRACCION N42",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
+    },
+    {
       "ss_id": "222540-01-10",
       "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-010",
       "si_id": "222540-01",
@@ -1637,6 +1791,20 @@
       "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
       "contrato": "4600029422/GCC-002",
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
+    },
+    {
+      "ss_id": "222540-01-10.",
+      "ss_name": "VENTILADOR DE EXTRACCION 222542-VEN-010",
+      "si_id": "222540-01",
+      "si_name": "SISTEMA DE VENTILACION SNV. EXTRACCION N42",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
     },
     {
       "ss_id": "222540-02-01",
@@ -1679,6 +1847,20 @@
       "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
       "contrato": "4600029422/GCC-002",
       "empresa": "ACCIONA-OSSA-PIZZAROTTI"
+    },
+    {
+      "ss_id": "222540-02-04.",
+      "ss_name": "SALAS ELECTRICAS 222540-SEL-001",
+      "si_id": "222540-02",
+      "si_name": "SALA ELECTRICA 222540-SEL-001",
+      "t_id": "222540",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION",
+      "a_id": "222500",
+      "a_name": "MB - N42 N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
     },
     {
       "ss_id": "222540-03-01",
@@ -3613,6 +3795,20 @@
       "empresa": "SIGDO KOPPERS S.A"
     },
     {
+      "ss_id": "223430-01-17",
+      "ss_name": "SISTEMA DE PUESTA A TIERRA DE VENTILADORES INY",
+      "si_id": "223430-01",
+      "si_name": "VENTILADORES DE INYECCION MB-S04",
+      "t_id": "223430",
+      "t_name": "SUBNIVEL DE INYECCION MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600029025/CC-101",
+      "empresa": "SIGDO KOPPERS S.A"
+    },
+    {
       "ss_id": "223430-02-01",
       "ss_name": "PUERTA DE VENTILACION V-5050 223431-PRT-001",
       "si_id": "223430-02",
@@ -3825,6 +4021,20 @@
     {
       "ss_id": "223440-04-03",
       "ss_name": "MT, BT, VDF, TDI, TDA, PLC Y COMUNICACIONES 223440-SEL-004",
+      "si_id": "223440-04",
+      "si_name": "SALA ELECTRICA 223440-SEL-004",
+      "t_id": "223440",
+      "t_name": "SUBNIVEL DE EXTRACCION MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600029025/CC-101",
+      "empresa": "SIGDO KOPPERS S.A"
+    },
+    {
+      "ss_id": "223440-04-04",
+      "ss_name": "CABLEADO Y DISTRIBUCIÓN DE MEDIA TENSIÓN 223440-SEL-004",
       "si_id": "223440-04",
       "si_name": "SALA ELECTRICA 223440-SEL-004",
       "t_id": "223440",
@@ -4341,6 +4551,20 @@
       "empresa": "SIGDO KOPPERS S.A"
     },
     {
+      "ss_id": "223440-05-38",
+      "ss_name": "SISTEMA DE PUESTA A TIERRA DE VENTILADORES EXT",
+      "si_id": "223440-05",
+      "si_name": "VENTILADORES DE EXTRACCION MB-S04",
+      "t_id": "223440",
+      "t_name": "SUBNIVEL DE EXTRACCION MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600029025/CC-101",
+      "empresa": "SIGDO KOPPERS S.A"
+    },
+    {
       "ss_id": "223440-06-01",
       "ss_name": "SUMIDERO DE DRENAJE FR-CH-EXS-S04-01",
       "si_id": "223440-06",
@@ -4721,6 +4945,20 @@
     {
       "ss_id": "223480-01-10",
       "ss_name": "RECINTO ELECTRICO 223487-BZD-010",
+      "si_id": "223480-01",
+      "si_name": "RECINTOS ELECTRICOS BUZONES DE DESCARGA",
+      "t_id": "223480",
+      "t_name": "SUBNIVEL DE ACARREO MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600029025/CC-101",
+      "empresa": "SIGDO KOPPERS S.A"
+    },
+    {
+      "ss_id": "223480-01-11",
+      "ss_name": "CABLEADO Y DISTRIBUCIÓN DE BAJA TENSIÓN 223486-BZD-005",
       "si_id": "223480-01",
       "si_name": "RECINTOS ELECTRICOS BUZONES DE DESCARGA",
       "t_id": "223480",
@@ -5504,7 +5742,7 @@
     },
     {
       "ss_id": "223520F-01-03",
-      "ss_name": "CAB-02-NP (TRAMO 2, INCLUYE TRAMOS C-56@60)",
+      "ss_name": "CAB-02-NP (TRAMO 2), INCLUYE TRAMOS C-56@60",
       "si_id": "223520F-01",
       "si_name": "CABECERAS",
       "t_id": "223520F",
@@ -8724,7 +8962,7 @@
     },
     {
       "ss_id": "221820F-02-01",
-      "ss_name": "CHINS-REX-IN1-01",
+      "ss_name": "CHINS-REX-IN1-01, INCLUYE CHINS-HD-S04-06",
       "si_id": "221820F-02",
       "si_name": "CHIMENEAS RAMPA DE DRENAJE",
       "t_id": "221820F",
@@ -9228,7 +9466,7 @@
     },
     {
       "ss_id": "223430F-02-02",
-      "ss_name": "CHINS-SMM-S04-02, CHINS-HD-S04-03, CHINS-HD-S04-05, CHINS-HD-S04-06, CHEME-HD-S04-01, CHINS-PD-S04-10, CHINS-PD-S04-11, CHINS-PD-S04-13, CHINS-PD-S04-14",
+      "ss_name": "CHINS-SMM-S04-02, CHINS-HD-S04-03, CHINS-HD-S04-05, CHEME-HD-S04-01, CHINS-PD-S04-10, CHINS-PD-S04-11, CHINS-PD-S04-13, CHINS-PD-S04-14",
       "si_id": "223430F-02",
       "si_name": "CHIMENEAS DE INYECCION S04",
       "t_id": "223430F",
@@ -9409,20 +9647,6 @@
       "empresa": "MASTER DRILLING - BESALCO"
     },
     {
-      "ss_id": "225310F-03-01",
-      "ss_name": "CHIMENEAS CHIPI-INS-S04-02, CHIPI-INS-S05-01, CHIPI-HD-S04-01",
-      "si_id": "225310F-03",
-      "si_name": "CHIMENEAS",
-      "t_id": "225310F",
-      "t_name": "MB-S05",
-      "a_id": "225300",
-      "a_name": "NIVEL DE INYECCION",
-      "w_id": "225000",
-      "w_name": "UNIDADES DE EXPLOTACION CONTINUIDAD NIVEL 1 SECTOR SUR",
-      "contrato": "4600027681/CC-113",
-      "empresa": "MASTER DRILLING - BESALCO"
-    },
-    {
       "ss_id": "225413F-01-01",
       "ss_name": "225413F-01-01 [CHIMENEAS CHEXS-PD-S05-01 Y CHEXS-PD-S05-02, INCLUYE CHIM TRASPASO-HD-PD-S05-01, CHINS-ACA-S05-03 Y CHIM. TRASPASO-HD-PD-S05-02]",
       "si_id": "225413F-01",
@@ -9480,7 +9704,21 @@
     },
     {
       "ss_id": "221310F-01-07",
-      "ss_name": "OO.CC. FORTIFICACION PERNOS CABLE PILAR RAC-PD-PNC-02, EMA-PD-PNC-01 ACCESO RAC NORTE, MARCOS METALICOS HN 20x64,4",
+      "ss_name": "OO.CC. FORTIFICACIÓN CABLES PILAR RAC-PD-PNC-02",
+      "si_id": "221310F-01",
+      "si_name": "RAMPAS DE ACCESO A SUBNIVELES CENTRAL",
+      "t_id": "221310F",
+      "t_name": "RAMPAS DE ACCESO ENTRE SUBNIVELES",
+      "a_id": "221300",
+      "a_name": "ACCESOS A SUBNIVELES",
+      "w_id": "221000",
+      "w_name": "INFRAESTRUCTURA DE NIVEL",
+      "contrato": "4600027291/CC-117",
+      "empresa": "GARDILCIC"
+    },
+    {
+      "ss_id": "221310F-01-08",
+      "ss_name": "FORTIFICACION CALBES EMA-PD-PNC-01, ACCESO RAC NORTE",
       "si_id": "221310F-01",
       "si_name": "RAMPAS DE ACCESO A SUBNIVELES CENTRAL",
       "t_id": "221310F",
@@ -9733,6 +9971,20 @@
     {
       "ss_id": "222120F-02-11",
       "ss_name": "FORTIFICACION MARCOS METALICOS HN 20 / ATRAVIESO GAL-EXS-N01-02/C-4",
+      "si_id": "222120F-02",
+      "si_name": "RAMPAS ACARREO PANEL CENTRAL",
+      "t_id": "222120F",
+      "t_name": "SUBNIVEL DE PRODUCCION MB-N01",
+      "a_id": "222100",
+      "a_name": "MB - N01 - N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "4600027291/CC-117",
+      "empresa": "GARDILCIC"
+    },
+    {
+      "ss_id": "222120F-02-12",
+      "ss_name": "FORTIFICACION CABLES FRI-PD-PNC-08",
       "si_id": "222120F-02",
       "si_name": "RAMPAS ACARREO PANEL CENTRAL",
       "t_id": "222120F",

@@ -1531,7 +1531,7 @@ textarea { resize: vertical; min-height: 80px; }
     <button class="btn btn-danger" onclick="confirmarNuevaInspeccion()" style="margin-top:0;background:rgba(239,68,68,0.12);border:1px solid var(--danger);color:var(--danger)">🧹 Nueva Inspección — Limpiar Todo</button>
     <!-- V52: Indicador de versión visible — debe coincidir con CACHE_NAME en sw.js -->
     <div style="text-align:center;font-size:10px;color:#666;margin-top:24px;padding:10px;border-top:1px solid var(--slate-lt);">
-      Punch List PWA · <span id="appVersionLabel">V53</span> · WBS Sync: <span id="appLastSync">—</span>
+      Punch List PWA · <span id="appVersionLabel">V54</span> · WBS Sync: <span id="appLastSync">—</span>
     </div>
   </div>
 
@@ -1573,6 +1573,14 @@ textarea { resize: vertical; min-height: 80px; }
         <div class="form-group">
           <label>Observaciones Generales <span class="ic-badge">IC</span></label>
           <textarea id="ic_observaciones" rows="3" placeholder="Observaciones adicionales..."></textarea>
+        </div>
+      </div>
+
+      <!-- V54: Bloque solo CAM (oculto en IC) — observaciones opcionales debajo del header -->
+      <div id="seccionCAM" style="display:none;">
+        <div class="form-group">
+          <label>Observaciones (opcional) <span style="display:inline-block;background:rgba(99,102,241,0.2);color:#a5b4fc;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">CAM</span></label>
+          <textarea id="cam_observaciones" rows="3" placeholder="Observaciones generales de la caminata (opcional). Si queda vacío no aparecerá en el PDF/Word."></textarea>
         </div>
       </div>
 
@@ -1877,7 +1885,7 @@ let _selectedWBSRecord = null;
 // V52: flag para deshabilitar listeners de persistencia durante cargarBorrador (evita pisar datos)
 let _loadingBorrador = false;
 // V52: versión visible en la UI — debe coincidir con CACHE_NAME en sw.js
-const APP_VERSION = 'V53';
+const APP_VERSION = 'V54';
 
 // ==================== INDEXEDDB ====================
 const DB_NAME = 'PunchListDB';
@@ -2683,6 +2691,9 @@ async function loadConfig() {
   if (_icDes) _icDes.value = await getConfig('icDesarrollo') || '';
   const _icObs = document.getElementById('ic_observaciones');
   if (_icObs) _icObs.value = await getConfig('icObservaciones') || '';
+  // V54: Restaurar observaciones CAM
+  const _camObs = document.getElementById('cam_observaciones');
+  if (_camObs) _camObs.value = await getConfig('camObservaciones') || '';
   // V44: Restaurar cargo/empresa segunda firma IC + V49: nombre
   const _icF2n = document.getElementById('ic_firma2_nombre');
   if (_icF2n) _icF2n.value = await getConfig('icFirma2Nombre') || '';
@@ -3000,6 +3011,7 @@ async function nuevaInspeccion() {
 
   // 3. Limpiar campos del tab Informe
   const campos = ['ic_nivel','ic_objetivo','ic_desarrollo','ic_observaciones',
+                  'cam_observaciones',
                   'ic_firma2_nombre','ic_firma2_cargo','ic_firma2_empresa'];
   campos.forEach(id => {
     const el = document.getElementById(id);
@@ -3010,6 +3022,7 @@ async function nuevaInspeccion() {
   await setConfig('icObjetivo', '');
   await setConfig('icDesarrollo', '');
   await setConfig('icObservaciones', '');
+  await setConfig('camObservaciones', ''); // V54
   await setConfig('icFirma2Nombre', '');
   await setConfig('icFirma2Cargo', '');
   await setConfig('icFirma2Empresa', '');
@@ -3448,11 +3461,20 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
 // ═══════════════════════════════════════════════════════
 function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
-    originadoPor, fotosHTML, tablaHTML, firmasBloque, LOGO) {
+    originadoPor, fotosHTML, tablaHTML, firmasBloque, LOGO, camObservaciones) {
   const logoSrc = LOGO || '';
   const rowspan = correlativo ? 4 : 3;
   const correlativoRow = correlativo
     ? '<tr><td style="border:1px solid #333;padding:4px 8px;font-size:9pt;"><b>Aviso:</b> ' + correlativo + '</td></tr>'
+    : '';
+
+  // V54: bloque observaciones opcional — solo aparece si hay contenido
+  const obs = (camObservaciones || '').trim();
+  const obsBloque = obs
+    ? '<div style="margin-bottom:10px;border:1px solid #333;padding:8px 10px;font-size:9pt;">' +
+      '<div style="font-weight:bold;margin-bottom:4px;">OBSERVACIONES</div>' +
+      '<div style="white-space:pre-wrap;line-height:1.5;">' + obs + '</div>' +
+      '</div>'
     : '';
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
@@ -3481,6 +3503,7 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     '<td style="border:1px solid #333;padding:5px 8px;width:50%;"><b>N\u00b0 CONTRATO:</b> ' + contratoDisplay + '</td></tr>' +
     '<tr><td colspan="2" style="border:1px solid #333;padding:5px 8px;"><b>FECHA:</b> ' + fechaEmision + '</td></tr>' +
     '</table>' +
+    obsBloque +
     fotosHTML + tablaHTML + firmasBloque +
     '<div class="footer">' + codigo + ' (' + subsistemaNombre + ')</div>' +
     '</body></html>';
@@ -3530,6 +3553,8 @@ async function generatePDF() {
   const desarrollo = document.getElementById('ic_desarrollo').value || '';
   const observaciones = document.getElementById('ic_observaciones').value ||
     'Las observaciones encontradas deben ser subsanadas progresivamente durante los avances correspondientes, procurando una utilización eficiente de los recursos disponibles.';
+  // V54: observaciones CAM (opcional, vacío = no aparece en el PDF)
+  const camObservacionesPDF = (document.getElementById('cam_observaciones')?.value || '').trim();
 
   // Formatear fecha YYYY-MM-DD → DD-MM-YYYY
   const formatDate = d => {
@@ -3672,7 +3697,7 @@ async function generatePDF() {
         _sinRespConstr_pdf)
     : buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
         wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
-        originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO);
+        originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO, camObservacionesPDF);
 
   // Iframe oculto para renderizar — print() lo dispara el usuario con gesto directo
   // Destruir y recrear cada vez para garantizar que onload se dispare (evita race condition)
@@ -3758,7 +3783,9 @@ async function exportarWord() {
     firmaConstruccionCargo: (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '',
     firmaConstruccionEmpresa: (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '',
     // V51: flag para omitir bloque de firma Construcción
-    sinRespConstr: await _getBool('sinRespConstr')
+    sinRespConstr: await _getBool('sinRespConstr'),
+    // V54: observaciones CAM (opcional, vacío = no aparece en Word)
+    camObservaciones: (document.getElementById('cam_observaciones')?.value || '').trim()
   });
 }
 
@@ -4148,6 +4175,25 @@ function _dxBuildBody(d) {
       _dxPar('', { sz: 18 });
   }
 
+  // V54: Sección observaciones CAM (opcional, solo si hay contenido)
+  let seccionesCAM = '';
+  if (tipo === 'CAM') {
+    const obsCam = (d.camObservaciones || '').trim();
+    if (obsCam) {
+      // Tabla de 1 celda con borde para emular el bloque visual del PDF
+      const obsRow = {
+        cells: _dxCell(
+          _dxPar('OBSERVACIONES', { bold: true, sz: 20 }) +
+          _dxPar(obsCam, { sz: 18 }),
+          { w: 9639 }
+        )
+      };
+      seccionesCAM =
+        _dxTable([obsRow], { totalW: 9639, gridCols: [9639] }) +
+        _dxPar('', { sz: 18 });
+    }
+  }
+
   // ── Registro fotográfico ──────────────────────────────────────────────
   const fotosCeldas = [];
   for (const it of d.items) {
@@ -4319,6 +4365,7 @@ function _dxBuildBody(d) {
   const body =
     headerTable + _dxPar('', { sz: 8 }) +
     datosTable + _dxPar('', { sz: 8 }) +
+    seccionesCAM +
     seccionesIC + fotosBlock + tablaHallazgos + firmasBlock;
 
   return { body, images, subForFooter: d.subsistemaNombre || d.nombreLabor || '' };
@@ -4470,6 +4517,9 @@ function actualizarVisibilidadFirmantes() {
   if (secFirmantes) secFirmantes.style.display = esCaminata0 ? 'none' : 'block';
   const secIC = document.getElementById('seccionIC');
   if (secIC) secIC.style.display = esCaminata0 ? 'block' : 'none';
+  // V54: seccionCAM visible solo cuando NO es IC
+  const secCAM = document.getElementById('seccionCAM');
+  if (secCAM) secCAM.style.display = esCaminata0 ? 'none' : 'block';
   const labelCorr = document.getElementById('labelCorrelativo');
   if (labelCorr) labelCorr.textContent = esCaminata0 ? 'Correlativo' : 'Aviso';
   if (secResultado) {
@@ -4818,7 +4868,9 @@ async function guardarBorrador() {
       // V50: flag inspección sin SS
       'sinSS',
       // V51: flag sin Responsable Construcción
-      'sinRespConstr'];
+      'sinRespConstr',
+      // V54: observaciones CAM
+      'camObservaciones'];
     for (const k of cfgKeys) { cfg[k] = await getConfig(k) || ''; }
     // Leer ítems actuales
     const items = await new Promise((res, rej) => {
@@ -5011,6 +5063,7 @@ function _wireupPersistenciaIC() {
     ['ic_objetivo',       'icObjetivo'],
     ['ic_desarrollo',     'icDesarrollo'],
     ['ic_observaciones',  'icObservaciones'],
+    ['cam_observaciones', 'camObservaciones'],
     ['ic_firma2_nombre',  'icFirma2Nombre'],
     ['ic_firma2_cargo',   'icFirma2Cargo'],
     ['ic_firma2_empresa', 'icFirma2Empresa']

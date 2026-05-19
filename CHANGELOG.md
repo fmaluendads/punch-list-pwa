@@ -9,7 +9,30 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 ---
 
 
----
+## [V54] - 2026-05-19
+
+### Added
+- **Apartado OBSERVACIONES en caminatas (CAM)**: nuevo bloque debajo del header con `<textarea id="cam_observaciones">` opcional. Visible solo cuando el tipo de inspección es CAM-REC o CAM-ENT (oculto en IC). Persistente en IDB con clave `camObservaciones`.
+- El bloque aparece en PDF y Word **solo si el textarea tiene contenido** (vacío = no aparece). Se inserta entre la tabla de datos del proyecto y la tabla de hallazgos, con borde y título "OBSERVACIONES" en negrita.
+- **18 nuevos SS en `data.json`** (de 770 a 788):
+  - 10 ventiladores de extracción `222540-01-01` a `-10` (CODELCO GOMS)
+  - 1 sala eléctrica `222540-02-04` (CODELCO GOMS)
+  - 2 rampas by-pass `221810F-01-01`, `-01-02` (GEOVITA)
+  - 4 sistemas eléctricos `223430-01-17`, `223440-04-04`, `223440-05-38`, `223480-01-11` (SIGDO KOPPERS S.A)
+  - 2 fortificaciones de cables `221310F-01-08`, `222120F-02-12` (GARDILCIC)
+
+### Changed
+- **Cambio de operador en SS `225310F-03-01`**: de MASTER DRILLING - BESALCO (contrato `CC-113`) a GEOVITA (contrato `GCC-001`). Decisión tomada en base a la información del archivo `WBS_Semanal__1_.xlsx` donde el SS aparece duplicado y se prioriza Geovita como operador actual.
+
+### Notas técnicas
+- El bloque CAM observaciones se gestiona con el mismo patrón de persistencia de los campos IC: `_wireupPersistenciaIC` con debounce 400ms, respeto del flag `_loadingBorrador`, snapshot en `cfgKeys` de borradores.
+- Word: el bloque se renderiza como tabla 1×1 con borde (similar al patrón visual del PDF) usando `_dxTable([obsRow], { totalW: 9639, gridCols: [9639] })`.
+- PDF: bloque CSS con `border:1px solid #333`, `padding:8px 10px`, `white-space:pre-wrap` para conservar saltos de línea del textarea.
+- `empresasContratos` del data.json verificado: las 8 empresas que aparecen en `wbsData` (incluida SIGDO KOPPERS S.A) ya estaban presentes en la lista de empresas contratistas. Sin cambios necesarios.
+- 0 SS eliminados del data.json (los 770 anteriores se mantienen).
+
+### Razones
+El equipo en terreno solicitó tener un apartado de observaciones generales en las caminatas (similar al IC) para registrar comentarios contextuales que no caben en la tabla de hallazgos. La actualización de `data.json` corresponde al ciclo regular de sincronización con la planilla WBS oficial de GOMS.
 
 ## [V53] - 2026-05-11
 
