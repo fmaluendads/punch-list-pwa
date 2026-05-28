@@ -8,6 +8,29 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V55] - 2026-05-28
+
+> **Solo datos** — Esta versión actualiza únicamente `data.json`. No modifica `index.html` ni `sw.js`, por lo que NO requiere bump de `CACHE_NAME`. El Service Worker actualiza `data.json` automáticamente vía Stale-While-Revalidate.
+
+### Added
+- **3 nuevos SS en `data.json`** (de 788 a 791):
+  - `222440-01-10` — Ventilador extracción 222442-VEN-010 CS-664 (CODELCO GOMS)
+  - `224323F-01-01` — CHINS-SMM-N52-01 (MASTER DRILLING - BESALCO)
+  - `225413F-01-02` — CHEXS-ACA-S05-04@05 (MASTER DRILLING - BESALCO)
+- Nuevo responsable de construcción agregado a la lista (`responsablesConstruccion`).
+
+### Changed
+- **Cambio de operador en SS `223520F-01-05`**: de GEOVITA (contrato `GCC-001`) a GARDILCIC (contrato `GCC-004`). El nombre del subsistema también cambió: "RAC-REX-INI-01 / CAB-02-NP..." → "CAB-02-NP-S05 (TRAMO 4)". Resuelto según la planilla `WBS_Semanal.xlsx` donde aparece duplicado, priorizando GARDILCIC (primera ocurrencia / operador actual).
+
+### Notas técnicas
+- Duplicado `225310F-03-01` mantiene GEOVITA (consistente con la decisión de V54).
+- **GEOVITA se mantiene** en `empresasContratos`: aunque se cerró un contrato puntual, la empresa sigue operando 75 subsistemas según la planilla WBS oficial. Descartarla habría dejado esos 75 SS sin empresa asignada.
+- Distribución de SS por empresa: SIGDO KOPPERS S.A (207), GARDILCIC (157), ZUBLIN (145), ACCIONA-OSSA-PIZZAROTTI (95), GEOVITA (75), MASTER DRILLING - BESALCO (57), CODELCO GOMS (52), SIGMA S.A (3).
+- 0 SS eliminados respecto a V54.
+- Deploy: subir únicamente `data.json` (y opcionalmente este `CHANGELOG.md`). No es necesario tocar el Service Worker.
+
+### Razones
+Ciclo regular de sincronización con la planilla WBS oficial de GOMS, más la incorporación de un nuevo responsable de construcción al equipo.
 
 ## [V54] - 2026-05-19
 
