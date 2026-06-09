@@ -1531,7 +1531,7 @@ textarea { resize: vertical; min-height: 80px; }
     <button class="btn btn-danger" onclick="confirmarNuevaInspeccion()" style="margin-top:0;background:rgba(239,68,68,0.12);border:1px solid var(--danger);color:var(--danger)">🧹 Nueva Inspección — Limpiar Todo</button>
     <!-- V52: Indicador de versión visible — debe coincidir con CACHE_NAME en sw.js -->
     <div style="text-align:center;font-size:10px;color:#666;margin-top:24px;padding:10px;border-top:1px solid var(--slate-lt);">
-      Punch List PWA · <span id="appVersionLabel">V54</span> · WBS Sync: <span id="appLastSync">—</span>
+      Punch List PWA · <span id="appVersionLabel">V56</span> · WBS Sync: <span id="appLastSync">—</span>
     </div>
   </div>
 
@@ -1620,6 +1620,11 @@ textarea { resize: vertical; min-height: 80px; }
               <input type="text" id="ic_firma2_cargo" placeholder="Cargo" style="padding:7px;font-size:12px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;">
               <input type="text" id="ic_firma2_empresa" placeholder="Empresa" style="padding:7px;font-size:12px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;">
             </div>
+            <!-- V56: Fecha de firma — se autocompleta al firmar, editable -->
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <label for="ic_firma2_fecha" style="font-size:11px;color:var(--text-muted);min-width:90px;">📅 Fecha firma:</label>
+              <input type="date" id="ic_firma2_fecha" style="flex:1;padding:7px;font-size:12px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;">
+            </div>
             <div class="firma-canvas-wrap" id="ic-firma-wrap-2">
               <canvas id="ic-firma-canvas-2" height="100"></canvas>
               <div class="firma-canvas-hint" id="ic-firma-hint-2">Firme aquí con dedo o lápiz</div>
@@ -1692,6 +1697,20 @@ textarea { resize: vertical; min-height: 80px; }
     <button class="foto-menu-btn foto-menu-cancel" onclick="cerrarMenuFoto()">
       Cancelar
     </button>
+  </div>
+</div>
+
+<!-- V56: Modal nombre de archivo (PDF/Word) -->
+<div class="modal-overlay" id="filenameModalOverlay">
+  <div class="modal" id="filenameModal">
+    <h3 id="filenameModalTitle">Nombre del archivo</h3>
+    <p id="filenameModalHelp" style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Puedes editar el nombre antes de descargar. Para PDF, este será el nombre sugerido en el diálogo de impresión del navegador.</p>
+    <input type="text" id="filenameInput" style="width:100%;padding:9px;font-size:13px;border:1px solid var(--slate-lt);border-radius:6px;background:var(--coal);color:var(--text);font-family:inherit;margin-bottom:10px;" placeholder="nombre_del_archivo">
+    <div id="filenameExtHint" style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Extensión: <b id="filenameExt">.docx</b></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="cerrarFilenameModal()">Cancelar</button>
+      <button class="btn btn-primary" id="filenameConfirmBtn">Descargar</button>
+    </div>
   </div>
 </div>
 
@@ -1885,7 +1904,7 @@ let _selectedWBSRecord = null;
 // V52: flag para deshabilitar listeners de persistencia durante cargarBorrador (evita pisar datos)
 let _loadingBorrador = false;
 // V52: versión visible en la UI — debe coincidir con CACHE_NAME en sw.js
-const APP_VERSION = 'V54';
+const APP_VERSION = 'V56';
 
 // ==================== INDEXEDDB ====================
 const DB_NAME = 'PunchListDB';
@@ -2469,6 +2488,57 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('active');
 }
 
+// V56: ==================== MODAL NOMBRE ARCHIVO ====================
+// Helper para pedir nombre de archivo antes de descargar/imprimir.
+// uso: promptNombreArchivo({ extension: '.docx', sugerencia: 'nombre', titulo: 'Word' }, (nombreFinal) => { ... })
+// El callback recibe null si el usuario cancela, o el string del nombre (SIN extensión).
+function promptNombreArchivo(opts, callback) {
+  opts = opts || {};
+  const ext = opts.extension || '.docx';
+  const sug = opts.sugerencia || 'documento';
+  const titulo = opts.titulo || 'Archivo';
+
+  document.getElementById('filenameModalTitle').textContent = 'Nombre del ' + titulo;
+  document.getElementById('filenameExt').textContent = ext;
+  const input = document.getElementById('filenameInput');
+  input.value = sug;
+  const confirmBtn = document.getElementById('filenameConfirmBtn');
+
+  // Limpiar listeners viejos clonando el botón
+  const newBtn = confirmBtn.cloneNode(true);
+  confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+  newBtn.addEventListener('click', () => {
+    let nombre = input.value.trim();
+    if (!nombre) nombre = sug;
+    // Quitar extensión si el usuario la incluyó manualmente
+    if (nombre.toLowerCase().endsWith(ext.toLowerCase())) {
+      nombre = nombre.slice(0, -ext.length);
+    }
+    cerrarFilenameModal();
+    callback(nombre);
+  });
+
+  document.getElementById('filenameModalOverlay').classList.add('active');
+  // Focus + select para edición rápida
+  setTimeout(() => { input.focus(); input.select(); }, 100);
+}
+
+function cerrarFilenameModal() {
+  document.getElementById('filenameModalOverlay').classList.remove('active');
+}
+
+// Helper: construir nombre sugerido limpio (sin acentos/espacios raros) para sugerir en el modal
+function _sugerenciaNombreArchivo(codigo, identificador) {
+  const idClean = (identificador || '')
+    .replace(/\[.*?\]/g, '')           // quitar [contenido entre brackets]
+    .replace(/\s+/g, '_')              // espacios → underscore
+    .replace(/[^\w\u00C0-\u017F-]/g, '') // quitar caracteres raros excepto acentos y guión
+    .substring(0, 50);                  // máximo 50 caracteres
+  const fechaStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  return (codigo || 'documento') + '_' + (idClean || 'sin_ss') + '_' + fechaStr;
+}
+
 // ==================== DUPLICAR ÍTEM ====================
 async function duplicarItem(id) {
   const items = await getItems();
@@ -2701,6 +2771,9 @@ async function loadConfig() {
   if (_icF2c) _icF2c.value = await getConfig('icFirma2Cargo') || '';
   const _icF2e = document.getElementById('ic_firma2_empresa');
   if (_icF2e) _icF2e.value = await getConfig('icFirma2Empresa') || '';
+  // V56: Restaurar fecha firma Responsable Construcción
+  const _icF2f = document.getElementById('ic_firma2_fecha');
+  if (_icF2f) _icF2f.value = await getConfig('icFirma2Fecha') || '';
   // V47: Restaurar dataURIs de firmas IC desde IDB (críticas: deben sobrevivir al refresh)
   _icFirmaData = await getConfig('icFirmaData') || null;
   _icFirmaConstruccionData = await getConfig('icFirmaConstruccionData') || null;
@@ -2947,6 +3020,16 @@ function initFirmaIC2() {
     _icFirmaConstruccionData = canvas.toDataURL('image/png');
     // V47: persistir firma en IDB
     setConfig('icFirmaConstruccionData', _icFirmaConstruccionData);
+    // V56: auto-fill fecha de firma con hoy SI el usuario no ingresó una manualmente
+    const fechaInput = document.getElementById('ic_firma2_fecha');
+    if (fechaInput && !fechaInput.value) {
+      const hoy = new Date();
+      const yyyy = hoy.getFullYear();
+      const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+      const dd = String(hoy.getDate()).padStart(2, '0');
+      fechaInput.value = yyyy + '-' + mm + '-' + dd;
+      setConfig('icFirma2Fecha', fechaInput.value);
+    }
   };
   canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', stop);
   canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', draw, {passive:false}); canvas.addEventListener('touchend', stop, {passive:false});
@@ -3012,7 +3095,7 @@ async function nuevaInspeccion() {
   // 3. Limpiar campos del tab Informe
   const campos = ['ic_nivel','ic_objetivo','ic_desarrollo','ic_observaciones',
                   'cam_observaciones',
-                  'ic_firma2_nombre','ic_firma2_cargo','ic_firma2_empresa'];
+                  'ic_firma2_nombre','ic_firma2_cargo','ic_firma2_empresa','ic_firma2_fecha'];
   campos.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -3026,6 +3109,7 @@ async function nuevaInspeccion() {
   await setConfig('icFirma2Nombre', '');
   await setConfig('icFirma2Cargo', '');
   await setConfig('icFirma2Empresa', '');
+  await setConfig('icFirma2Fecha', ''); // V56
   // V50: resetear flag inspección sin SS
   await setConfig('sinSS', false);
   const _chkSinSS = document.getElementById('cfg_sinSS');
@@ -3372,7 +3456,7 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     planoReferencial, nivel, nombreLabor, originadoPor, firmaInspeccionData,
     objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO, subsistema,
     firmaConstruccionData, firmaConstruccionNombre, firmaConstruccionCargo, firmaConstruccionEmpresa,
-    sinRespConstr) {
+    sinRespConstr, firmaConstruccionFecha) {
   subsistema = subsistema || '';
   const logoSrc = LOGO || '';
   const rowspan = correlativo ? 4 : 3;
@@ -3396,19 +3480,27 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
   const _imgFirmaConstr = firmaConstruccionData
     ? '<img src="' + firmaConstruccionData + '" style="max-width:140px;max-height:55px;object-fit:contain;">'
     : '<div style="min-height:55px;"></div>';
+  // V56: Fecha de firma del Responsable Construcción (formato dd-mm-yyyy desde yyyy-mm-dd del input date)
+  let _fechaFirmaConstrHTML = '';
+  if (firmaConstruccionFecha) {
+    const parts = String(firmaConstruccionFecha).split('-');
+    const fechaFmt = (parts.length === 3) ? (parts[2] + '-' + parts[1] + '-' + parts[0]) : firmaConstruccionFecha;
+    _fechaFirmaConstrHTML = '<div style="font-size:8pt;color:#555;margin-top:3px;"><b>Fecha:</b> ' + fechaFmt + '</div>';
+  }
   // V51: si sinRespConstr=true, omitir la segunda fila (firma Construcción)
   const _filaFirmaConstr = sinRespConstr
     ? ''
-    : '<tr><td style="border:1px solid #333;padding:6px 8px;text-align:center;vertical-align:bottom;">' +
+    : '<tr style="page-break-inside:avoid;break-inside:avoid;"><td style="border:1px solid #333;padding:6px 8px;text-align:center;vertical-align:bottom;">' +
       _imgFirmaConstr +
       '<div style="border-top:1px solid #333;margin-top:4px;padding-top:3px;"><b>' + (firmaConstruccionNombre || '—') + '</b></div>' +
       '<div style="font-size:8pt;color:#555;">' + (firmaConstruccionCargo || '') + '</div>' +
       '<div style="font-size:8pt;color:#555;">' + (firmaConstruccionEmpresa || '') + '</div>' +
       '<div style="font-size:8pt;color:#555;font-style:italic;margin-top:2px;">Responsable de Construcción</div>' +
+      _fechaFirmaConstrHTML +
       '</td></tr>';
   const firmasICBloque =
-    '<table style="width:60%;border-collapse:collapse;margin:14px 0 6px 0;font-size:9pt;">' +
-    '<tr><td style="border:1px solid #333;padding:6px 8px;text-align:center;vertical-align:bottom;">' +
+    '<table style="width:60%;border-collapse:collapse;margin:14px 0 6px 0;font-size:9pt;page-break-inside:avoid;break-inside:avoid;">' +
+    '<tr style="page-break-inside:avoid;break-inside:avoid;"><td style="border:1px solid #333;padding:6px 8px;text-align:center;vertical-align:bottom;">' +
     _imgFirmaInsp +
     '<div style="border-top:1px solid #333;margin-top:4px;padding-top:3px;"><b>' + (originadoPor || '—') + '</b></div>' +
     '<div style="font-size:8pt;color:#555;font-style:italic;">Responsable Inspección</div>' +
@@ -3578,6 +3670,8 @@ async function generatePDF() {
   const firmaConstruccionNombre  = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '');
   const firmaConstruccionCargo   = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '');
   const firmaConstruccionEmpresa = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '');
+  // V56: fecha de firma Responsable Construcción
+  const firmaConstruccionFecha   = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_fecha')?.value) || await getConfig('icFirma2Fecha') || '');
 
   let empresa = cfg.empresa || await getConfig('empresa') || '';
   let contrato = cfg.contrato || await getConfig('contrato') || '';
@@ -3694,25 +3788,41 @@ async function generatePDF() {
         planoReferencial, nivel, nombreLabor, originadoPor, _icFirmaData,
         objetivo, desarrollo, observaciones, resultadoIC, fotosHTML, tablaHTML, firmasBloque, LOGO, subsistema,
         _icFirmaConstruccionData, firmaConstruccionNombre, firmaConstruccionCargo, firmaConstruccionEmpresa,
-        _sinRespConstr_pdf)
+        _sinRespConstr_pdf, firmaConstruccionFecha)
     : buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
         wbsNombre, areaNombre, subsistemaNombre, empresa, contratoDisplay,
         originadoPor, fotosHTML, tablaHTML5col, firmasBloque, LOGO, camObservacionesPDF);
 
-  // Iframe oculto para renderizar — print() lo dispara el usuario con gesto directo
-  // Destruir y recrear cada vez para garantizar que onload se dispare (evita race condition)
-  let pdfFrame = document.getElementById('_pdfFrame');
-  if (pdfFrame) pdfFrame.parentNode.removeChild(pdfFrame);
-  pdfFrame = document.createElement('iframe');
-  pdfFrame.id = '_pdfFrame';
-  pdfFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;visibility:hidden';
-  document.body.appendChild(pdfFrame);
+  // V56: Pedir nombre del PDF antes de mostrar el iframe — se inyecta en el <title>
+  // del HTML para que el navegador lo use como sugerencia en "Guardar como PDF"
+  const _sugerenciaPDF = _sugerenciaNombreArchivo(codigo, subsistemaNombre || nombreLabor);
+  promptNombreArchivo(
+    { extension: '.pdf', sugerencia: _sugerenciaPDF, titulo: 'PDF' },
+    (nombreFinal) => {
+      // Inyectar el nombre como <title> del HTML — el navegador lo usa como sugerencia
+      // en el diálogo "Guardar como PDF" (Chrome/Firefox lo respetan; Safari iOS a veces)
+      const safeTitle = String(nombreFinal).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const htmlConTitle = htmlContent.replace(
+        /<head>/i,
+        '<head><title>' + safeTitle + '</title>'
+      );
 
-  pdfFrame.onload = () => {
-    document.getElementById('pdfPrintBtn').style.display = 'block';
-    showToast('PDF listo — toque el botón naranja para imprimir');
-  };
-  pdfFrame.srcdoc = htmlContent;
+      // Iframe oculto para renderizar — print() lo dispara el usuario con gesto directo
+      // Destruir y recrear cada vez para garantizar que onload se dispare (evita race condition)
+      let pdfFrame = document.getElementById('_pdfFrame');
+      if (pdfFrame) pdfFrame.parentNode.removeChild(pdfFrame);
+      pdfFrame = document.createElement('iframe');
+      pdfFrame.id = '_pdfFrame';
+      pdfFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;visibility:hidden';
+      document.body.appendChild(pdfFrame);
+
+      pdfFrame.onload = () => {
+        document.getElementById('pdfPrintBtn').style.display = 'block';
+        showToast('PDF listo — toque el botón naranja para imprimir');
+      };
+      pdfFrame.srcdoc = htmlConTitle;
+    }
+  );
 }
 
 // ==================== EXPORTAR WORD ====================
@@ -3768,25 +3878,45 @@ async function exportarWord() {
   const firmasWord   = esCaminata0W ? [] : _firmantes.filter(f => f.nombre || f.data);
 
   // Pasar todos los datos a la función de descarga SINCRONA
-  _descargarWord({
-    codigo, nombreLabor, planoReferencial, disciplinaIC, resultadoIC,
-    nivel, objetivo, desarrollo, observaciones,
-    fechaEmision, subsistema, originadoPor, contrato, items,
-    wbsNombre: wbsNombreW, areaNombre: areaNombreW,
-    subsistemaNombre: subsistemaNombreW, empresa: empresaW,
-    titulo: tituloWord, esCaminata0: esCaminata0W, firmantes: firmasWord,
-    correlativo: correlativoW,
-    // V44: firmas IC para Word
-    firmaInspeccion: _icFirmaData || null,
-    firmaConstruccion: _icFirmaConstruccionData || null,
-    firmaConstruccionNombre: (document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '',
-    firmaConstruccionCargo: (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '',
-    firmaConstruccionEmpresa: (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '',
-    // V51: flag para omitir bloque de firma Construcción
-    sinRespConstr: await _getBool('sinRespConstr'),
-    // V54: observaciones CAM (opcional, vacío = no aparece en Word)
-    camObservaciones: (document.getElementById('cam_observaciones')?.value || '').trim()
-  });
+  // V56: pre-calcular variables async ANTES de abrir el modal
+  // (el callback de promptNombreArchivo es sincrónico — no podemos hacer await ahí dentro)
+  const _w56_f2nombre = (document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '';
+  const _w56_f2cargo  = (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '';
+  const _w56_f2empresa= (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '';
+  const _w56_f2fecha  = (document.getElementById('ic_firma2_fecha')?.value) || await getConfig('icFirma2Fecha') || '';
+  const _w56_sinRC    = await _getBool('sinRespConstr');
+  const _w56_camObs   = (document.getElementById('cam_observaciones')?.value || '').trim();
+
+  // V56: Pedir nombre de archivo antes de descargar (modal con sugerencia editable)
+  const sugerenciaW = _sugerenciaNombreArchivo(codigo, subsistemaNombreW || nombreLabor);
+  promptNombreArchivo(
+    { extension: '.docx', sugerencia: sugerenciaW, titulo: 'Word' },
+    (nombreFinal) => {
+      _descargarWord({
+        codigo, nombreLabor, planoReferencial, disciplinaIC, resultadoIC,
+        nivel, objetivo, desarrollo, observaciones,
+        fechaEmision, subsistema, originadoPor, contrato, items,
+        wbsNombre: wbsNombreW, areaNombre: areaNombreW,
+        subsistemaNombre: subsistemaNombreW, empresa: empresaW,
+        titulo: tituloWord, esCaminata0: esCaminata0W, firmantes: firmasWord,
+        correlativo: correlativoW,
+        // V44: firmas IC para Word
+        firmaInspeccion: _icFirmaData || null,
+        firmaConstruccion: _icFirmaConstruccionData || null,
+        firmaConstruccionNombre: _w56_f2nombre,
+        firmaConstruccionCargo: _w56_f2cargo,
+        firmaConstruccionEmpresa: _w56_f2empresa,
+        // V56: fecha firma Responsable Construcción
+        firmaConstruccionFecha: _w56_f2fecha,
+        // V51: flag para omitir bloque de firma Construcción
+        sinRespConstr: _w56_sinRC,
+        // V54: observaciones CAM (opcional, vacío = no aparece en Word)
+        camObservaciones: _w56_camObs,
+        // V56: nombre personalizado del archivo
+        customFilename: nombreFinal
+      });
+    }
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -3983,9 +4113,13 @@ function _dxTable(rows, opts) {
     '<w:bottom w:w="60" w:type="dxa"/><w:right w:w="80" w:type="dxa"/>' +
     '</w:tblCellMargin>' +
     '</w:tblPr>';
-  const trs = rows.map(r =>
-    '<w:tr>' + (r.height ? '<w:trPr><w:trHeight w:val="' + r.height + '" w:hRule="atLeast"/></w:trPr>' : '') + r.cells + '</w:tr>'
-  ).join('');
+  // V56: cantSplit a nivel de fila evita que se parta entre páginas
+  const cantSplitTag = opts.cantSplit ? '<w:cantSplit/>' : '';
+  const trs = rows.map(r => {
+    const trPrInner = (r.height ? '<w:trHeight w:val="' + r.height + '" w:hRule="atLeast"/>' : '') + cantSplitTag;
+    const trPr = trPrInner ? '<w:trPr>' + trPrInner + '</w:trPr>' : '';
+    return '<w:tr>' + trPr + r.cells + '</w:tr>';
+  }).join('');
   return '<w:tbl>' + tblPr + grid + trs + '</w:tbl>';
 }
 
@@ -4304,7 +4438,7 @@ function _dxBuildBody(d) {
       while (cells.length < 3) cells.push(_dxCell(null, { w: colW }));
       rows.push({ cells: cells.join('') });
     }
-    firmasBlock += _dxTable(rows, { totalW: 9639, gridCols: [colW, colW, 9639 - 2 * colW] });
+    firmasBlock += _dxTable(rows, { totalW: 9639, gridCols: [colW, colW, 9639 - 2 * colW], cantSplit: true });
   }
 
   // V45: Firmas IC (Inspección arriba + Construcción abajo) — tabla 2×1 vertical
@@ -4335,6 +4469,12 @@ function _dxBuildBody(d) {
       if (opts.cargo)   inner += _dxPar(opts.cargo,   { align: 'center', sz: 14 });
       if (opts.empresa) inner += _dxPar(opts.empresa, { align: 'center', sz: 14 });
       inner += _dxPar(opts.role, { align: 'center', sz: 14, color: '555555' });
+      // V56: agregar fecha si está presente (solo Responsable Construcción la pasa)
+      if (opts.fecha) {
+        const fp = String(opts.fecha).split('-');
+        const fechaFmt = (fp.length === 3) ? (fp[2] + '-' + fp[1] + '-' + fp[0]) : opts.fecha;
+        inner += _dxPar('Fecha: ' + fechaFmt, { align: 'center', sz: 14, color: '555555' });
+      }
       return _dxCell(inner, { w: tblW, vAlign: 'bottom' });
     }
 
@@ -4347,7 +4487,7 @@ function _dxBuildBody(d) {
     // V51: solo crear/incluir cellConstr si sinRespConstr no está activo
     if (d.sinRespConstr) {
       // Solo firma de Inspección — tabla de 1 fila
-      firmasBlock += _dxTable([{ cells: cellInsp }], { totalW: tblW, gridCols: [tblW] });
+      firmasBlock += _dxTable([{ cells: cellInsp }], { totalW: tblW, gridCols: [tblW], cantSplit: true });
     } else {
       const cellConstr = _icFirmaCell({
         data: d.firmaConstruccion || null,
@@ -4355,10 +4495,11 @@ function _dxBuildBody(d) {
         cargo: d.firmaConstruccionCargo || '',
         empresa: d.firmaConstruccionEmpresa || '',
         role: 'Responsable Construcción',
-        label: 'firmaConstruccion'
+        label: 'firmaConstruccion',
+        fecha: d.firmaConstruccionFecha || '' // V56
       });
-      // V45: 2 filas de 1 columna cada una → firmas apiladas verticalmente
-      firmasBlock += _dxTable([{ cells: cellInsp }, { cells: cellConstr }], { totalW: tblW, gridCols: [tblW] });
+      // V45/V56: 2 filas de 1 columna cada una → firmas apiladas verticalmente, no se cortan entre páginas
+      firmasBlock += _dxTable([{ cells: cellInsp }, { cells: cellConstr }], { totalW: tblW, gridCols: [tblW], cantSplit: true });
     }
   }
 
@@ -4480,10 +4621,15 @@ function _descargarWord(d) {
     return;
   }
 
-  // Nombre de archivo
-  const filename = d.codigo + '_' +
-    (d.titulo ? d.titulo.replace(/\s+/g, '_').replace(/[^\w\u00C0-\u017F-]/g, '') : (d.esCaminata0 ? 'IC' : 'CAM')) +
-    '.docx';
+  // V56: nombre customizado (si viene) o auto-generado
+  let filename;
+  if (d.customFilename) {
+    filename = d.customFilename.endsWith('.docx') ? d.customFilename : d.customFilename + '.docx';
+  } else {
+    filename = d.codigo + '_' +
+      (d.titulo ? d.titulo.replace(/\s+/g, '_').replace(/[^\w\u00C0-\u017F-]/g, '') : (d.esCaminata0 ? 'IC' : 'CAM')) +
+      '.docx';
+  }
 
   // Descarga: blob con MIME .docx oficial
   try {
@@ -4724,12 +4870,12 @@ function getFirmasHTML() {
       </td>`).join('');
     // Rellenar con celdas vacías si el grupo tiene menos de 3
     const vacias = Array(3 - grupo.length).fill('<td style="border:1px solid #333;padding:8px;"></td>').join('');
-    rows += `<tr>${cds}${vacias}</tr>`;
+    rows += `<tr style="page-break-inside:avoid;break-inside:avoid;">${cds}${vacias}</tr>`;
   }
 
   return `
-  <div style="margin-top:14px;">
-    <table style="width:100%;border-collapse:collapse;font-size:9pt;">
+  <div style="margin-top:14px;page-break-inside:avoid;break-inside:avoid;">
+    <table style="width:100%;border-collapse:collapse;font-size:9pt;page-break-inside:avoid;break-inside:avoid;">
       <tr style="background:#f0f0f0;">
         <td colspan="3" style="border:1px solid #333;padding:5px 8px;font-weight:bold;text-align:center;">FIRMAS</td>
       </tr>
@@ -4865,6 +5011,7 @@ async function guardarBorrador() {
       // V44: campos IC persistentes
       'icNivel','icObjetivo','icDesarrollo','icObservaciones',
       'icFirma2Nombre','icFirma2Cargo','icFirma2Empresa',
+      'icFirma2Fecha', // V56
       // V50: flag inspección sin SS
       'sinSS',
       // V51: flag sin Responsable Construcción
@@ -5066,7 +5213,8 @@ function _wireupPersistenciaIC() {
     ['cam_observaciones', 'camObservaciones'],
     ['ic_firma2_nombre',  'icFirma2Nombre'],
     ['ic_firma2_cargo',   'icFirma2Cargo'],
-    ['ic_firma2_empresa', 'icFirma2Empresa']
+    ['ic_firma2_empresa', 'icFirma2Empresa'],
+    ['ic_firma2_fecha',   'icFirma2Fecha']
   ];
   const _t = {}; // timers por id
   for (const [id, key] of map) {

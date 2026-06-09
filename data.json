@@ -85,6 +85,20 @@
       "empresa": "GARDILCIC"
     },
     {
+      "ss_id": "221160F-01-04",
+      "ss_name": "XC-PD-S05-01 (TRAMO 3)",
+      "si_id": "221160F-01",
+      "si_name": "CRUZADO PRINCIPAL DE PRODUCCION",
+      "t_id": "221160F",
+      "t_name": "ACCESO DE NIVEL",
+      "a_id": "221100",
+      "a_name": "INFRAESTRUCTURA DE NIVEL",
+      "w_id": "221000",
+      "w_name": "INFRAESTRUCTURA DE NIVEL",
+      "contrato": "4600031457/GCC-004",
+      "empresa": "GARDILCIC"
+    },
+    {
       "ss_id": "221161F-01-01",
       "ss_name": "CRUZADO PRINCIPAL DE PRODUCCION NORTE, INCLUYE FRONTONES",
       "si_id": "221161F-01",
@@ -240,7 +254,7 @@
     },
     {
       "ss_id": "221345F-02-02",
-      "ss_name": "C-53-PD-N52-N62 CONTINUIDAD",
+      "ss_name": "C-53-PD-N52-N62 CONTINUIDAD, INCLUYE FRM-P-02",
       "si_id": "221345F-02",
       "si_name": "ACCESO A SUBNIVEL DE PRODUCCION 05",
       "t_id": "221340F",
@@ -337,6 +351,20 @@
       "empresa": "GEOVITA"
     },
     {
+      "ss_id": "221470F-01-04",
+      "ss_name": "FRSEU1 XCI-08",
+      "si_id": "221470F-01",
+      "si_name": "CRUZADO DE INYECCION S05",
+      "t_id": "221470F",
+      "t_name": "CRUZADO DE INYECCION",
+      "a_id": "221400",
+      "a_name": "VENTILACION DE INYECCION",
+      "w_id": "221000",
+      "w_name": "INFRAESTRUCTURA DE NIVEL",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
+    },
+    {
       "ss_id": "221570F-01-01",
       "ss_name": "XCE-06 (TRAMO 1)",
       "si_id": "221570F-01",
@@ -409,6 +437,20 @@
     {
       "ss_id": "221810F-01-02",
       "ss_name": "RAMPA BY-PASS 01 TRAMO 02",
+      "si_id": "221810F-01",
+      "si_name": "RAMPA BY-PASS 01",
+      "t_id": "221810F",
+      "t_name": "RAMPA DE EXPLORACIONES",
+      "a_id": "221800",
+      "a_name": "SULFUROS PROFUNDOS",
+      "w_id": "221000",
+      "w_name": "INFRAESTRUCTURA DE NIVEL",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
+    },
+    {
+      "ss_id": "221810F-01-03",
+      "ss_name": "RAMPA BY-PASS 01 TRAMO 03",
       "si_id": "221810F-01",
       "si_name": "RAMPA BY-PASS 01",
       "t_id": "221810F",
@@ -2396,7 +2438,7 @@
     },
     {
       "ss_id": "222712F-02-07",
-      "ss_name": "C-53-NH-N52 CONTINUIDAD",
+      "ss_name": "C-53-NH-N52 CONTINUIDAD, INCLUYE FRM-H-03",
       "si_id": "222712F-02",
       "si_name": "CALLES",
       "t_id": "222710F",
@@ -3922,7 +3964,7 @@
     },
     {
       "ss_id": "223440-02-02",
-      "ss_name": "SISTEMA HVAC, PRESURIZADOR Y SISTEMA DE DETECCIÓN Y EXTINCIÓN DE INCENDIOS 223440-SEL-002",
+      "ss_name": "SISTEMA HVAC 223440-SEL-002",
       "si_id": "223440-02",
       "si_name": "SALA ELECTRICA 223440-SEL-002",
       "t_id": "223440",
@@ -3951,6 +3993,20 @@
     {
       "ss_id": "223440-02-04",
       "ss_name": "CABLEADO Y DISTRIBUCIÓN DE MEDIA TENSIÓN 223440-SEL-002",
+      "si_id": "223440-02",
+      "si_name": "SALA ELECTRICA 223440-SEL-002",
+      "t_id": "223440",
+      "t_name": "SUBNIVEL DE EXTRACCION MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600029025/CC-101",
+      "empresa": "SIGDO KOPPERS S.A"
+    },
+    {
+      "ss_id": "223440-02-05",
+      "ss_name": "PRESURIZADOR Y SISTEMA DE DETECCIÓN Y EXTINCIÓN DE INCENDIOS 223440-SEL-002",
       "si_id": "223440-02",
       "si_name": "SALA ELECTRICA 223440-SEL-002",
       "t_id": "223440",
@@ -4020,7 +4076,7 @@
     },
     {
       "ss_id": "223440-04-02",
-      "ss_name": "SISTEMA HVAC, PRESURIZADOR Y SISTEMA DE DETECCIÓN Y EXTINCIÓN DE INCENDIOS 223440-SEL-004",
+      "ss_name": "SISTEMA HVAC 223440-SEL-004",
       "si_id": "223440-04",
       "si_name": "SALA ELECTRICA 223440-SEL-004",
       "t_id": "223440",
@@ -4049,6 +4105,20 @@
     {
       "ss_id": "223440-04-04",
       "ss_name": "CABLEADO Y DISTRIBUCIÓN DE MEDIA TENSIÓN 223440-SEL-004",
+      "si_id": "223440-04",
+      "si_name": "SALA ELECTRICA 223440-SEL-004",
+      "t_id": "223440",
+      "t_name": "SUBNIVEL DE EXTRACCION MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600029025/CC-101",
+      "empresa": "SIGDO KOPPERS S.A"
+    },
+    {
+      "ss_id": "223440-04-05",
+      "ss_name": "PRESURIZADOR Y SISTEMA DE DETECCIÓN Y EXTINCIÓN DE INCENDIOS 223440-SEL-004",
       "si_id": "223440-04",
       "si_name": "SALA ELECTRICA 223440-SEL-004",
       "t_id": "223440",
@@ -6162,7 +6232,7 @@
     },
     {
       "ss_id": "224212F-02-03",
-      "ss_name": "C-51-PD-N51, INCLUYE ZANJAS NORTE Y SUR, FRI-PD-N51-06, CONTINUIDAD",
+      "ss_name": "C-51-PD-N51, INCLUYE ZANJAS NORTE Y SUR, FRI-PD-N51-06, CONEX-PD-N51-03A CONTINUIDAD",
       "si_id": "224212F-02",
       "si_name": "CALLES",
       "t_id": "224210F",
@@ -8723,20 +8793,6 @@
       "empresa": "GEOVITA"
     },
     {
-      "ss_id": "225411F-01-04",
-      "ss_name": "XCE-04 (TRAMO 4), INCLUYE FRONTONES",
-      "si_id": "225411F-01",
-      "si_name": "GALERIAS DE EXTRACCION",
-      "t_id": "225410F",
-      "t_name": "SUBNIVEL VENTILACION EXTRACCION MB-S05",
-      "a_id": "225400",
-      "a_name": "NIVEL DE EXTRACCION",
-      "w_id": "225000",
-      "w_name": "UNIDADES DE EXPLOTACION CONTINUIDAD NIVEL 1 SECTOR SUR",
-      "contrato": "4600031459/GCC-005",
-      "empresa": "GEOVITA"
-    },
-    {
       "ss_id": "225412F-01-01",
       "ss_name": "FRMAR-EXS-S05-01, INCLUYE FRMAR-SMM-S04-02",
       "si_id": "225412F-01",
@@ -8888,6 +8944,34 @@
       "w_id": "225000",
       "w_name": "UNIDADES DE EXPLOTACION CONTINUIDAD NIVEL 1 SECTOR SUR",
       "contrato": "4600029058/GCC-001",
+      "empresa": "GEOVITA"
+    },
+    {
+      "ss_id": "225511F-02-03A",
+      "ss_name": "GA-04-ACA-S05 (TRAMO 01)",
+      "si_id": "225511F-02",
+      "si_name": "GALERIAS ACA-S05",
+      "t_id": "225510F",
+      "t_name": "SUBNIVEL DE ACARREO MB-S05",
+      "a_id": "225500",
+      "a_name": "NIVEL DE ACARREO",
+      "w_id": "225000",
+      "w_name": "UNIDADES DE EXPLOTACION CONTINUIDAD NIVEL 1 SECTOR SUR",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
+    },
+    {
+      "ss_id": "225511F-02-03B",
+      "ss_name": "GA-04-ACA-S05 (TRAMO 02)",
+      "si_id": "225511F-02",
+      "si_name": "GALERIAS ACA-S05",
+      "t_id": "225510F",
+      "t_name": "SUBNIVEL DE ACARREO MB-S05",
+      "a_id": "225500",
+      "a_name": "NIVEL DE ACARREO",
+      "w_id": "225000",
+      "w_name": "UNIDADES DE EXPLOTACION CONTINUIDAD NIVEL 1 SECTOR SUR",
+      "contrato": "4600031459/GCC-005",
       "empresa": "GEOVITA"
     },
     {
@@ -9537,6 +9621,34 @@
     {
       "ss_id": "222120F-05-03",
       "ss_name": "CHIMENEAS PILOTO, CA-PD-PC-C03-ZJ02N@ZJ08N",
+      "si_id": "222120F-05",
+      "si_name": "CHIMENEAS PILOTO - PANEL CENTRAL",
+      "t_id": "222120F",
+      "t_name": "SUBNIVEL DE PRODUCCION MB-N01",
+      "a_id": "222100",
+      "a_name": "MB - N01 - N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "4600027681/CC-113",
+      "empresa": "MASTER DRILLING - BESALCO"
+    },
+    {
+      "ss_id": "222120F-05-04",
+      "ss_name": "CHIMENEAS PILOTO, CA-PD-PC-C04-ZJ01N@ZJ07N",
+      "si_id": "222120F-05",
+      "si_name": "CHIMENEAS PILOTO - PANEL CENTRAL",
+      "t_id": "222120F",
+      "t_name": "SUBNIVEL DE PRODUCCION MB-N01",
+      "a_id": "222100",
+      "a_name": "MB - N01 - N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "4600027681/CC-113",
+      "empresa": "MASTER DRILLING - BESALCO"
+    },
+    {
+      "ss_id": "222120F-05-05",
+      "ss_name": "CHIMENEAS PILOTO, CA-PD-PC-C05-ZJ01N@ZJ06N",
       "si_id": "222120F-05",
       "si_name": "CHIMENEAS PILOTO - PANEL CENTRAL",
       "t_id": "222120F",
@@ -11062,7 +11174,7 @@
     },
     {
       "ss_id": "225413F-01-02",
-      "ss_name": "CHEXS-ACA-S05-04@05",
+      "ss_name": "CHEXS-ACA-S05-04@06",
       "si_id": "225413F-01",
       "si_name": "CHIMENEAS",
       "t_id": "225410F",

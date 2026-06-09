@@ -8,29 +8,59 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
-## [V55] - 2026-05-28
-
-> **Solo datos** — Esta versión actualiza únicamente `data.json`. No modifica `index.html` ni `sw.js`, por lo que NO requiere bump de `CACHE_NAME`. El Service Worker actualiza `data.json` automáticamente vía Stale-While-Revalidate.
+## [V56] - 2026-05-28
 
 ### Added
-- **3 nuevos SS en `data.json`** (de 788 a 791):
-  - `222440-01-10` — Ventilador extracción 222442-VEN-010 CS-664 (CODELCO GOMS)
-  - `224323F-01-01` — CHINS-SMM-N52-01 (MASTER DRILLING - BESALCO)
-  - `225413F-01-02` — CHEXS-ACA-S05-04@05 (MASTER DRILLING - BESALCO)
-- Nuevo responsable de construcción agregado a la lista (`responsablesConstruccion`).
+- **Fecha de firma del Responsable de Construcción (IC)**: nuevo campo `<input type="date" id="ic_firma2_fecha">` debajo de cargo/empresa. **Auto-completa la fecha actual** cuando el usuario firma (touchend/mouseup del canvas), pero es **editable** por si el documento se firma en otro día. Aparece en PDF y Word debajo de "Responsable de Construcción" solo si tiene contenido.
+- **Modal de nombre de archivo** antes de descargar PDF o Word. Helper `promptNombreArchivo(opts, callback)` con sugerencia auto-generada (formato `CODIGO_SS_YYYY-MM-DD`). Aplica a ambos formatos:
+  - **Word**: el nombre se usa como `download="..."` del link (control total).
+  - **PDF**: el nombre se inyecta como `<title>` del HTML del iframe (sugerencia para "Guardar como PDF" del navegador — Chrome/Firefox respetan, Safari iOS a veces).
+- **8 nuevos SS en `data.json`** (de 791 a 799):
+  - `221160F-01-04` — XC-PD-S05-01 TRAMO 3 (GARDILCIC)
+  - `221470F-01-04` — FRSEU1 XCI-08 (GEOVITA)
+  - `221810F-01-03` — Rampa by-pass 01 tramo 03 (GEOVITA)
+  - `223440-02-05`, `223440-04-05` — Presurizador y detección/extinción (SIGDO KOPPERS)
+  - `225511F-02-03A`, `225511F-02-03B` — GA-04-ACA-S05 tramos 01 y 02 (GEOVITA)
+  - `222120F-05-04`, `222120F-05-05` — Chimeneas piloto CA-PD-PC (MDB)
+
+### Fixed
+- **🔴 Crítico — firmas IC cortadas entre páginas**: el bloque de firmas IC (Inspección + Construcción apiladas) podía partirse entre páginas del PDF/Word, dejando una firma en una página y otra en la siguiente. Causa: el navegador hacía page-break entre las filas de la tabla cuando no entraban juntas.
+  - **PDF**: agregadas reglas CSS `page-break-inside: avoid` y `break-inside: avoid` a la tabla de firmas IC, sus filas internas, y al bloque de firmas CAM completo.
+  - **Word**: la función `_dxTable` ahora acepta `opts.cantSplit` que agrega `<w:cantSplit/>` a las propiedades de cada fila (`<w:trPr>`). Aplicado a las tablas de firmas IC (apiladas y solo-inspección) y a la tabla de firmantes CAM.
 
 ### Changed
-- **Cambio de operador en SS `223520F-01-05`**: de GEOVITA (contrato `GCC-001`) a GARDILCIC (contrato `GCC-004`). El nombre del subsistema también cambió: "RAC-REX-INI-01 / CAB-02-NP..." → "CAB-02-NP-S05 (TRAMO 4)". Resuelto según la planilla `WBS_Semanal.xlsx` donde aparece duplicado, priorizando GARDILCIC (primera ocurrencia / operador actual).
+- **`data.json` actualizado a 799 SS** (de 791). Se eliminó `225411F-01-04` siguiendo la planilla oficial (ya no figura en `WBS_Semanal__1_.xlsx`).
+- 6 SS existentes con cambios menores de nombre/descripción.
+- `_descargarWord` ahora acepta el parámetro opcional `customFilename` para permitir nombre editable desde el modal.
 
 ### Notas técnicas
-- Duplicado `225310F-03-01` mantiene GEOVITA (consistente con la decisión de V54).
-- **GEOVITA se mantiene** en `empresasContratos`: aunque se cerró un contrato puntual, la empresa sigue operando 75 subsistemas según la planilla WBS oficial. Descartarla habría dejado esos 75 SS sin empresa asignada.
-- Distribución de SS por empresa: SIGDO KOPPERS S.A (207), GARDILCIC (157), ZUBLIN (145), ACCIONA-OSSA-PIZZAROTTI (95), GEOVITA (75), MASTER DRILLING - BESALCO (57), CODELCO GOMS (52), SIGMA S.A (3).
-- 0 SS eliminados respecto a V54.
-- Deploy: subir únicamente `data.json` (y opcionalmente este `CHANGELOG.md`). No es necesario tocar el Service Worker.
+- Auto-fill de fecha solo dispara cuando el usuario **firma por primera vez** (campo vacío). Si la fecha ya tiene valor, no la sobrescribe — permite firmar varias veces sin perder la fecha original.
+- Formato fecha: `<input type="date">` usa `yyyy-mm-dd` internamente; al renderizar en PDF/Word se convierte a `dd-mm-yyyy` consistente con `fmtFecha`.
+- El modal de nombre de archivo es **bloqueante por diseño**: hasta que el usuario confirma o cancela, no se descarga nada. Esto evita race conditions con el iframe del PDF.
+- La sugerencia auto-generada limpia caracteres especiales y trunca a 50 chars para evitar problemas en sistemas de archivos.
+- Duplicados resueltos consistentes con V54/V55: `223520F-01-05`→GARDILCIC, `225310F-03-01`→GEOVITA.
 
 ### Razones
-Ciclo regular de sincronización con la planilla WBS oficial de GOMS, más la incorporación de un nuevo responsable de construcción al equipo.
+El equipo reportó 3 problemas:
+1. Las firmas se cortaban entre páginas al imprimir (visible en la imagen del reporte CAM-REC del PK 0+020).
+2. Necesitaban registrar la fecha en que se firmaba el documento (puede no coincidir con la fecha de emisión).
+3. Querían control sobre el nombre del archivo para integrarlo con sistemas de gestión documental de CODELCO.
+
+---
+
+## [V55] - 2026-05-19
+
+> **Solo datos** — Esta versión actualizó únicamente `data.json` con +3 SS (de 788 a 791) y agregó un responsable de construcción nuevo. No modificó código (sin bump de `CACHE_NAME`).
+
+### Added
+- 3 nuevos SS: `222440-01-10`, `224323F-01-01`, `225413F-01-02`.
+- Nuevo responsable de construcción.
+
+### Changed
+- `223520F-01-05`: cambio de operador GEOVITA → GARDILCIC (cambio operacional real reflejado en planilla WBS).
+
+### Notas
+- Geovita se mantiene en `empresasContratos` (75 SS activos).
 
 ## [V54] - 2026-05-19
 
