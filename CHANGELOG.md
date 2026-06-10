@@ -8,6 +8,27 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V57] - 2026-06-10
+
+### Fixed
+- **🔴 Crítico — Bug histórico de fecha del informe**: Al exportar PDF o Word, la fecha del informe mostraba la **fecha del snapshot del primer ítem creado**, no la fecha vigente en "Fecha de Emisión" de Config. Si el usuario creaba ítems un día y exportaba el informe varios días después (workflow real del equipo), la fecha del documento quedaba congelada en la fecha vieja aunque se actualizara en Config.
+  - **Causa raíz**: el operador `||` en `generatePDF()` y `exportarWord()` evaluaba `cfg.fechaEmision` (snapshot) **antes** que `await getConfig('fechaEmision')` (IDB actual). Como el snapshot siempre tiene valor, nunca se llegaba a leer el IDB actualizado.
+  - **Fix**: invertida la prioridad. Ahora `getConfig('fechaEmision')` se evalúa primero, y `cfg.fechaEmision` queda como fallback solo si el IDB no tiene fecha (situación rara, no debería ocurrir en uso normal).
+  - **Caso reportado**: especialista guardó `10-06-2026` en Config, pero el PDF salía con `31-05-2026` (snapshot del día en que creó los ítems).
+
+### Notas técnicas
+- El fix aplica en 2 lugares: `generatePDF()` (línea 3659) y `exportarWord()` (línea 3868).
+- La exportación a **CSV** (línea 2691) **NO se modifica**: ahí semánticamente corresponde guardar la fecha histórica de creación de cada ítem (es un export de hallazgos individuales, no del informe).
+- **Compatibilidad con borradores**: `cargarBorrador()` restaura `cfg.fechaEmision` al IDB con `setConfigBatch`, por lo que la fecha del borrador sigue siendo la que aparece en el PDF/Word cuando se carga uno viejo. Sin regresión.
+- 4 escenarios validados con smoke test:
+  - Config + snapshot ambos con fecha → usa Config (fix aplicado) ✓
+  - Config vacío, snapshot con fecha → cae en snapshot (compat) ✓
+  - Ambos vacíos → cae en `Date.now()` (último fallback) ✓
+  - Borrador cargado → fecha del borrador ✓
+
+### Razones
+Workflow real del equipo: crean ítems progresivamente durante la inspección (a veces varios días) y solo al final ajustan "Fecha de Emisión" en Config para que coincida con la fecha de firma del documento. Hasta V56, ese ajuste se persistía en IDB pero el PDF/Word lo ignoraba. **El fix es mínimo (2 líneas) pero recupera el comportamiento esperado del campo "Fecha de Emisión"** como fuente de verdad del informe.
+
 ## [V56] - 2026-05-28
 
 ### Added

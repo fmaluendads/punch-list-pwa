@@ -1531,7 +1531,7 @@ textarea { resize: vertical; min-height: 80px; }
     <button class="btn btn-danger" onclick="confirmarNuevaInspeccion()" style="margin-top:0;background:rgba(239,68,68,0.12);border:1px solid var(--danger);color:var(--danger)">🧹 Nueva Inspección — Limpiar Todo</button>
     <!-- V52: Indicador de versión visible — debe coincidir con CACHE_NAME en sw.js -->
     <div style="text-align:center;font-size:10px;color:#666;margin-top:24px;padding:10px;border-top:1px solid var(--slate-lt);">
-      Punch List PWA · <span id="appVersionLabel">V56</span> · WBS Sync: <span id="appLastSync">—</span>
+      Punch List PWA · <span id="appVersionLabel">V57</span> · WBS Sync: <span id="appLastSync">—</span>
     </div>
   </div>
 
@@ -1904,7 +1904,7 @@ let _selectedWBSRecord = null;
 // V52: flag para deshabilitar listeners de persistencia durante cargarBorrador (evita pisar datos)
 let _loadingBorrador = false;
 // V52: versión visible en la UI — debe coincidir con CACHE_NAME en sw.js
-const APP_VERSION = 'V56';
+const APP_VERSION = 'V57';
 
 // ==================== INDEXEDDB ====================
 const DB_NAME = 'PunchListDB';
@@ -3656,7 +3656,11 @@ async function generatePDF() {
   };
 
   const cfg = items[0]?.config || {};
-  const fechaEmision = formatDate(cfg.fechaEmision || await getConfig('fechaEmision') || new Date().toISOString().split('T')[0]);
+  // V57: La fecha de Config es la fuente de verdad para el informe (no el snapshot del ítem).
+  // Si el usuario cambió "Fecha de Emisión" en Config después de crear los ítems, esa es la
+  // fecha vigente del documento. Antes el operador || tomaba cfg.fechaEmision primero y nunca
+  // llegaba al getConfig actualizado (bug reportado por especialista).
+  const fechaEmision = formatDate(await getConfig('fechaEmision') || cfg.fechaEmision || new Date().toISOString().split('T')[0]);
   // V50: si la inspección es "sin SS", el subsistema se reemplaza por placeholder
   const _sinSS_pdf = cfg.sinSS === true || (await _getBool('sinSS'));
   const subsistema   = _sinSS_pdf ? 'SIN SUBSISTEMA' : (cfg.subsistema   || await getConfig('subsistema')   || '');
@@ -3861,7 +3865,8 @@ async function exportarWord() {
     'Las observaciones encontradas deben ser subsanadas progresivamente durante los avances correspondientes.';
 
   const cfg          = items[0]?.config || {};
-  const fechaEmision     = cfg.fechaEmision || new Date().toISOString().split('T')[0];
+  // V57: misma lógica que generatePDF — Config IDB es la fuente de verdad sobre el snapshot
+  const fechaEmision = (await getConfig('fechaEmision')) || cfg.fechaEmision || new Date().toISOString().split('T')[0];
   // V50: detectar si la inspección es "sin SS"
   const _sinSS_word = cfg.sinSS === true || (await _getBool('sinSS'));
   const subsistema       = _sinSS_word ? 'SIN SUBSISTEMA' : (cfg.subsistema || '');
