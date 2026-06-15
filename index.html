@@ -1531,7 +1531,7 @@ textarea { resize: vertical; min-height: 80px; }
     <button class="btn btn-danger" onclick="confirmarNuevaInspeccion()" style="margin-top:0;background:rgba(239,68,68,0.12);border:1px solid var(--danger);color:var(--danger)">🧹 Nueva Inspección — Limpiar Todo</button>
     <!-- V52: Indicador de versión visible — debe coincidir con CACHE_NAME en sw.js -->
     <div style="text-align:center;font-size:10px;color:#666;margin-top:24px;padding:10px;border-top:1px solid var(--slate-lt);">
-      Punch List PWA · <span id="appVersionLabel">V57</span> · WBS Sync: <span id="appLastSync">—</span>
+      Punch List PWA · <span id="appVersionLabel">V58</span> · WBS Sync: <span id="appLastSync">—</span>
     </div>
   </div>
 
@@ -1904,7 +1904,7 @@ let _selectedWBSRecord = null;
 // V52: flag para deshabilitar listeners de persistencia durante cargarBorrador (evita pisar datos)
 let _loadingBorrador = false;
 // V52: versión visible en la UI — debe coincidir con CACHE_NAME en sw.js
-const APP_VERSION = 'V57';
+const APP_VERSION = 'V58';
 
 // ==================== INDEXEDDB ====================
 const DB_NAME = 'PunchListDB';
@@ -3663,9 +3663,11 @@ async function generatePDF() {
   const fechaEmision = formatDate(await getConfig('fechaEmision') || cfg.fechaEmision || new Date().toISOString().split('T')[0]);
   // V50: si la inspección es "sin SS", el subsistema se reemplaza por placeholder
   const _sinSS_pdf = cfg.sinSS === true || (await _getBool('sinSS'));
-  const subsistema   = _sinSS_pdf ? 'SIN SUBSISTEMA' : (cfg.subsistema   || await getConfig('subsistema')   || '');
-  const originadoPor = cfg.originadoPor || await getConfig('originadoPor') || '';
-  const pkReferencia = cfg.nombreLabor  || nombreLabor;
+  // V58: Config IDB es la fuente de verdad (los snapshots por ítem se ignoran)
+  // Si el usuario cambia subsistema en Config después de crear ítems, debe reflejarse en el export
+  const subsistema   = _sinSS_pdf ? 'SIN SUBSISTEMA' : (await getConfig('subsistema')   || cfg.subsistema   || '');
+  const originadoPor = await getConfig('originadoPor') || cfg.originadoPor || '';
+  const pkReferencia = nombreLabor || cfg.nombreLabor || '';
 
   // V44/V49: Datos firma Construcción (segunda firma IC)
   // V49: nombre ahora es input editable (con fallback a Config si está vacío)
@@ -3677,8 +3679,9 @@ async function generatePDF() {
   // V56: fecha de firma Responsable Construcción
   const firmaConstruccionFecha   = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_fecha')?.value) || await getConfig('icFirma2Fecha') || '');
 
-  let empresa = cfg.empresa || await getConfig('empresa') || '';
-  let contrato = cfg.contrato || await getConfig('contrato') || '';
+  // V58: Config IDB es la fuente de verdad — snapshots por ítem se ignoran
+  let empresa = await getConfig('empresa') || cfg.empresa || '';
+  let contrato = await getConfig('contrato') || cfg.contrato || '';
   if (!empresa && cfg.empresaContrato) {
     const ec = DATOS.empresasContratos.find(e => `${e.empresa} - ${e.contrato}` === cfg.empresaContrato);
     if (ec) { empresa = ec.empresa; contrato = ec.contrato; }
@@ -3869,14 +3872,21 @@ async function exportarWord() {
   const fechaEmision = (await getConfig('fechaEmision')) || cfg.fechaEmision || new Date().toISOString().split('T')[0];
   // V50: detectar si la inspección es "sin SS"
   const _sinSS_word = cfg.sinSS === true || (await _getBool('sinSS'));
-  const subsistema       = _sinSS_word ? 'SIN SUBSISTEMA' : (cfg.subsistema || '');
-  const originadoPor     = cfg.originadoPor || '';
-  const contrato         = cfg.contrato ? (cfg.contrato.split('/').pop() || cfg.contrato) : '';
+  // V58: Config IDB es la fuente de verdad — snapshots por ítem se ignoran
+  // Si el usuario cambia subsistema/empresa/contrato/caminata en Config después de crear
+  // ítems, debe reflejarse en el export. Bug reportado: PDF salía como IC pero Word como CAM
+  // porque cfg.caminata (snapshot) era distinto a getConfig('caminata') (IDB actual).
+  const subsistemaIDB    = await getConfig('subsistema') || '';
+  const subsistema       = _sinSS_word ? 'SIN SUBSISTEMA' : (subsistemaIDB || cfg.subsistema || '');
+  const originadoPor     = await getConfig('originadoPor') || cfg.originadoPor || '';
+  const contratoIDB      = await getConfig('contrato') || '';
+  const contratoRaw      = contratoIDB || cfg.contrato || '';
+  const contrato         = contratoRaw ? (contratoRaw.split('/').pop() || contratoRaw) : '';
   const wbsNombreW       = _sinSS_word ? 'SIN SUBSISTEMA' : (await getConfig('wbsNombre') || (await getConfig('wbs') || ''));
   const areaNombreW      = _sinSS_word ? 'SIN SUBSISTEMA' : (await getConfig('areaNombre') || (await getConfig('area') || ''));
   const subsistemaNombreW= _sinSS_word ? 'SIN SUBSISTEMA' : (await getConfig('subsistemaNombre') || subsistema);
-  const empresaW         = cfg.empresa || await getConfig('empresa') || '';
-  const caminataWord = cfg.caminata || await getConfig('caminata') || 'INSPECCIÓN';
+  const empresaW         = await getConfig('empresa') || cfg.empresa || '';
+  const caminataWord     = await getConfig('caminata') || cfg.caminata || 'INSPECCIÓN';
   const esCaminata0W = caminataWord === 'INSPECCIÓN';
   if (esCaminata0W && !resultadoIC) { showToast('Seleccione el Resultado (Cumple/No Cumple)', 'error'); return; }
   const tituloWord   = esCaminata0W ? 'INSPECCIÓN DE CALIDAD' : caminataWord.toUpperCase();
