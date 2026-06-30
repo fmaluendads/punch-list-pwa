@@ -8,6 +8,73 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V59] - 2026-06-22
+
+> **Solo datos** — Esta versión actualiza únicamente `data.json`. No modifica `index.html` ni `sw.js`, por lo que NO requiere bump de `CACHE_NAME`. El Service Worker actualiza `data.json` automáticamente vía Stale-While-Revalidate.
+
+### Added
+- **31 nuevos SS en `data.json`** (de 799 a 827):
+  - 6 puertas estándar/extraliviana en sector NORTE (`222120-01-01` a `-06`, GARDILCIC)
+  - 6 ventiladores de inyección sector NORTE (`222130-01-01` a `-06`, GARDILCIC)
+  - 1 ventilador de extracción (`222140-01-01`, GARDILCIC)
+  - 3 ventiladores de inyección sector SUR (`223130-01-01` a `-03`, GARDILCIC)
+  - 2 frontones TICA (`223120-01-01`, `-02`)
+  - 2 fosos de drenaje (`223120-02-01`, `-02`)
+  - 1 sistema supresión de polvo NP (`223120-03-01`)
+  - 1 sala eléctrica (`223120-04-01`)
+  - 4 sistemas de alumbrado (`223440-08-01` a `-04`, SIGDO KOPPERS S.A)
+  - 1 montaje estructuras (`223480F-03-02`, SIGDO KOPPERS S.A)
+  - 1 conexión (`225213F-01-03`)
+  - 1 rampa by-pass (`221610F-01-04`)
+  - 2 chimeneas (`223440F-03-07`, `225413F-01-03`, MDB)
+
+### Removed
+- 3 SS legacy con sufijo `(IM)` eliminados (reorganización de nomenclatura por GOMS):
+  - `222120F-04-06` PUERTA EXTRALIVIANA 20340-PRT-006 (IM) → reemplazado por `222120-01-06`
+  - `222140F-01-01` VENTILADOR EXTRACCION 222142-VEN-001 (IM)
+  - `222140F-01-02` VENTILADOR EXTRACCION 222132-VEN-006 (IM) → reemplazado por `222140-01-01`
+
+### Changed
+- 11 SS con cambios menores de nombre/descripción (más completos o más cortos). Sin cambios de empresa/contrato.
+
+### Notas técnicas
+- **GOMS resolvió los duplicados que bloquearon la actualización anterior**: los 5 ventiladores que aparecían con el mismo `ss_id` en sectores norte y sur ahora tienen IDs distintos (`222130-01-XX` para norte vs `223130-01-XX` para sur). Patrón profesional cumplido: planilla origen corregida en vez de workaround en el catálogo.
+- Duplicados conocidos resueltos por **primera ocurrencia** (consistente con V54/V55):
+  - `223520F-01-05` → GARDILCIC
+  - `225310F-03-01` → GEOVITA
+- **0 cambios de empresa/contrato** en SS existentes.
+- 8 empresas en `wbsData`, todas presentes en `empresasContratos` (sin acción necesaria).
+- Distribución actualizada: SIGDO KOPPERS (214), GARDILCIC (179), ZUBLIN (145), ACCIONA-OSSA-PIZZAROTTI (95), GEOVITA (78), MDB (61), CODELCO GOMS (52), SIGMA (3).
+- GEOVITA confirma actividad sostenida: 75 SS en V56 → 78 SS en V59. La empresa sigue operando — decisión V55 de mantenerla en BD validada por evidencia.
+- Deploy: subir únicamente `data.json` (y opcionalmente este `CHANGELOG.md`). No es necesario tocar el Service Worker.
+
+### Razones
+Ciclo regular de sincronización con la planilla WBS oficial de GOMS (`WBS_Semanal__1_.xlsx` del 22-06-26). La planilla anterior (del 22-06-26 sin sufijo) había sido rechazada por contener duplicados internos de IDs entre sectores norte y sur. GOMS corrigió la nomenclatura asignando IDs únicos a cada sector, lo que permitió aplicar esta actualización sin ambigüedades.
+
+## [V58] - 2026-06-10
+
+### Fixed
+- **🔴 Crítico — IC se exportaba como CAM en Word**: Un especialista reportó que al hacer una inspección IC, el PDF salía como IC pero el Word salía con formato CAMINATA. La causa raíz es el mismo patrón que V57 (fechaEmision), pero aplicado al campo `caminata` y otros: `cfg.X || await getConfig('X')` evaluaba el snapshot del primer ítem ANTES que el Config IDB actualizado. Como el snapshot siempre tiene valor, nunca se llegaba a leer Config.
+  - **Caso reproducido**: usuario empieza una caminata, crea ítems (snapshot `caminata = "CAMINATA DE RECEPCIÓN"`), después decide convertirla en IC y cambia el campo en Config (`getConfig('caminata') = "INSPECCIÓN"`). El PDF lee de getConfig → IC. El Word leía snapshot → CAM. Inconsistencia.
+
+### Changed
+- **Modelo mental del export consolidado**: **Config IDB es la única fuente de verdad** para todos los campos del informe. Los snapshots por ítem (`item.config.X`) ahora se ignoran al exportar — solo quedan como fallback si Config IDB está completamente vacío (no debería ocurrir en uso normal).
+- **4 campos con prioridad invertida** (Config primero, snapshot como fallback):
+  - `caminata` (afecta `tituloWord`, `esCaminata0W`) en `exportarWord()`
+  - `empresa` en `generatePDF()` y `exportarWord()`
+  - `subsistema` en `generatePDF()` y `exportarWord()`
+  - `contrato` en `generatePDF()` y `exportarWord()`
+- También quedaron invertidos `originadoPor` por consistencia (mismo patrón).
+
+### Notas técnicas
+- **Borradores siguen funcionando sin regresión**: `cargarBorrador()` restaura todos los valores del borrador a Config IDB vía `setConfigBatch()`. Por eso después de cargar, `getConfig('caminata')` devuelve el valor del borrador (no el del config "vivo" previo). El export sigue respetando el borrador completo.
+- El razonamiento del usuario fue clave: *"Si genero un borrador debería quedar con todos sus ítems al cargarlo y exportarlo, si guardo otra configuración se debe respetar todo con esa configuración"*. Es decir, **la fuente de verdad debe ser una sola** (Config IDB), no una mezcla incoherente snapshot-vs-IDB.
+- Patrón histórico de snapshots por ítem fue diseñado para soportar inspecciones multi-SS (un solo informe con ítems de diferentes subsistemas). En la práctica el equipo no usa eso — siempre 1 SS por inspección. El snapshot quedaba creando confusión sin aportar valor.
+- Smoke tests validaron: IC → Word con "INSPECCIÓN DE CALIDAD" ✓, CAM → Word con "CAMINATA" ✓.
+
+### Razones
+Reporte del especialista que vio el bug en producción real: el archivo descargado se llamaba `IC-GOMS-DCH_...docx` (porque `codigo` se calcula con getConfig al inicio) pero su contenido se renderizaba como caminata (porque `tituloWord` se calculaba con snapshot). Es la inconsistencia más confusa posible: nombre dice una cosa, contenido dice otra. El fix elimina la posibilidad de ese tipo de discrepancia para todos los campos críticos del informe.
+
 ## [V57] - 2026-06-10
 
 ### Fixed
