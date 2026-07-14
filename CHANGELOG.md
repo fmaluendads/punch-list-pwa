@@ -8,6 +8,53 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V60] - 2026-07-13
+
+> **Solo datos** — Esta versión actualiza únicamente `data.json`. No modifica `index.html` ni `sw.js`, por lo que NO requiere bump de `CACHE_NAME`. El Service Worker actualiza `data.json` automáticamente vía Stale-While-Revalidate.
+
+### Added
+- **7 nuevos SS en `data.json`** (de 827 a 834):
+  - `221323F-01-01` — Intersecciones pernos cables C-45, C-47 (ZUBLIN)
+  - `221570F-01-03` — XCE-06 (TRAMO 3) (GEOVITA)
+  - `223420-08-21`, `223420-08-22` — Habilitación de martillos hidráulicos (GEOVITA)
+  - `225312F-01-02` — FR-INS-IN1-02, FRE-REX-SUR-03 (GEOVITA)
+  - `225411F-01-04` — Conexión marinas SNI/SNE (GEOVITA)
+  - `225411F-01-05` — Conexión-marinas-SNI/SNE-01 (GEOVITA)
+- **6 nuevos responsables de construcción**:
+  - AURISTELA ROBLES RIVERA
+  - JUAN MORALES NAVARRO
+  - ALEJANDRA PIZARRO
+  - Hugo Alfredo Fuentes Zúñiga
+  - MARCO SAN MARTIN
+  - ADRIANO ZANDONAI
+
+### Preserved
+- **157 SS mantenidos de contratos activos** que no aparecen en el reporte del Excel origen (`WBS_GOMS.xlsx` del 13-07-2026):
+  - **96 SS de GARDILCIC** con contrato `4600027291/CC-117`
+  - **61 SS de MASTER DRILLING - BESALCO** con contrato `4600027681/CC-113`
+- Decisión operacional de Felipe: los contratos CC-117 y CC-113 siguen activos aunque el reporte de origen los haya omitido. Preservar los SS evita romper inspecciones/borradores/PDFs históricos vinculados a esos contratos.
+
+### Notas técnicas
+- **Cambio de formato del Excel de origen**: `WBS_GOMS.xlsx` es un "Reporte Listado WBS" del sistema AGD_GOMS_DCH, con estructura distinta a los `WBS_Semanal.xlsx` habituales (headers en fila 3, datos desde fila 6, columnas nuevas `Clasificación`, `Plano`, `¿CRP?`).
+- El Excel exportado por GOMS reportó 678 registros (677 tras dedup del duplicado histórico `223520F-01-05`), un subset que no incluye a los 2 contratistas mencionados. El motivo del filtro en origen no fue confirmado con GOMS al momento de esta actualización.
+- Estrategia aplicada:
+  1. Base: los 677 SS del Excel (dedup por primera ocurrencia)
+  2. Merge: agregar los 157 SS de CC-117/CC-113 preservados del data.json V59
+  3. Resultado: 834 SS
+- Duplicados conocidos resueltos consistente con V54/V55: `223520F-01-05`→GARDILCIC, `225310F-03-01`→GEOVITA.
+- 0 cambios de empresa/contrato en SS existentes.
+- Distribución final: SIGDO KOPPERS S.A (214), GARDILCIC (179), ZUBLIN (146), ACCIONA-OSSA-PIZZAROTTI (95), GEOVITA (84), MDB (61), CODELCO GOMS (52), SIGMA S.A (3).
+
+### Razones
+- **WBS**: sincronización con reporte de GOMS del 13-07-2026, aplicando estrategia de preservación de contratos activos (CC-117, CC-113) que no aparecen en el reporte pero siguen operativos según decisión operacional del equipo.
+- **Responsables**: nuevas incorporaciones al staff de construcción del equipo GOMS.
+
+### Deploy
+Subir únicamente `data.json` (y opcionalmente este `CHANGELOG.md`). No es necesario tocar el Service Worker. El equipo verá **"📦 834 subsistemas disponibles offline"** en el footer del Config cuando reciba la actualización.
+
+### Recomendación pendiente
+Confirmar con GOMS por qué el reporte oficial del sistema origen omitió los 2 contratos activos (CC-117 GARDILCIC, CC-113 MDB). Si el filtro fue intencional, evaluar la consistencia del catálogo. Si fue un error, solicitar re-generación del reporte incluyendo esos contratos para futuras actualizaciones.
+
 ## [V59] - 2026-06-22
 
 > **Solo datos** — Esta versión actualiza únicamente `data.json`. No modifica `index.html` ni `sw.js`, por lo que NO requiere bump de `CACHE_NAME`. El Service Worker actualiza `data.json` automáticamente vía Stale-While-Revalidate.

@@ -127,6 +127,20 @@
       "empresa": "ZUBLIN"
     },
     {
+      "ss_id": "221323F-01-01",
+      "ss_name": "INTERSECCIONES PERNOS CABLES C-45, C-47 NP MB N51",
+      "si_id": "221323F-01",
+      "si_name": "ACCESO DESDE RAMPA DE EXPLORACION A SUBNIVEL DE PRODUCCION",
+      "t_id": "221320F",
+      "t_name": "FACILIDADES CONSTRUCTIVA PARA PREPARACION MINERA INICIAL",
+      "a_id": "221300",
+      "a_name": "ACCESOS A SUBNIVELES",
+      "w_id": "221000",
+      "w_name": "INFRAESTRUCTURA DE NIVEL",
+      "contrato": "4600031460/GCC-003",
+      "empresa": "ZUBLIN"
+    },
+    {
       "ss_id": "221335F-01-01",
       "ss_name": "RAC-HD-S05-01",
       "si_id": "221335F-01",
@@ -240,7 +254,7 @@
     },
     {
       "ss_id": "221345F-02-01",
-      "ss_name": "C-53-PD-N51-N06 CONTINUIDAD, INCLUYE FRM-P-14",
+      "ss_name": "C-53-PD-N51-N06 CONTINUIDAD, INCLUYE FRM-P-14 Y FR-SEU-PD-N05-01",
       "si_id": "221345F-02",
       "si_name": "ACCESO A SUBNIVEL DE PRODUCCION 05",
       "t_id": "221340F",
@@ -390,6 +404,20 @@
       "w_id": "221000",
       "w_name": "INFRAESTRUCTURA DE NIVEL",
       "contrato": "4600029058/GCC-001",
+      "empresa": "GEOVITA"
+    },
+    {
+      "ss_id": "221570F-01-03",
+      "ss_name": "XCE-06 (TRAMO 3",
+      "si_id": "221570F-01",
+      "si_name": "CABECERA DE EXTRACCION S05",
+      "t_id": "221570F",
+      "t_name": "CABECERA DE EXTRACCION",
+      "a_id": "221500",
+      "a_name": "VENTILACION DE EXTRACCION",
+      "w_id": "221000",
+      "w_name": "INFRAESTRUCTURA DE NIVEL",
+      "contrato": "4600031459/GCC-005",
       "empresa": "GEOVITA"
     },
     {
@@ -3737,6 +3765,34 @@
       "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
       "contrato": "4600029025/CC-101",
       "empresa": "SIGDO KOPPERS S.A"
+    },
+    {
+      "ss_id": "223420-08-21",
+      "ss_name": "HABILITACIÓN DE MARTILLOS HIDRAULICOS 223420-MTO-003 / 223420-MTO-004 / 223420-MTO-005",
+      "si_id": "223420-08",
+      "si_name": "PUNTOS DE VACIADO",
+      "t_id": "223420",
+      "t_name": "SUBNIVEL DE PRODUCCION MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
+    },
+    {
+      "ss_id": "223420-08-22",
+      "ss_name": "HABILITACIÓN DE MARTILLOS HIDRAULICOS 223420-MTO-001 / 223420-MTO-002",
+      "si_id": "223420-08",
+      "si_name": "PUNTOS DE VACIADO",
+      "t_id": "223420",
+      "t_name": "SUBNIVEL DE PRODUCCION MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
     },
     {
       "ss_id": "223420F-01-01",
@@ -9143,6 +9199,20 @@
       "empresa": "GEOVITA"
     },
     {
+      "ss_id": "225312F-01-02",
+      "ss_name": "FR-INS-IN1-02, FRE-REX-SUR-03",
+      "si_id": "225312F-01",
+      "si_name": "FRONTONES",
+      "t_id": "225310F",
+      "t_name": "SUBNIVEL VENTILACION INYECCION MB-S05",
+      "a_id": "225300",
+      "a_name": "NIVEL DE INYECCION",
+      "w_id": "225000",
+      "w_name": "UNIDADES DE EXPLOTACION CONTINUIDAD NIVEL 1 SECTOR SUR",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
+    },
+    {
       "ss_id": "225411F-01-01",
       "ss_name": "XCE-04 (TRAMO 1), INCLUYE FRONTONES",
       "si_id": "225411F-01",
@@ -9173,6 +9243,34 @@
     {
       "ss_id": "225411F-01-03",
       "ss_name": "XCE-04 (TRAMO 3), INCLUYE FRONTONES",
+      "si_id": "225411F-01",
+      "si_name": "GALERIAS DE EXTRACCION",
+      "t_id": "225410F",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION MB-S05",
+      "a_id": "225400",
+      "a_name": "NIVEL DE EXTRACCION",
+      "w_id": "225000",
+      "w_name": "UNIDADES DE EXPLOTACION CONTINUIDAD NIVEL 1 SECTOR SUR",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
+    },
+    {
+      "ss_id": "225411F-01-04",
+      "ss_name": "CONEXIÓN MARINAS SNI/SNE",
+      "si_id": "225411F-01",
+      "si_name": "GALERIAS DE EXTRACCION",
+      "t_id": "225410F",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION MB-S05",
+      "a_id": "225400",
+      "a_name": "NIVEL DE EXTRACCION",
+      "w_id": "225000",
+      "w_name": "UNIDADES DE EXPLOTACION CONTINUIDAD NIVEL 1 SECTOR SUR",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
+    },
+    {
+      "ss_id": "225411F-01-05",
+      "ss_name": "CONEXIÓN-MARINAS-SNI/SNE-01",
       "si_id": "225411F-01",
       "si_name": "GALERIAS DE EXTRACCION",
       "t_id": "225410F",
@@ -11763,7 +11861,13 @@
     "RODRIGO GARCIA",
     "SANTIAGO ANDRES MEDINA SEMIR",
     "LAUTARO BENAVIDES",
-    "SERGIO MORALES"
+    "SERGIO MORALES",
+    "AURISTELA ROBLES RIVERA",
+    "JUAN MORALES NAVARRO",
+    "ALEJANDRA PIZARRO",
+    "Hugo Alfredo Fuentes Zúñiga",
+    "MARCO SAN MARTIN",
+    "ADRIANO ZANDONAI"
   ],
   "ingenierosSistema": [
     "Luis Hernandez Toledo"
