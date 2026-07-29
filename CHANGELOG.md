@@ -8,6 +8,32 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [Documentación] - 2026-07-27
+
+> **Sin versión** — Cambio exclusivamente documental. No modifica `index.html`, `sw.js` ni `data.json`, no requiere bump de `CACHE_NAME` ni despliegue. **No consume el número V61**, que queda reservado para el refactor `AppState`.
+
+### Added
+- **`CONTEXTO_CLAUDE.md`** (nuevo) — consolida el contexto operativo del proyecto que hasta ahora solo vivía en conversaciones: forma de trabajo, decisiones arquitectónicas vigentes, reglas de datos WBS, formatos de Excel origen, flujo de deploy sin git CLI, técnicas de edición de `index.html` y tabla de anti-patrones. Complementa `ARQUITECTURA.md` por referencia cruzada, sin duplicar contenido técnico.
+  - **Motivo**: hacer portable el único activo del proyecto que no estaba versionado, de cara a la migración del entorno de trabajo a una cuenta Claude Enterprise (contrato de supervisión JEJ — CODELCO).
+
+### Fixed
+- **`ARQUITECTURA.md` §6 — numeración del roadmap corregida.** Los refactors del Nivel 1 estaban numerados V59–V63, pero esos números fueron consumidos por los releases solo-datos V59 y V60. Renumerados a **V61–V65**. Sin esta corrección, el refactor `AppState` se habría etiquetado V59 y roto el versionado secuencial (§8, regla 6).
+- **`ARQUITECTURA.md` §2** — `datos_cache` indicaba 799 WBS; son 834 al V60.
+- **`ARQUITECTURA.md` §10** — el historial de versiones cortaba en V58; agregados V59 y V60.
+- **`ARQUITECTURA.md` §3 y §8** — la excepción de bump de `CACHE_NAME` para releases solo-datos citaba únicamente V55; ahora refleja V55, V59 y V60.
+- **`ARQUITECTURA.md` §7.3** — carácter corrupto (U+FFFD) en "Múltiples campos".
+
+### Changed
+- **`ARQUITECTURA.md`** — encabezado y pie actualizados a V60 (julio 2026), con la aclaración explícita **código V58 · datos V60** y enlace cruzado a `CONTEXTO_CLAUDE.md`.
+
+### Notas técnicas
+- **Deploy: no aplica.** Ningún archivo de la app cambia. El Service Worker no se ve afectado y los usuarios en terreno no perciben nada.
+- Archivos que suben al repo: `CONTEXTO_CLAUDE.md` (nuevo) y `ARQUITECTURA.md` (modificado).
+- El texto de instrucciones del proyecto Claude **no se versiona en el repo**: se pega en la configuración del proyecto Enterprise.
+- Sin tag ni release en GitHub: la regla 8 de `ARQUITECTURA.md` §8 aplica a releases de código o datos, no a documentación.
+
+---
+
 ## [V60] - 2026-07-13
 
 > **Solo datos** — Esta versión actualiza únicamente `data.json`. No modifica `index.html` ni `sw.js`, por lo que NO requiere bump de `CACHE_NAME`. El Service Worker actualiza `data.json` automáticamente vía Stale-While-Revalidate.

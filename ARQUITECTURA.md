@@ -1,10 +1,12 @@
 # Arquitectura — Punch List PWA
 
-Documento técnico de referencia. Describe la arquitectura actual del proyecto, sus puntos críticos, y un roadmap evolutivo en 3 niveles.
+Documento técnico de referencia. Describe la arquitectura actual del proyecto, sus puntos críticos, las decisiones de diseño tomadas, y un roadmap evolutivo en 3 niveles.
 
-> **Última actualización**: V52 (mayo 2026)
+> **Última actualización**: V60 (julio 2026) — código V58 · datos V60
 > **Audiencia**: desarrolladores que mantengan o evolucionen la app
 > **Mantenedor**: Felipe Maluenda (GOMS — CODELCO Chuquicamata Subterránea)
+>
+> **Documento complementario**: `CONTEXTO_CLAUDE.md` describe *cómo se trabaja sobre el sistema* (proceso, reglas de datos WBS, deploy, anti-patrones). Este documento describe *el sistema*.
 
 ---
 
@@ -32,9 +34,9 @@ Documento técnico de referencia. Describe la arquitectura actual del proyecto, 
 |---|---|---|
 | `items` | `id` (autoincrement) | Hallazgos/observaciones con fotos y snapshot de config |
 | `config` | `key` (string) | Configuración global: WBS, fechas, campos IC, flags |
-| `especialistas` | `id` (autoincrement) | Especialistas personalizados (custom + base de data.json) |
-| `datos_cache` | `key` (string) | Caché de `data.json` para uso offline (770 WBS) |
-| `borradores` | `id` (autoincrement) | Snapshots completos (config + items + firmas) — máx 5 |
+| `especialistas` | `id` (autoincrement) | Especialistas personalizados |
+| `datos_cache` | `key` (string) | Caché de `data.json` para uso offline (834 WBS al V60) |
+| `borradores` | `id` (autoincrement) | Snapshots completos — máx 10 (V53+) |
 
 ### Claves importantes del store `config`
 
@@ -44,11 +46,13 @@ originadoPor, respConstruccion, ingSistema, fechaEmision, caminata
 nombreLabor, planoReferencial
 wbsNombre, areaNombre, subsistemaNombre
 icNivel, icObjetivo, icDesarrollo, icObservaciones
-icFirmaData, icFirmaConstruccionData  (V47, dataURIs PNG)
+icFirmaData, icFirmaConstruccionData            (V47, dataURIs PNG)
 icFirma2Nombre, icFirma2Cargo, icFirma2Empresa  (V44/V49)
-sinSS, sinRespConstr  (V50/V51, booleans)
-_firmantes_idb  (V42, JSON array firmantes CAM)
-customEspecialistas  (array strings)
+icFirma2Fecha                                   (V56, fecha firma Resp. Construcción)
+sinSS, sinRespConstr                            (V50/V51, booleans)
+camObservaciones                                (V54, observaciones opcionales CAM)
+_firmantes_idb                                  (V42, JSON array firmantes CAM)
+customEspecialistas                             (array strings)
 ```
 
 ---
@@ -58,12 +62,14 @@ customEspecialistas  (array strings)
 ```
 data.json     → Stale-While-Revalidate (caché inmediato + actualiza background)
 index.html    → Network-first (siempre intenta red, fallback cache)
-otros (icons, manifest) → Cache-first (sirve cache, sino red + cachea)
+otros         → Cache-first
 ```
 
 Cada release bumpea `CACHE_NAME` (`punch-list-vNN`). El `activate` borra caches viejos automáticamente.
 
-Hooks: `self.skipWaiting()` y `self.clients.claim()` para forzar activación inmediata sin esperar reload manual.
+Hooks: `self.skipWaiting()` y `self.clients.claim()` para forzar activación inmediata.
+
+**Excepción — releases solo-datos** (V55, V59, V60): no requieren bump de `CACHE_NAME` porque solo cambia `data.json`, y la estrategia Stale-While-Revalidate lo actualiza automáticamente.
 
 ---
 
@@ -73,8 +79,7 @@ Hooks: `self.skipWaiting()` y `self.clients.claim()` para forzar activación inm
 
 ```
 1. openDB()                 → abre IndexedDB
-2. loadDatos()              → fetch(data.json) con timeout 5s
-                              fallback: loadDatosIDB() (cache offline)
+2. loadDatos()              → fetch(data.json) timeout 5s → fallback IDB cache
 3. loadConfig()             → restaura DOM desde IDB config
 4. _wireupPersistenciaIC()  → conecta listeners debounce 400ms
 5. sincronizarDatosBackground (3s después) → refresca data.json si hay red
@@ -83,232 +88,326 @@ Hooks: `self.skipWaiting()` y `self.clients.claim()` para forzar activación inm
 ### Crear ítem
 
 ```
-1. addItemForm() → captura datos del formulario
-2. cfg = leer 14 claves del IDB config
-3. addItem({...item, config: cfg, sinSS: cfg.sinSS}) → snapshot de config en el ítem
-4. renderItems() + actualizarChecklist()
+1. addItemForm() → captura datos
+2. cfg = leer claves del IDB config
+3. addItem({...item, config: cfg}) → snapshot de config en el ítem
+4. renderItems()
 ```
 
-### Guardar borrador
+> **Nota V58**: el snapshot por ítem se mantiene en IDB por compatibilidad, pero **no se usa al exportar** (ver sección 5.2).
+
+### Cargar borrador (V52 refactor + V58 implicaciones)
 
 ```
-1. _getAllBorradores() → verifica límite (max 5)
-2. Leer 26 claves de config en parallel from IDB
-3. Leer items con getItems()
-4. Leer _firmantes (CAM) y _icFirmaData (IC) from memoria
-5. Construir { nombre, config, items, firmantes, firmasIC }
-6. add() al store borradores
-```
-
-### Cargar borrador (V52 refactor)
-
-```
-1. _loadingBorrador = true                   ← deshabilita listeners debounce
+1. _loadingBorrador = true                    ← deshabilita listeners debounce
 2. get(borrador) del IDB
-3. setConfigBatch(cfg + firmas)              ← 1 transacción IDB atómica
-4. _icFirmaData/_icFirmaConstruccionData set ← variables JS
-5. _firmantes set + guardarFirmantesSession  ← memoria
-6. clear() + add() items en 1 transacción IDB
-7. await loadConfig()                        ← UI desde IDB
+3. setConfigBatch(cfg + firmas)               ← 1 transacción IDB atómica
+4. _icFirmaData/_icFirmaConstruccionData set
+5. _firmantes set + guardarFirmantesSession
+6. clear() + add() items en 1 transacción
+7. await loadConfig()                         ← UI desde IDB
 8. Fallback derived_* si SS no en data.json
 9. renderItems() + renderFirmantes()
 10. Repintar canvas firmas CAM (setTimeout 150ms)
-11. _loadingBorrador = false (setTimeout 500ms)  ← reactiva listeners
+11. _loadingBorrador = false (setTimeout 500ms)
+```
+
+**V58 importante**: `setConfigBatch` restaura **todo** el config del borrador a IDB. Por eso al exportar inmediatamente después, los `getConfig` devuelven los valores del borrador. Esto permite que V58 priorice Config IDB sobre snapshots sin romper borradores.
+
+### Editar ítem (V53 refactor)
+
+V53 fusionó la lógica de "Nuevo" y "Editar" para soportar multi-foto en edición.
+
+```
+1. editItem(id) → _editingItemId = id
+2. poblarEditFotos(item.fotos)         ← carga TODAS las fotos
+3. actualizarTituloFotosEdit()         ← ajusta max (3 normal / 10 S/O)
+4. submit form → updateItem({...item, fotos: _currentFotos.filter(Boolean)})
+5. closeEditModal() → _editingItemId = null
+```
+
+### Generar PDF (V57-V58 modelo)
+
+```
+1. Leer Config IDB (NO los snapshots)
+2. Validar campos requeridos según tipo
+3. Construir HTML según buildHTMLInspeccion o buildHTMLCaminata
+4. promptNombreArchivo()                ← V56: modal con sugerencia editable
+5. Inyectar nombre en <title> del HTML
+6. iframe.srcdoc = htmlConTitle
+7. Botón naranja dispara window.print()
+```
+
+### Generar Word (V57-V58 modelo)
+
+```
+1. Leer Config IDB (NO los snapshots)
+2. Validar campos requeridos
+3. promptNombreArchivo()                ← V56
+4. _descargarWord({...payload, customFilename}) → generarDocx() → blob → <a download>
 ```
 
 ---
 
 ## 5. Estado actual — Análisis crítico
 
-### 5.1 Variables globales (11 — fuente de fragilidad)
+### 5.1 Variables globales (12)
 
 ```javascript
-let _firmantes = [];                    // CAM signatures
-let _icFirmaData = null;                // IC inspection signature
-let _icFirmaConstruccionData = null;    // IC construction signature
+let _firmantes = [];
+let _icFirmaData = null;
+let _icFirmaConstruccionData = null;
 let _currentFotos = Array(10).fill(null);
 let _maxFotoSlot = 2;
 let _currentFotoSlot = 0;
 let _wbsActiveEmpresa = '';
 let _selectedWBSRecord = null;
 let _loadingBorrador = false;           // V52
+let _editingItemId = null;              // V53
 let db = null;
-let DATOS = { ... };                    // catálogo global
+let DATOS = { ... };
 ```
 
-**Problema**: cualquier función puede mutar cualquiera de estas. Sin control de acceso, sin auditoría.
+Mitigación V52: flag `_loadingBorrador` previene pisotones de listeners durante carga.
 
-### 5.2 Fuentes de verdad duplicadas
+### 5.2 Fuentes de verdad — Decisión V58 (CRÍTICO)
 
-| Dato | Lugares |
-|---|---|
-| Firmas CAM | `_firmantes[i].data` + `sessionStorage` + `config._firmantes_idb` + `borradores.firmantes` |
-| Firma IC | `_icFirmaData` + `config.icFirmaData` + `borradores.firmasIC` |
-| Subsistema | `config.subsistema` + `item.config.subsistema` + DOM (botón WBS) |
-| Caminata | `config.caminata` + `cfg_caminata.value` (DOM) |
-| Flags `sinSS`/`sinRespConstr` | IDB config + DOM checkbox + `item.config.sinSS` |
+Históricamente había hasta 3 lugares simultáneos para el mismo dato (snapshot por ítem, Config IDB, DOM). Esto causó bugs persistentes en V54-V57.
 
-**Riesgo**: cualquier desincronía entre estas fuentes produce comportamiento errático. Es el origen de bugs históricos (V44 campos IC, V47 firmas, V52 borradores).
+**V58 estableció el modelo definitivo para EXPORTS**:
 
-### 5.3 Race conditions identificadas (V52 corrigió las 4 críticas)
+> **Config IDB es la única fuente de verdad** para los datos del informe al exportar PDF/Word. Los snapshots por ítem quedan como fallback defensivo si Config IDB está vacío.
 
-| # | Patrón | Status V52 |
+Datos afectados:
+- `fechaEmision` (V57)
+- `caminata`, `empresa`, `subsistema`, `contrato`, `originadoPor` (V58)
+
+**Razonamiento**: el equipo trabaja con UNA inspección a la vez, UN subsistema, UNA fecha. El snapshot fue diseñado para soportar multi-SS (que el equipo no usa) y causaba bugs cuando se cambiaba Config después de crear ítems.
+
+### 5.3 Race conditions identificadas
+
+| # | Patrón | Status |
 |---|---|---|
-| 1 | `loadConfig()` sin await en cargarBorrador | ✅ Corregido |
-| 2 | `setTimeout(initFirmaIC, 100)` antes de canvas dimensionado | ✅ Refactor V47 |
-| 3 | `actualizarVisibilidadFirmantes` duplicado | ✅ Corregido |
-| 4 | `setTimeout(empresa/contrato, 150)` antes de select populated | ⚠️ Mitigado |
-| 5 | Listeners debounce 400ms vs cargarBorrador | ✅ Flag `_loadingBorrador` |
+| 1 | loadConfig sin await en cargarBorrador | ✅ V52 |
+| 2 | setTimeout initFirmaIC antes de canvas dimensionado | ✅ V47 |
+| 3 | actualizarVisibilidadFirmantes duplicado | ✅ V52 |
+| 4 | setTimeout empresa/contrato antes de select populated | ⚠️ Mitigado |
+| 5 | Listeners debounce 400ms vs cargarBorrador | ✅ V52 (_loadingBorrador) |
 | 6 | fetch data.json con AbortController durante UI ops | ⚠️ Mitigado |
-| 7 | sincronizarDatosBackground 3s reemplaza DATOS global | ⚠️ Conocido |
-| 8 | `pdfFrame.onload` callback timing inconsistente | ⚠️ Conocido |
+| 7 | sincronizarDatosBackground reemplaza DATOS global | ⚠️ Conocido |
+| 8 | pdfFrame.onload timing inconsistente | ⚠️ Conocido |
+| 9 | Snapshot ítem vs Config IDB al exportar | ✅ V57-V58 |
 
-### 5.4 Funciones con efectos secundarios no obvios
+### 5.4 Persistencia de campos IC/CAM
 
-| Función | Efecto secundario oculto |
-|---|---|
-| `actualizarVisibilidadFirmantes()` | Dispara `setTimeout(initFirmaIC, 100)` que toca canvas |
-| `loadConfig()` | Llama a `actualizarVisibilidadFirmantes()` |
-| `onSinSSChange()` | Limpia 5 campos del DOM |
-| `applyWBSRecord(rec, save)` | Setea 9 campos IDB + actualiza checklist |
-| `addItem(item)` | Dispara warning toast condicional según `sinSS` |
+Wireup `_wireupPersistenciaIC()` mantiene mapa con debounce 400ms:
 
-**Mejora futura**: separar "queries" (leen) de "mutations" (escriben + side effects).
+```javascript
+[
+  ['ic_nivel',          'icNivel'],
+  ['ic_objetivo',       'icObjetivo'],
+  ['ic_desarrollo',     'icDesarrollo'],
+  ['ic_observaciones',  'icObservaciones'],
+  ['cam_observaciones', 'camObservaciones'],  // V54
+  ['ic_firma2_nombre',  'icFirma2Nombre'],
+  ['ic_firma2_cargo',   'icFirma2Cargo'],
+  ['ic_firma2_empresa', 'icFirma2Empresa'],
+  ['ic_firma2_fecha',   'icFirma2Fecha']      // V56
+]
+```
+
+Todos respetan flag `_loadingBorrador`.
+
+### 5.5 Generación de documentos — V56-V58
+
+**Anti-corte de firmas (V56)**:
+- PDF: `page-break-inside: avoid` + `break-inside: avoid` en tabla y filas
+- Word: `_dxTable({cantSplit: true})` inserta `<w:trPr><w:cantSplit/></w:trPr>`
+
+**Fecha firma Resp. Construcción (V56)**:
+- Auto-fill al confirmar firma SI el input está vacío
+- Editable; persiste con clave `icFirma2Fecha`
+- Renderiza en PDF y Word **solo si tiene contenido**
+
+**Modal nombre archivo (V56)**:
+- Helper `promptNombreArchivo({extension, sugerencia, titulo}, callback)`
+- Sugerencia: `CODIGO_SS_YYYY-MM-DD`
+- PDF: nombre se inyecta como `<title>` (sugerencia para "Guardar como PDF")
+- Word: control 100% vía `<a download="...">`
+- Limitación: Safari iOS a veces ignora el `<title>` (no es bug de la app)
 
 ---
 
 ## 6. Roadmap arquitectónico — 3 niveles
 
-### Nivel 1 — Refactor manteniendo single-file (próximas 4 versiones, V53-V56)
+### Nivel 1 — Refactor manteniendo single-file (V61+)
 
-**Objetivo**: bajar complejidad sin cambiar stack.
+> **Renumerado en V60.** Este roadmap se escribió en V58 asignando los números V59–V63. V59 y V60 se consumieron después como releases **solo datos**, por lo que los refactors se corren a V61–V65. El versionado es secuencial y no admite V44.1 (§8, regla 6).
 
-**V53 — AppState centralizado**
-```javascript
-const AppState = {
-  _state: { config: {}, items: [], firmantes: [], icFirmas: {}, fotos: [], ui: {} },
-  _subs: [],
-  get(path), set(path, val, {persist}), subscribe(path, cb)
-};
-```
-Reemplaza todas las variables globales. Lectura/escritura controlada. Notifica a UI vía pubsub.
+#### V61 — AppState centralizado
+Reemplaza variables globales con estado controlado + pubsub.
 
-**V54 — Validadores declarativos**
-```javascript
-const validators = {
-  ic_para_pdf: [
-    { campo: 'nombreLabor', requerido: true },
-    { campo: 'planoReferencial', requerido: true }
-  ],
-  cam_para_pdf: []
-};
-function validar(contexto) { ... }
-```
-Elimina los `if (!campo)` regados por el código.
+#### V62 — Validadores declarativos
+Reemplaza `if (!campo)` regados por el código con tabla de validators.
 
-**V55 — Migración a transacciones IDB batch**
-Reemplazar todos los `for...await setConfig(k,v)` por `setConfigBatch({...})`. 10× más rápido y atómico.
+#### V63 — Transacciones IDB batch consolidadas
+Ya parcialmente aplicado V52. Extender a más operaciones.
 
-**V56 — Eliminar duplicación de firmas**
-Una sola fuente de verdad (IDB). Memoria como cache de lectura, no autoridad.
+#### V64 — Eliminar duplicación de firmas
+Una sola fuente de verdad (IDB). Patrón V58 ya estableció el modelo.
 
-**Estimación total Nivel 1**: 6-8 semanas.
+#### V65 — Consolidar snapshot vs IDB
+Eliminar definitivamente el snapshot por ítem (mantenido por compat).
 
-### Nivel 2 — Modularización con HTML imports nativos (mediano plazo)
+Estimación: 6-8 semanas distribuidas según urgencias.
 
-Cuando index.html supere 6000 líneas o haya >1 dev concurrente.
+### Nivel 2 — Modularización con módulos nativos (mediano plazo)
+
+**Estado código V58 (vigente al V60)**: 5274 líneas — cerca del límite recomendado (6000).
 
 ```
-punch-list-pwa/
-├── index.html          (~300 líneas: layout + carga módulos)
-├── sw.js
-├── data.json
-├── js/
-│   ├── state.js
-│   ├── db.js
-│   ├── ui.js
-│   ├── validators.js
-│   ├── signatures.js
-│   ├── pdf.js
-│   ├── docx.js
-│   └── borradores.js
-├── css/styles.css
-└── CHANGELOG.md
+js/
+├── state.js
+├── db.js
+├── ui.js
+├── validators.js
+├── signatures.js
+├── pdf.js
+├── docx.js
+└── borradores.js
 ```
 
-`<script type="module">` para imports. Sin build. Sin npm. Funciona offline igual.
+`<script type="module">` para imports. Sin build. Funciona offline.
 
 ### Nivel 3 — Stack moderno con build (solo si crece alcance)
 
-**Disparador**: ≥2 empresas usando la app, equipo de devs ≥3, cliente exige tests.
-
-**Stack**:
-- Vite + React (o Vue/Svelte)
-- Zustand (state)
-- Dexie.js (IDB wrapper)
-- Vitest + Playwright (tests automatizados)
-- Sentry (telemetría)
-- GitHub Actions (CI)
-
-**Migración**: 6-8 semanas full-time.
+Vite + framework + Dexie.js + Vitest + Playwright + Sentry. Solo si ≥2 empresas o equipo ≥3 devs.
 
 ---
 
-## 7. Recomendación profesional
+## 7. Lecciones aprendidas V52-V58
 
-**No saltar a Nivel 3.** Para 1 equipo usuario es overkill.
+### 7.1 Patrón "snapshot vs IDB" (V57-V58)
 
-**Plan sugerido**:
-1. Estabilizar V52 en terreno (2-4 semanas validación)
-2. Empezar Nivel 1 en V53 (AppState)
-3. Continuar Nivel 1 hasta V56
-4. Evaluar Nivel 2 cuando llegue el momento (síntomas: PRs grandes, hard to review, >6000 líneas)
-5. Considerar Nivel 3 solo si el alcance del producto crece
+```javascript
+// MAL — snapshot primero, nunca llega al IDB actualizado
+const valor = cfg.X || await getConfig('X');
+
+// BIEN — Config IDB primero, snapshot como fallback
+const valor = await getConfig('X') || cfg.X;
+```
+
+**Detectable con grep**: `cfg.X || await getConfig`. Cuando aparece, evaluar si invertir produce el comportamiento esperado.
+
+**Lección de proceso**: V57 arregló solo `fechaEmision`; V58 arregló los otros 4 campos. Cuando hay un patrón sistemático, conviene atacar completo (V57 unificado).
+
+### 7.2 Firmas cortadas entre páginas (V56)
+
+Ni CSS ni OOXML prohíben por defecto el corte de tablas entre páginas. Solución estándar:
+- HTML/PDF: `page-break-inside: avoid` + `break-inside: avoid`
+- OOXML: `<w:cantSplit/>` a nivel de fila
+
+Detectable solo en documentos largos (por eso el equipo reportó después de meses).
+
+### 7.3 Race conditions en cargarBorrador (V52)
+
+Múltiples campos restaurándose en cadena + listeners debounce activos = datos perdidos. Solución integral:
+
+1. Flag global deshabilita listeners
+2. Transacción IDB atómica (`setConfigBatch`)
+3. `await loadConfig()` real
+4. Reactivación con setTimeout (margen seguridad)
+
+**Patrón general**: cualquier operación de restauración masiva necesita flag bloqueante.
+
+### 7.4 Multi-foto en edición (V53)
+
+Modal edición fue diseñado V40 para 1 foto. V42 agregó multi-foto al modal de creación pero olvidó actualizar el de edición. Bug latente durante meses.
+
+**Lección**: al agregar feature, revisar **todos los lugares relacionados** (edit modals, otros forms, exports, validaciones).
+
+### 7.5 Modelo mental del usuario manda (V58)
+
+El refactor V58 surgió de Felipe corrigiendo el modelo mental:
+
+> *"Si genero un borrador debería quedar con todos sus ítems al cargarlo y exportarlo, si guardo otra configuración se debe respetar todo con esa configuración"*
+
+Esta declaración simple desbloqueó la decisión arquitectónica de **Config IDB = fuente única**. Cuando el dev tiene dudas, preguntar al usuario qué espera.
 
 ---
 
-## 8. Reglas inviolables del proyecto
+## 8. Reglas inviolables
 
 1. **CSV 20 columnas**: nunca modificar formato
 2. **JS brace balance** = 0 (`node --check`)
 3. **`buildHTML*` / `buildWord*`**: string concatenation, nunca template literals
 4. **Análisis antes de ejecutar**: Felipe confirma explícitamente
-5. **Bumpear `CACHE_NAME`** en cada release
+5. **Bumpear `CACHE_NAME`** en cada release que toque código (excepción: releases solo-datos — V55, V59, V60)
 6. **Versionado secuencial** (V42, V43... sin V44.1)
-7. **Smoke test obligatorio** del Word con `python-docx` + LibreOffice antes del deploy
+7. **Smoke test obligatorio** del Word con `python-docx` + LibreOffice
 8. **Documentar en CHANGELOG.md** cada release
+9. **APP_VERSION + appVersionLabel + CACHE_NAME** sincronizados (V52+)
 
 ---
 
 ## 9. Workflows oficiales
 
-### Desarrollo de release
+### Release de código
 
 ```
-1. Análisis + propuesta (Claude/dev) → Felipe confirma
-2. Implementación de cambios
-3. Bump CACHE_NAME en sw.js
-4. Smoke test Word con LibreOffice
-5. `node --check` para sintaxis JS
-6. Actualizar CHANGELOG.md con sección [Vxx]
-7. Commit + push a GitHub
-8. Crear Release con tag vxx (description = sección CHANGELOG)
-9. Probar deploy: Unregister SW → Ctrl+Shift+R
-10. Validar en terreno con equipo (2-7 días)
+1. Análisis + propuesta → Felipe confirma
+2. Implementación
+3. Bump CACHE_NAME (sw.js) + APP_VERSION (index.html) + appVersionLabel
+4. Smoke test Word con LibreOffice / python-docx
+5. node --check para sintaxis JS
+6. Brace balance = 0
+7. Actualizar CHANGELOG.md
+8. Commit + push a GitHub
+9. Crear Release con tag vxx
+10. Probar deploy: Unregister SW → Ctrl+Shift+R
+11. Validar en terreno (2-7 días)
 ```
+
+### Update solo de datos (V55+)
+
+Si solo cambia `data.json` (WBS, responsables, especialistas): **no bumpear CACHE_NAME**. SW actualiza vía Stale-While-Revalidate. Solo subir nuevo data.json + sección CHANGELOG.
 
 ### Word para edición
 
 ```
-1. Trabajo en PWA (incluye correcciones offline)
-2. Exportar Word desde la PWA (`exportarWord()`)
-3. Editar `.docx` en Microsoft Word
-4. Guardar como PDF (Archivo → Guardar como PDF)
-5. Subir PDF a OneDrive/SharePoint
+1. Trabajo en PWA
+2. Exportar Word (con modal de nombre desde V56)
+3. Editar en Microsoft Word
+4. Guardar como PDF
+5. Subir a OneDrive/SharePoint
 ```
-
-`pdf_to_docx.py` se usa **solo** para PDFs históricos sin versión digital.
 
 ---
 
-*Documento mantenido por el equipo de desarrollo. Última revisión: V52.*
+## 10. Historial de versiones
+
+| Versión | Fecha | Tipo | Resumen |
+|---|---|---|---|
+| V42 | mar 2026 | Feature | Borradores (DB_VERSION=5, max 5) |
+| V43 | abr 2026 | Feature | OOXML real desde cero |
+| V44 | abr 2026 | Feature | 2da firma IC + persistencia campos |
+| V45 | abr 2026 | Feature | Disciplina + firmas IC apiladas |
+| V46 | abr 2026 | Fix | Paridad PDF↔Word |
+| V47 | may 2026 | Fix | Firmas IC persistentes |
+| V48 | may 2026 | Fix | CAM no requiere plano/labor |
+| V49 | may 2026 | Feature | Nombre Resp. Construcción editable |
+| V50 | may 2026 | Feature | Toggle "Inspección sin SS" |
+| V51 | may 2026 | Feature | Toggle "Sin Resp. Construcción" |
+| **V52** | may 2026 | Refactor | cargarBorrador + indicador versión + 6 bugs |
+| **V53** | may 2026 | Fix+Feature | Multi-foto edición + 10 borradores + UI rename |
+| **V54** | may 2026 | Feature | Observaciones CAM + 788 SS |
+| **V55** | may 2026 | Datos | 791 SS + nuevo responsable |
+| **V56** | may 2026 | Multi-fix | Anti-corte firmas + fecha firma + modal nombre |
+| **V57** | jun 2026 | Fix | Fecha del informe respeta Config IDB |
+| **V58** | jun 2026 | Fix | Config IDB = fuente única para export (4 campos) |
+| **V59** | jun 2026 | Datos | 827 SS — GOMS corrigió duplicados de ventiladores en origen |
+| **V60** | jul 2026 | Datos | 834 SS + 6 responsables · preservación manual de 157 SS (CC-117, CC-113) |
+
+---
+
+*Documento mantenido por el equipo de desarrollo. Última revisión: V60 (julio 2026).*
