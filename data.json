@@ -408,7 +408,7 @@
     },
     {
       "ss_id": "221570F-01-03",
-      "ss_name": "XCE-06 (TRAMO 3",
+      "ss_name": "XCE-06 (TRAMO 3)",
       "si_id": "221570F-01",
       "si_name": "CABECERA DE EXTRACCION S05",
       "t_id": "221570F",
@@ -5475,6 +5475,34 @@
       "empresa": "SIGDO KOPPERS S.A"
     },
     {
+      "ss_id": "223480-01-12",
+      "ss_name": "CABLEADO Y DISTRIBUCION DE BAJA TENSION 223486-BZD-004",
+      "si_id": "223480-01",
+      "si_name": "RECINTOS ELECTRICOS BUZONES DE DESCARGA",
+      "t_id": "223480",
+      "t_name": "SUBNIVEL DE ACARREO MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600029025/CC-101",
+      "empresa": "SIGDO KOPPERS S.A"
+    },
+    {
+      "ss_id": "223480-01-13",
+      "ss_name": "CABLEADO Y DISTRIBUCION DE BAJA TENSION 223486-BZD-003",
+      "si_id": "223480-01",
+      "si_name": "RECINTOS ELECTRICOS BUZONES DE DESCARGA",
+      "t_id": "223480",
+      "t_name": "SUBNIVEL DE ACARREO MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600029025/CC-101",
+      "empresa": "SIGDO KOPPERS S.A"
+    },
+    {
       "ss_id": "223480-02-03",
       "ss_name": "SALA HIDRAULICA 223486-BZD-003",
       "si_id": "223480-02",
@@ -5979,6 +6007,20 @@
       "empresa": "SIGDO KOPPERS S.A"
     },
     {
+      "ss_id": "223480-09-01",
+      "ss_name": "STM N°5 MB-S04",
+      "si_id": "223480-09",
+      "si_name": "STM N°5 MB-S04",
+      "t_id": "223480",
+      "t_name": "SUBNIVEL DE ACARREO MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
+    },
+    {
       "ss_id": "223480F-01-01",
       "ss_name": "OO.CC, MPT Y ESTRUCTURAS 223486-BZD-001",
       "si_id": "223480F-01",
@@ -6203,6 +6245,20 @@
       "empresa": "SIGDO KOPPERS S.A"
     },
     {
+      "ss_id": "223480F-05-01.",
+      "ss_name": "PAVIMENTOS RAC-SMM-S04-01 OESTE",
+      "si_id": "223480F-05",
+      "si_name": "PAVIMENTOS",
+      "t_id": "223480F",
+      "t_name": "SUBNIVEL DE ACARREO MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
+    },
+    {
       "ss_id": "223480F-05-02",
       "ss_name": "PAVIMENTOS RAC-SMM-S04-01 NORTE + TRAMO ESTE",
       "si_id": "223480F-05",
@@ -6217,6 +6273,20 @@
       "empresa": "SIGDO KOPPERS S.A"
     },
     {
+      "ss_id": "223480F-05-02.",
+      "ss_name": "PAVIMENTOS RAC-SMM-S04-01 NORTE + TRAMO ESTE",
+      "si_id": "223480F-05",
+      "si_name": "PAVIMENTOS",
+      "t_id": "223480F",
+      "t_name": "SUBNIVEL DE ACARREO MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
+    },
+    {
       "ss_id": "223480F-05-03",
       "ss_name": "PAVIMENTOS RAC-SMM-S04-01 SUR",
       "si_id": "223480F-05",
@@ -6229,6 +6299,20 @@
       "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
       "contrato": "4600029025/CC-101",
       "empresa": "SIGDO KOPPERS S.A"
+    },
+    {
+      "ss_id": "223480F-06-01.",
+      "ss_name": "MINERIA ACARREO S04",
+      "si_id": "223480F-06",
+      "si_name": "MINERIA ACARREO S04",
+      "t_id": "223480F",
+      "t_name": "SUBNIVEL DE ACARREO MB-S04",
+      "a_id": "223400",
+      "a_name": "MB - S04 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "CODELCO-GOMS",
+      "empresa": "CODELCO GOMS"
     },
     {
       "ss_id": "223520F-01-01",
@@ -6399,6 +6483,20 @@
       "empresa": "GEOVITA"
     },
     {
+      "ss_id": "223530F-01-06",
+      "ss_name": "FRI-C-01 Y FRI-C-03 NIVEL INY MB-S05",
+      "si_id": "223530F-01",
+      "si_name": "GALERIAS DE INYECCION S05",
+      "t_id": "223530F",
+      "t_name": "SUBNIVEL VENTILACION INYECCION MB-S05",
+      "a_id": "223500",
+      "a_name": "MB - S05 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600031459/GCC-005",
+      "empresa": "GEOVITA"
+    },
+    {
       "ss_id": "223540F-01-02",
       "ss_name": "GE-02, INCLUYE FC-01",
       "si_id": "223540F-01",
@@ -6410,6 +6508,20 @@
       "w_id": "223000",
       "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
       "contrato": "4600029058/GCC-001",
+      "empresa": "GEOVITA"
+    },
+    {
+      "ss_id": "223540F-01-03",
+      "ss_name": "GE-04 W / XCE-06",
+      "si_id": "223540F-01",
+      "si_name": "GALERIAS DE EXTRACCION S05",
+      "t_id": "223540F",
+      "t_name": "SUBNIVEL VENTILACION EXTRACCION MB-S05",
+      "a_id": "223500",
+      "a_name": "MB - S05 - N1",
+      "w_id": "223000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR SUR",
+      "contrato": "4600031459/GCC-005",
       "empresa": "GEOVITA"
     },
     {
@@ -6428,7 +6540,7 @@
     },
     {
       "ss_id": "224111F-01-02",
-      "ss_name": "CAB-HD-N51-02 CONTINUIDAD",
+      "ss_name": "XC-01 CONTINUIDAD",
       "si_id": "224111F-01",
       "si_name": "CABECERAS",
       "t_id": "224110F",
@@ -7464,7 +7576,7 @@
     },
     {
       "ss_id": "224412F-01-02",
-      "ss_name": "FRONTONES XCE-01 MB-N51 SECTOR NORTE",
+      "ss_name": "XC-01 MB-N51, INCLUYE FRONTONES SECTOR NORTE",
       "si_id": "224412F-01",
       "si_name": "FRONTONES MB-N51",
       "t_id": "224410F",
@@ -9927,6 +10039,20 @@
       "empresa": "GARDILCIC"
     },
     {
+      "ss_id": "222120F-03-08",
+      "ss_name": "OOCC PUENTE CABECERA 1 PANEL CENTRAL",
+      "si_id": "222120F-03",
+      "si_name": "CABECERAS PANEL CENTRAL",
+      "t_id": "222120F",
+      "t_name": "SUBNIVEL DE PRODUCCION MB-N01",
+      "a_id": "222100",
+      "a_name": "MB - N01 - N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "4600027291/CC-117",
+      "empresa": "GARDILCIC"
+    },
+    {
       "ss_id": "222120F-04-01",
       "ss_name": "PUERTA EXTRALIVIANA 222150-PRT-003 (IM)",
       "si_id": "222120F-04",
@@ -10977,6 +11103,20 @@
       "empresa": "MASTER DRILLING - BESALCO"
     },
     {
+      "ss_id": "222120F-05-06",
+      "ss_name": "CHIMENEAS PILOTO, CA-PD-PC-C06-ZJ01N@ZJ05N",
+      "si_id": "222120F-05",
+      "si_name": "CHIMENEAS PILOTO - PANEL CENTRAL",
+      "t_id": "222120F",
+      "t_name": "SUBNIVEL DE PRODUCCION MB-N01",
+      "a_id": "222100",
+      "a_name": "MB - N01 - N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "4600027681/CC-113",
+      "empresa": "MASTER DRILLING - BESALCO"
+    },
+    {
       "ss_id": "222130F-02-01",
       "ss_name": "CHIMENEAS CHINS01R@07R",
       "si_id": "222130F-02",
@@ -11237,6 +11377,20 @@
       "t_name": "INFRAESTRUCTURA GENERAL",
       "a_id": "222500",
       "a_name": "MB - N42 - N1",
+      "w_id": "222000",
+      "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
+      "contrato": "4600027681/CC-113",
+      "empresa": "MASTER DRILLING - BESALCO"
+    },
+    {
+      "ss_id": "222712F-02-06",
+      "ss_name": "PIQUE DE TRASPASO DE MARINA ESTE-NH-MB-52, INCLUYE CHEXS-HD-N52-02",
+      "si_id": "222710F-02",
+      "si_name": "CALLES",
+      "t_id": "222710F",
+      "t_name": "SUBNIVEL DE HUNDIMIENTO MB-N52",
+      "a_id": "222700",
+      "a_name": "MB - N52 - N1",
       "w_id": "222000",
       "w_name": "UNIDADES DE EXPLOTACION SECTOR NORTE",
       "contrato": "4600027681/CC-113",
@@ -11636,7 +11790,7 @@
     },
     {
       "ss_id": "225413F-01-01",
-      "ss_name": "225413F-01-01 [CHIMENEAS CHEXS-PD-S05-01 Y CHEXS-PD-S05-02, INCLUYE CHIM TRASPASO-HD-PD-S05-01, CHINS-ACA-S05-03 Y CHIM. TRASPASO-HD-PD-S05-02]",
+      "ss_name": "CHIMENEAS CHEXS-PD-S05-01 Y CHEXS-PD-S05-02, INCLUYE CHIM TRASPASO-HD-PD-S05-01, CHINS-ACA-S05-03 Y CHIM. TRASPASO-HD-PD-S05-02",
       "si_id": "225413F-01",
       "si_name": "CHIMENEAS",
       "t_id": "225410F",
@@ -11664,7 +11818,7 @@
     },
     {
       "ss_id": "225413F-01-03",
-      "ss_name": "CHEXS-ACA-S05-06",
+      "ss_name": "CHEXS-ACA-S05-06, CHINS-HD-S05-03",
       "si_id": "225413F-01",
       "si_name": "CHIMENEAS",
       "t_id": "225410F",
@@ -11809,6 +11963,18 @@
     {
       "empresa": "CODELCO GOMS DCH",
       "contrato": "CODELCO-GOMS-DCH"
+    },
+    {
+      "empresa": "ZUBLIN",
+      "contrato": "4600031460/GCC-003"
+    },
+    {
+      "empresa": "GARDILCIC",
+      "contrato": "4600031457/GCC-004"
+    },
+    {
+      "empresa": "GEOVITA",
+      "contrato": "4600031459/GCC-005"
     }
   ],
   "especialistasBase": [
@@ -11843,7 +12009,8 @@
     "ALVARO GONZALEZ MARIN",
     "LAUTARO BENAVIDES",
     "JORDAN PIZARRO",
-    "FABIAN POBLETE"
+    "FABIAN POBLETE",
+    "Betsabe Norambuena Navarro"
   ],
   "responsablesConstruccion": [
     "CARLOS AVENDAÑO",

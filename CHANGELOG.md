@@ -8,6 +8,51 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V61] - 2026-07-29
+
+> **Solo datos** — Esta versión actualiza únicamente `data.json`. No modifica `index.html` ni `sw.js`, por lo que NO requiere bump de `CACHE_NAME`. El Service Worker actualiza `data.json` automáticamente vía Stale-While-Revalidate.
+
+### Added
+- **11 registros nuevos en `wbsData`** (de 834 a 845 — 10 SS nuevos + 1 duplicado retenido, ver Notas):
+  - `222120F-03-08` — OOCC Puente Cabecera 1 Panel Central (GARDILCIC, CC-117)
+  - `222120F-05-06` — Chimeneas piloto CA-PD-PC-C06-ZJ01N@ZJ05N (MDB, CC-113)
+  - `223480-01-12`, `223480-01-13` — Cableado y distribución BT 223486-BZD-004/003 (SIGDO KOPPERS S.A, CC-101)
+  - `223480-09-01` — STM N°5 MB-S04 (CODELCO GOMS)
+  - `223480F-05-01.`, `223480F-05-02.` — Pavimentos RAC-SMM-S04-01 Oeste / Norte + Tramo Este (CODELCO GOMS)
+  - `223480F-06-01.` — Minería Acarreo S04 (CODELCO GOMS)
+  - `223530F-01-06` — FRI-C-01 y FRI-C-03 Nivel Iny MB-S05 (GEOVITA, GCC-005)
+  - `223540F-01-03` — GE-04 W / XCE-06 (GEOVITA, GCC-005)
+  - Segundo registro de `222712F-02-06` — Pique de traspaso de marina Este-NH-MB-52 (MDB, CC-113), ver Notas.
+- **3 pares nuevos en `empresasContratos`** (de 33 a 36) que ya existían en `wbsData` pero faltaban en el catálogo manual (afectaba el selector empresa/contrato en modo "sin SS"):
+  - ZUBLIN · `4600031460/GCC-003`
+  - GARDILCIC · `4600031457/GCC-004`
+  - GEOVITA · `4600031459/GCC-005`
+- **1 nuevo especialista en `especialistasBase`** (de 32 a 33): Betsabe Norambuena Navarro.
+
+### Changed
+- **5 correcciones de nombre de SS** provenientes del origen, todas mejoras: `225413F-01-01` (elimina ID incrustado en el nombre, bug de parseo histórico), `221570F-01-03` (recupera paréntesis de cierre), `224412F-01-02`, `224111F-01-02`, `225413F-01-03`.
+- **Normalización de espacios**: el Excel origen introduce espacios duros (U+00A0) y espacios dobles en varios nombres; se normalizan a espacio simple en todos los campos de texto para evitar caracteres invisibles en los exports PDF/Word.
+
+### Notas técnicas
+- **Fin de la preservación manual de CC-117/CC-113**: el reporte origen (`WBS_Semanal.xlsx` del 29-07-2026, formato antiguo: headers fila 0, datos desde fila 1) vuelve a incluir ambos contratos (97 SS CC-117, 63 SS CC-113). No fue necesaria la estrategia de merge de V60.
+- **Duplicado nuevo `222712F-02-06` retenido con ambos registros** por decisión operacional de Felipe: son obras distintas de empresas distintas (ZUBLIN/GCC-003 "C-51-NH-N52 CONTINUIDAD" y MDB/CC-113 "PIQUE DE TRASPASO DE MARINA ESTE-NH-MB-52"). Ambos son seleccionables desde el buscador WBS (la selección pasa el registro completo, no busca por ID). Precedente: V45 con `225310F-03-01`.
+  - **Caso borde conocido**: la restauración de la selección guardada (`loadConfig`) busca por `ss_id` con `find()` y toma el primero del array (ZUBLIN). Si el inspector seleccionó el registro MDB y recarga la app, la tarjeta de subsistema mostrará el de ZUBLIN. El export no se ve afectado (lee Config IDB, modelo V58). Fix candidato para release de código futuro: restaurar por `ss_id`+`empresa`.
+  - **Escalar a GOMS**: el registro MDB además trae `si_id` inconsistente (`222710F-02` vs `222712F-02` del prefijo del SS). Corresponde pedir corrección en la planilla origen (patrón V59).
+- Duplicados históricos resueltos por **primera ocurrencia**, consistente con V54–V60: `223520F-01-05`→GARDILCIC, `225310F-03-01`→GEOVITA.
+- **0 SS eliminados, 0 cambios de empresa/contrato** en SS existentes.
+- Distribución final: SIGDO KOPPERS S.A (216), GARDILCIC (180), ZUBLIN (146), ACCIONA-OSSA-PIZZAROTTI (95), GEOVITA (86), MDB (63), CODELCO GOMS (56), SIGMA S.A (3).
+- **Este release consume el número V61**: el roadmap de refactors del Nivel 1 se renumera a **V62–V66** en `ARQUITECTURA.md` §6 y `CONTEXTO_CLAUDE.md` §9.
+
+### Razones
+- **WBS**: ciclo regular de sincronización con la planilla oficial de GOMS del 29-07-2026.
+- **empresasContratos**: cierre de gap preexistente detectado durante el análisis.
+- **Especialista**: incorporación al staff solicitada por el equipo.
+
+### Deploy
+Subir únicamente `data.json` (más `CHANGELOG.md`, `ARQUITECTURA.md` y `CONTEXTO_CLAUDE.md` como documentación). No tocar el Service Worker. El equipo verá **"📦 845 subsistemas disponibles offline"** en el footer del Config cuando reciba la actualización.
+
+---
+
 ## [Documentación] - 2026-07-27
 
 > **Sin versión** — Cambio exclusivamente documental. No modifica `index.html`, `sw.js` ni `data.json`, no requiere bump de `CACHE_NAME` ni despliegue. **No consume el número V61**, que queda reservado para el refactor `AppState`.

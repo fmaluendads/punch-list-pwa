@@ -4,7 +4,7 @@ Documento de traspaso. Contiene el **contexto de trabajo** del proyecto: cómo s
 
 > **Complementa, no reemplaza, a `ARQUITECTURA.md`** — ese documento describe *el sistema*; este describe *cómo se trabaja sobre el sistema*. Todo lo técnico (esquema IDB, flujos, estrategias SW, análisis de estado) vive allá y acá solo se referencia.
 
-> **Última actualización**: V60 (julio 2026)
+> **Última actualización**: V61 (julio 2026)
 > **Mantenedor**: Felipe Maluenda — GOMS, CODELCO Chuquicamata Subterránea
 
 ---
@@ -30,15 +30,15 @@ PWA offline-first para inspectores de control de calidad en la Mina Chuquicamata
 
 ## 2. Estado actual
 
-**Código V58 · Datos V60.** No son el mismo número y eso es correcto.
+**Código V58 · Datos V61.** No son el mismo número y eso es correcto.
 
 | Archivo | Estado |
 |---|---|
 | `index.html` | ~5.274 líneas · 319 KB · `APP_VERSION = 'V58'` |
 | `sw.js` | `CACHE_NAME = 'punch-list-v58'` · 76 líneas |
-| `data.json` | 834 SS WBS · 33 empresas/contratos · 32 especialistas · 22 resp. construcción |
+| `data.json` | 845 SS WBS · 36 empresas/contratos · 33 especialistas · 22 resp. construcción |
 
-V59 y V60 fueron releases **solo datos**: no tocaron código, no bumpearon `CACHE_NAME`, y se propagaron solos vía Stale-While-Revalidate.
+V59, V60 y V61 fueron releases **solo datos**: no tocaron código, no bumpearon `CACHE_NAME`, y se propagaron solos vía Stale-While-Revalidate.
 
 > ⚠️ **Este cuadro se desactualiza.** La fuente de verdad del estado es el repo, y el historial completo está en `CHANGELOG.md`. **Nunca editar código sobre archivos de la base de conocimiento del proyecto: pedir siempre a Felipe que adjunte los archivos frescos del repo.**
 
@@ -98,10 +98,12 @@ Si aparece, evaluar si invertir el orden produce el comportamiento esperado.
 
 **Antes de aplicar un Excel nuevo, analizar siempre:** duplicados, SS nuevos, SS eliminados, cambios de empresa o contrato. Presentar el análisis a Felipe antes de generar el `data.json`.
 
-**Duplicados: se resuelven por primera ocurrencia en el Excel origen.** Regla consistente desde V54, aplicada en V55, V59 y V60:
+**Duplicados históricos: se resuelven por primera ocurrencia en el Excel origen.** Regla consistente desde V54, aplicada en V55, V59, V60 y V61:
 
 - `223520F-01-05` → GARDILCIC
 - `225310F-03-01` → GEOVITA
+
+**Excepción V61 — duplicados legítimos de empresas distintas se mantienen ambos.** `222712F-02-06` existe para ZUBLIN (GCC-003) y MDB (CC-113) como obras distintas; decisión operacional de Felipe: retener los dos registros. Ambos son seleccionables desde el buscador (la selección pasa el registro completo). Caso borde conocido: al recargar, la restauración por `ss_id` toma el primero del array — fix candidato para release de código (restaurar por `ss_id`+`empresa`). El `si_id` inconsistente del registro MDB se escala a GOMS.
 
 **Duplicados sospechosos: no se parchean en la app, se escalan a GOMS.** Precedente V59: cinco ventiladores de sectores norte y sur compartían `ss_id`. En vez de un workaround en el catálogo, se escaló y GOMS corrigió la planilla origen (`222130-01-XX` norte vs `223130-01-XX` sur). El patrón correcto es corregir en origen.
 
@@ -151,15 +153,15 @@ El balance debe ser exactamente 0 después de cada cambio, y `node --check` debe
 
 ## 9. Roadmap
 
-Los cinco refactors del Nivel 1 están descritos en `ARQUITECTURA.md` §6, pero **con la numeración desfasada**: ese documento los numera V59–V63, y esos números ya fueron consumidos por los releases de datos. La numeración vigente es:
+Los cinco refactors del Nivel 1 están descritos en `ARQUITECTURA.md` §6, pero **con la numeración desfasada**: ese documento los escribió originalmente como V59–V63, y esos números ya fueron consumidos por los releases de datos (el último: V61). La numeración vigente es:
 
 | Versión | Refactor |
 |---|---|
-| V61 | `AppState` centralizado — reemplaza ~12 variables globales |
-| V62 | Validadores declarativos — elimina los `if (!campo)` dispersos |
-| V63 | Transacciones IDB batch consolidadas — extiende `setConfigBatch` de V52 |
-| V64 | Fuente única para firmas en IDB — elimina duplicación |
-| V65 | Elimina definitivamente los snapshots de config por ítem |
+| V62 | `AppState` centralizado — reemplaza ~12 variables globales |
+| V63 | Validadores declarativos — elimina los `if (!campo)` dispersos |
+| V64 | Transacciones IDB batch consolidadas — extiende `setConfigBatch` de V52 |
+| V65 | Fuente única para firmas en IDB — elimina duplicación |
+| V66 | Elimina definitivamente los snapshots de config por ítem |
 
 **Nivel 2** (modularización con `<script type="module">`, sin build) cuando `index.html` pase de ~6.000 líneas. **Nivel 3** (Vite + framework + Dexie + Vitest + Sentry) solo si el alcance crece a ≥2 empresas o ≥3 desarrolladores.
 
