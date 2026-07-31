@@ -8,6 +8,40 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V62] - 2026-07-31
+
+> **Solo datos** — Actualiza únicamente `data.json`. No requiere bump de `CACHE_NAME`; se propaga vía Stale-While-Revalidate.
+
+### Added
+- **7 registros nuevos en `wbsData`** (de 845 a 852):
+  - `221160F-01-05` — ACC-PD-S05/S06-00 (GARDILCIC, GCC-004)
+  - `223480-07-05` — Canalización, escalerillas, alumbrado y enchufes sala TICA (SIGDO KOPPERS S.A, CC-101)
+  - `223480-07-06` — Equipos eléctricos y de comunicación sala TICA (SIGDO KOPPERS S.A, CC-101)
+  - `225416F-01-01` — Bypass GALEX MBS04/S05, incluye FRE-REX-SUR 01@02 (GEOVITA, GCC-005)
+  - `225511F-01-06` — Frontón pozo FRF-A-01 MB S05 (GEOVITA, GCC-005)
+  - Segunda ocurrencia de `223520F-01-05` — CAB-02-NP-S05 (TRAMO 4) (GEOVITA, GCC-001), ver Changed.
+  - Segunda ocurrencia de `225310F-03-01` — Chimeneas CHIPI-INS-S04/S05 (MDB, CC-113), ver Changed.
+
+### Changed
+- **Cambio de política de duplicados** (decisión operacional de Felipe): a partir de V62 la planilla origen se carga **completa, sin deduplicar**. Se abandona la regla de "primera ocurrencia" vigente desde V54. Los duplicados de `ss_id` entre empresas distintas son legítimos en terreno y ambos registros deben ser inspeccionables. Duplicados retenidos: `222712F-02-06` (ZUBLIN / MDB, desde V61), `223520F-01-05` (GARDILCIC / GEOVITA), `225310F-03-01` (GEOVITA / MDB).
+
+### Notas técnicas
+- **Caso borde conocido (heredado de V61), ahora aplica a 3 IDs**: la restauración de la selección guardada (`loadConfig`, línea 2742) busca por `ss_id` y toma el primero del array. Fix candidato para el próximo release de código: restaurar por `ss_id`+`empresa`. Prioridad sube al haber 3 IDs afectados.
+- `223520F-01-05` aparece dos veces **con el mismo nombre** en el buscador WBS; se distinguen por el chip de empresa (GARDILCIC / GEOVITA) y por contrato al seleccionar.
+- El registro MDB de `222712F-02-06` sigue con `si_id` inconsistente en origen (`222710F-02`); corrección solicitada a GOMS el 29-07, pendiente.
+- **0 eliminados, 0 cambios** de contrato, nombre o jerarquía en los 845 registros de V61. Planilla origen del 31-07-2026, formato antiguo.
+- Distribución: SIGDO KOPPERS S.A (218), GARDILCIC (181), ZUBLIN (146), ACCIONA-OSSA-PIZZAROTTI (95), GEOVITA (89), MDB (64), CODELCO GOMS (56), SIGMA S.A (3).
+- **Roadmap desacoplado del versionado**: los refactors del Nivel 1 pasan de números de versión (V63–V67, en renumeración perpetua por los releases semanales de datos) a etiquetas estables **R1–R5** en `ARQUITECTURA.md` §6 y `CONTEXTO_CLAUDE.md` §9. Cada refactor tomará número de versión recién cuando se ejecute.
+
+### Razones
+- **WBS**: ciclo regular de sincronización con la planilla oficial de GOMS del 31-07-2026.
+- **Política de duplicados**: los IDs repetidos entre empresas distintas representan obras reales que deben poder inspeccionarse; descartar la segunda ocurrencia las dejaba invisibles.
+
+### Deploy
+Subir únicamente `data.json` (más `CHANGELOG.md`, `ARQUITECTURA.md` y `CONTEXTO_CLAUDE.md` como documentación). No tocar el Service Worker. Footer esperado: **"📦 852 subsistemas disponibles offline"**.
+
+---
+
 ## [V61] - 2026-07-29
 
 > **Solo datos** — Esta versión actualiza únicamente `data.json`. No modifica `index.html` ni `sw.js`, por lo que NO requiere bump de `CACHE_NAME`. El Service Worker actualiza `data.json` automáticamente vía Stale-While-Revalidate.

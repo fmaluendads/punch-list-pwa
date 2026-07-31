@@ -2,7 +2,7 @@
 
 Documento técnico de referencia. Describe la arquitectura actual del proyecto, sus puntos críticos, las decisiones de diseño tomadas, y un roadmap evolutivo en 3 niveles.
 
-> **Última actualización**: V61 (julio 2026) — código V58 · datos V61
+> **Última actualización**: V62 (julio 2026) — código V58 · datos V62
 > **Audiencia**: desarrolladores que mantengan o evolucionen la app
 > **Mantenedor**: Felipe Maluenda (GOMS — CODELCO Chuquicamata Subterránea)
 >
@@ -35,7 +35,7 @@ Documento técnico de referencia. Describe la arquitectura actual del proyecto, 
 | `items` | `id` (autoincrement) | Hallazgos/observaciones con fotos y snapshot de config |
 | `config` | `key` (string) | Configuración global: WBS, fechas, campos IC, flags |
 | `especialistas` | `id` (autoincrement) | Especialistas personalizados |
-| `datos_cache` | `key` (string) | Caché de `data.json` para uso offline (845 WBS al V61) |
+| `datos_cache` | `key` (string) | Caché de `data.json` para uso offline (852 WBS al V62) |
 | `borradores` | `id` (autoincrement) | Snapshots completos — máx 10 (V53+) |
 
 ### Claves importantes del store `config`
@@ -69,7 +69,7 @@ Cada release bumpea `CACHE_NAME` (`punch-list-vNN`). El `activate` borra caches 
 
 Hooks: `self.skipWaiting()` y `self.clients.claim()` para forzar activación inmediata.
 
-**Excepción — releases solo-datos** (V55, V59, V60, V61): no requieren bump de `CACHE_NAME` porque solo cambia `data.json`, y la estrategia Stale-While-Revalidate lo actualiza automáticamente.
+**Excepción — releases solo-datos** (V55, V59–V62): no requieren bump de `CACHE_NAME` porque solo cambia `data.json`, y la estrategia Stale-While-Revalidate lo actualiza automáticamente.
 
 ---
 
@@ -240,30 +240,30 @@ Todos respetan flag `_loadingBorrador`.
 
 ## 6. Roadmap arquitectónico — 3 niveles
 
-### Nivel 1 — Refactor manteniendo single-file (V62+)
+### Nivel 1 — Refactor manteniendo single-file (R1–R5)
 
-> **Renumerado en V61.** Este roadmap se escribió en V58 asignando los números V59–V63. V59, V60 y V61 se consumieron después como releases **solo datos**, por lo que los refactors se corren a V62–V66. El versionado es secuencial y no admite V44.1 (§8, regla 6).
+> **Desacoplado del versionado en V62.** Este roadmap se escribió en V58 con números de versión asignados (V59–V63), que fueron consumidos repetidamente por releases solo-datos, forzando renumeraciones en V60, V61 y V62. Desde V62 los refactors usan etiquetas estables **R1–R5** y toman número de versión recién cuando se ejecutan. El versionado sigue siendo secuencial y no admite V44.1 (§8, regla 6).
 
-#### V62 — AppState centralizado
+#### R1 — AppState centralizado
 Reemplaza variables globales con estado controlado + pubsub.
 
-#### V63 — Validadores declarativos
+#### R2 — Validadores declarativos
 Reemplaza `if (!campo)` regados por el código con tabla de validators.
 
-#### V64 — Transacciones IDB batch consolidadas
+#### R3 — Transacciones IDB batch consolidadas
 Ya parcialmente aplicado V52. Extender a más operaciones.
 
-#### V65 — Eliminar duplicación de firmas
+#### R4 — Eliminar duplicación de firmas
 Una sola fuente de verdad (IDB). Patrón V58 ya estableció el modelo.
 
-#### V66 — Consolidar snapshot vs IDB
+#### R5 — Consolidar snapshot vs IDB
 Eliminar definitivamente el snapshot por ítem (mantenido por compat).
 
 Estimación: 6-8 semanas distribuidas según urgencias.
 
 ### Nivel 2 — Modularización con módulos nativos (mediano plazo)
 
-**Estado código V58 (vigente al V61)**: 5274 líneas — cerca del límite recomendado (6000).
+**Estado código V58 (vigente al V62)**: 5274 líneas — cerca del límite recomendado (6000).
 
 ```
 js/
@@ -342,7 +342,7 @@ Esta declaración simple desbloqueó la decisión arquitectónica de **Config ID
 2. **JS brace balance** = 0 (`node --check`)
 3. **`buildHTML*` / `buildWord*`**: string concatenation, nunca template literals
 4. **Análisis antes de ejecutar**: Felipe confirma explícitamente
-5. **Bumpear `CACHE_NAME`** en cada release que toque código (excepción: releases solo-datos — V55, V59, V60, V61)
+5. **Bumpear `CACHE_NAME`** en cada release que toque código (excepción: releases solo-datos — V55, V59–V62)
 6. **Versionado secuencial** (V42, V43... sin V44.1)
 7. **Smoke test obligatorio** del Word con `python-docx` + LibreOffice
 8. **Documentar en CHANGELOG.md** cada release
@@ -408,7 +408,8 @@ Si solo cambia `data.json` (WBS, responsables, especialistas): **no bumpear CACH
 | **V59** | jun 2026 | Datos | 827 SS — GOMS corrigió duplicados de ventiladores en origen |
 | **V60** | jul 2026 | Datos | 834 SS + 6 responsables · preservación manual de 157 SS (CC-117, CC-113) |
 | **V61** | jul 2026 | Datos | 845 SS + 3 pares empresa/contrato + 1 especialista · CC-117/CC-113 vuelven al origen |
+| **V62** | jul 2026 | Datos | 852 SS · nueva política: planilla completa sin deduplicar · roadmap desacoplado a R1–R5 |
 
 ---
 
-*Documento mantenido por el equipo de desarrollo. Última revisión: V61 (julio 2026).*
+*Documento mantenido por el equipo de desarrollo. Última revisión: V62 (julio 2026).*
