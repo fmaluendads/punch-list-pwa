@@ -8,6 +8,40 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V63] - 2026-08-03
+
+> **Release de código** — Modifica `index.html` y `sw.js`. Bump de `CACHE_NAME` a `punch-list-v63`.
+
+### Added
+- **Confirmación al eliminar inspecciones guardadas**: el botón 🗑️ de la lista de borradores ya no elimina de inmediato; abre el modal estándar de confirmación (nueva función `confirmarEliminarBorrador`, reutiliza `modalOverlay`).
+
+### Changed
+- **Máximo 10 fotos para todas las prioridades** (antes 3 para P1–P5 y 10 solo para S/O). Se elimina la lógica de límite por prioridad en `onPrioridadChange` y `actualizarTituloFotosEdit` (`_maxFotoSlot = 9` fijo); títulos actualizados a "máx. 10"; `duplicarItem` copia hasta 10 fotos (antes `slice(0, 3)`).
+- **Fotos con recorte cuadrado centrado**: `compressImage` ahora recorta al cuadrado central (hasta 800×800, JPEG 0.7) al capturar/subir. Todas las fotos de ítem quedan 1:1, consistentes en UI, PDF y Word. Las fotos legacy (no cuadradas) mantienen su proporción en los informes, sin recorte.
+- **Registro fotográfico sin cortes de página**: en el Word, las filas de la tabla de fotos llevan `cantSplit` (patrón anti-corte de V56); en el PDF, cada celda de foto lleva `break-inside: avoid` y la imagen usa `aspect-ratio: 1/1` + `object-fit: cover`.
+- **Prefill de fecha de compromiso en hora local**: el default hoy+30 del formulario Nuevo usaba `toISOString()` (UTC), que después de las ~20:00 hora de Chile corría el valor un día. Ahora se calcula con fecha local. Sin cambio de comportamiento funcional.
+
+### Fixed
+- **Restauración WBS por `ss_id` + `empresa`** (caso borde heredado de V61/V62, 3 IDs afectados): `loadConfig` y `onSinSSChange` ahora buscan la combinación exacta `ss_id`+`empresa` con fallback a primera ocurrencia; la verificación de existencia en `cargarBorrador` también es consciente de la empresa, de modo que un borrador de un SS duplicado restaura la obra correcta.
+- **Patrón residual snapshot-antes-de-IDB en `respConstruccion`**: dos ocurrencias de `cfg.respConstruccion || await getConfig('respConstruccion')` (fallback de la firma Responsable Construcción en PDF y Word) invertidas a IDB-primero, cerrando el patrón sistemático de V57/V58 (§5.2 de `ARQUITECTURA.md`).
+- **Eliminar una foto borraba todas las posteriores** (reportado por el equipo en edición de ítems; heredado de V53 y presente también en el formulario Nuevo): `removePhotoSlot` y `removeEditPhotoSlot` "compactaban" haciendo `_currentFotos[i] = null` sobre todos los slots siguientes, perdiendo las fotos de verdad. Ahora compactan correctamente (quitan la foto y corren las restantes) y repintan la grilla vía `poblarEditFotos` / nueva `poblarFotoSlots` (que además simplifica `duplicarItem`). Con máx. 3 fotos casi no se notaba; con 10 era crítico.
+- **Tablas de hallazgos cortadas entre páginas** (reportado con capturas del PDF): en el PDF, `tr { break-inside: avoid }` en ambos templates (ninguna fila se parte) y `thead { display: table-header-group }` (el encabezado se repite en cada página, resolviendo el encabezado huérfano). En el Word, filas de hallazgos con `cantSplit` y fila de encabezado marcada `<w:tblHeader/>` (nueva opción `header` por fila en `_dxTable`) para que Word también repita el encabezado por página.
+
+### Notas técnicas
+- Validado: brace balance = 0, `node --check` OK, smoke test del generador Word con `python-docx` (IC y CAM, 10 fotos cuadradas 6×6 cm + 1 legacy con ratio preservado, `cantSplit` y `tblHeader` presentes, ZIP íntegro), y test unitario de compactación de fotos con stub de DOM (eliminar 1ª/intermedia en Nuevo y Editar).
+- Límite conocido del PDF: Chrome no soporta de forma confiable evitar que un `<thead>` quede solo al borde inferior de una página; con el encabezado repetido por página el documento queda correcto igualmente.
+- Sin cambios en `data.json` (sigue en datos V62) ni en el formato CSV de 20 columnas.
+- Fotos existentes (capturadas antes de V63) no se modifican: el recorte cuadrado aplica solo a fotos nuevas.
+
+### Razones
+- Mejoras solicitadas por el equipo en terreno: eliminación accidental de inspecciones guardadas, necesidad de más de 3 fotos por hallazgo en prioridades normales, fotos cortadas en los informes.
+- La revisión del reporte de "fecha de compromiso incorrecta" no encontró bug de cruce con la fecha de la IC; se corrigió el único defecto real hallado (default UTC) y se dejó constancia de que la causa probable es no-rellenado del campo prefijado.
+
+### Deploy
+Subir `index.html` y `sw.js` (más `CHANGELOG.md`, `ARQUITECTURA.md` y `CONTEXTO_CLAUDE.md` como documentación). Crear tag y release `V63` en GitHub. Footer esperado: **"Punch List PWA · V63"**.
+
+---
+
 ## [V62] - 2026-07-31
 
 > **Solo datos** — Actualiza únicamente `data.json`. No requiere bump de `CACHE_NAME`; se propaga vía Stale-While-Revalidate.

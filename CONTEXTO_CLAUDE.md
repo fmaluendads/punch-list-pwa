@@ -4,7 +4,7 @@ Documento de traspaso. Contiene el **contexto de trabajo** del proyecto: cómo s
 
 > **Complementa, no reemplaza, a `ARQUITECTURA.md`** — ese documento describe *el sistema*; este describe *cómo se trabaja sobre el sistema*. Todo lo técnico (esquema IDB, flujos, estrategias SW, análisis de estado) vive allá y acá solo se referencia.
 
-> **Última actualización**: V62 (julio 2026)
+> **Última actualización**: V63 (agosto 2026)
 > **Mantenedor**: Felipe Maluenda — GOMS, CODELCO Chuquicamata Subterránea
 
 ---
@@ -30,15 +30,15 @@ PWA offline-first para inspectores de control de calidad en la Mina Chuquicamata
 
 ## 2. Estado actual
 
-**Código V58 · Datos V62.** No son el mismo número y eso es correcto.
+**Código V63 · Datos V62.** No son el mismo número y eso es correcto.
 
 | Archivo | Estado |
 |---|---|
-| `index.html` | ~5.274 líneas · 319 KB · `APP_VERSION = 'V58'` |
-| `sw.js` | `CACHE_NAME = 'punch-list-v58'` · 76 líneas |
+| `index.html` | ~5.270 líneas · 320 KB · `APP_VERSION = 'V63'` |
+| `sw.js` | `CACHE_NAME = 'punch-list-v63'` · 76 líneas |
 | `data.json` | 852 SS WBS · 36 empresas/contratos · 33 especialistas · 22 resp. construcción |
 
-V59–V62 fueron releases **solo datos**: no tocaron código, no bumpearon `CACHE_NAME`, y se propagaron solos vía Stale-While-Revalidate.
+V59–V62 fueron releases **solo datos**: no tocaron código, no bumpearon `CACHE_NAME`, y se propagaron solos vía Stale-While-Revalidate. V63 (ago 2026) fue release de código: confirmación al eliminar borradores, 10 fotos para todas las prioridades, fotos cuadradas, tablas y fotos sin cortes de página en PDF y Word, fix del borrado en cascada al eliminar una foto, y cierre de los dos fixes pendientes (restauración WBS por `ss_id`+`empresa`, patrón residual de `respConstruccion`).
 
 > ⚠️ **Este cuadro se desactualiza.** La fuente de verdad del estado es el repo, y el historial completo está en `CHANGELOG.md`. **Nunca editar código sobre archivos de la base de conocimiento del proyecto: pedir siempre a Felipe que adjunte los archivos frescos del repo.**
 
@@ -98,7 +98,7 @@ Si aparece, evaluar si invertir el orden produce el comportamiento esperado.
 
 **Antes de aplicar un Excel nuevo, analizar siempre:** duplicados, SS nuevos, SS eliminados, cambios de empresa o contrato. Presentar el análisis a Felipe antes de generar el `data.json`.
 
-**Política de duplicados (desde V62): la planilla origen se carga completa, sin deduplicar.** Los `ss_id` repetidos entre empresas distintas son legítimos en terreno y ambos registros deben ser inspeccionables. Reemplaza la regla de "primera ocurrencia" vigente V54–V61, que dejaba invisible la segunda obra. Duplicados retenidos al V62: `222712F-02-06` (ZUBLIN/MDB), `223520F-01-05` (GARDILCIC/GEOVITA, mismo nombre — se distinguen por chip de empresa), `225310F-03-01` (GEOVITA/MDB). Caso borde: la restauración por `ss_id` en `loadConfig` toma el primero del array — fix candidato para próximo release de código (restaurar por `ss_id`+`empresa`). Regla histórica que reemplaza, aplicada V54–V61 por primera ocurrencia:
+**Política de duplicados (desde V62): la planilla origen se carga completa, sin deduplicar.** Los `ss_id` repetidos entre empresas distintas son legítimos en terreno y ambos registros deben ser inspeccionables. Reemplaza la regla de "primera ocurrencia" vigente V54–V61, que dejaba invisible la segunda obra. Duplicados retenidos al V62: `222712F-02-06` (ZUBLIN/MDB), `223520F-01-05` (GARDILCIC/GEOVITA, mismo nombre — se distinguen por chip de empresa), `225310F-03-01` (GEOVITA/MDB). Caso borde **resuelto en V63**: la restauración en `loadConfig` ahora busca por `ss_id`+`empresa` (con fallback a primera ocurrencia si la combinación exacta no existe). Regla histórica que reemplaza, aplicada V54–V61 por primera ocurrencia:
 
 - `223520F-01-05` → GARDILCIC
 - `225310F-03-01` → GEOVITA
@@ -136,7 +136,7 @@ Si aparece, evaluar si invertir el orden produce el comportamiento esperado.
 
 ## 8. Técnicas de edición del archivo grande
 
-`index.html` tiene ~5.274 líneas. Lo que funciona:
+`index.html` tiene ~5.270 líneas. Lo que funciona:
 
 - **Reemplazo con Python** (`content.replace(old, new, 1)`) es más confiable que `str_replace` para bloques multilínea con escapes complejos.
 - **Localizar puntos de inserción con `grep -n "string exacto"`**, nunca asumiendo números de línea: cada edición los corre.

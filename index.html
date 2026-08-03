@@ -1147,7 +1147,7 @@ textarea { resize: vertical; min-height: 80px; }
       </div>
       
       <div class="form-section">
-        <h3 id="fotosSectionTitle">📷 Fotos (Opcional — máx. 3)</h3>
+        <h3 id="fotosSectionTitle">📷 Fotos (Opcional — máx. 10)</h3>
         <div style="display:flex;flex-direction:column;gap:10px;" id="fotosContainer">
           <!-- Slot 0 -->
           <div class="foto-slot" id="fotoSlot0">
@@ -1531,7 +1531,7 @@ textarea { resize: vertical; min-height: 80px; }
     <button class="btn btn-danger" onclick="confirmarNuevaInspeccion()" style="margin-top:0;background:rgba(239,68,68,0.12);border:1px solid var(--danger);color:var(--danger)">🧹 Nueva Inspección — Limpiar Todo</button>
     <!-- V52: Indicador de versión visible — debe coincidir con CACHE_NAME en sw.js -->
     <div style="text-align:center;font-size:10px;color:#666;margin-top:24px;padding:10px;border-top:1px solid var(--slate-lt);">
-      Punch List PWA · <span id="appVersionLabel">V58</span> · WBS Sync: <span id="appLastSync">—</span>
+      Punch List PWA · <span id="appVersionLabel">V63</span> · WBS Sync: <span id="appLastSync">—</span>
     </div>
   </div>
 
@@ -1771,7 +1771,7 @@ textarea { resize: vertical; min-height: 80px; }
 
 
       <div class="form-group">
-        <h4 id="editFotosSectionTitle" style="font-size:14px;margin:0 0 8px 0;">📷 Fotos (Opcional — máx. 3)</h4>
+        <h4 id="editFotosSectionTitle" style="font-size:14px;margin:0 0 8px 0;">📷 Fotos (Opcional — máx. 10)</h4>
         <div style="display:flex;flex-direction:column;gap:10px;" id="editFotosContainer">
           <!-- Slot 0 -->
           <div class="foto-slot" id="editFotoSlot0">
@@ -1893,8 +1893,8 @@ async function sincronizarDatosBackground() {
 // ==================== VARIABLES GLOBALES ====================
 let currentPhoto = null;       // legacy compat
 let editCurrentPhoto = null;   // legacy compat — V53 ya no se usa (sustituido por _currentFotos compartido)
-let _currentFotos = Array(10).fill(null); // slots 0-9; activos 0-2 normal, 0-9 para S/O
-let _maxFotoSlot = 2; // 2=normal (máx 3 fotos), 9=S/O (máx 10 fotos)
+let _currentFotos = Array(10).fill(null); // slots 0-9 activos para todas las prioridades (V63)
+let _maxFotoSlot = 9; // V63: máx 10 fotos para todas las prioridades (antes 3 normal / 10 S/O)
 let _currentFotoSlot = 0;
 let _editingItemId = null; // V53: id del ítem en edición — null cuando se está creando uno nuevo
 let _icFirmaData = null; // firma responsable IC
@@ -1904,7 +1904,7 @@ let _selectedWBSRecord = null;
 // V52: flag para deshabilitar listeners de persistencia durante cargarBorrador (evita pisar datos)
 let _loadingBorrador = false;
 // V52: versión visible en la UI — debe coincidir con CACHE_NAME en sw.js
-const APP_VERSION = 'V58';
+const APP_VERSION = 'V63';
 
 // ==================== INDEXEDDB ====================
 const DB_NAME = 'PunchListDB';
@@ -2135,21 +2135,42 @@ async function handleFotoSlot(event, slot) {
   if (slot < _maxFotoSlot) document.getElementById('fotoSlot' + (slot+1)).style.display = 'block';
 }
 
-function removePhotoSlot(slot) {
-  _currentFotos[slot] = null;
-  document.getElementById('fotoPreview' + slot).style.display = 'none';
-  document.getElementById('fotoPlaceholder' + slot).style.display = 'flex';
-  document.getElementById('fotoActions' + slot).style.display = 'none';
-  document.getElementById('fotoInput' + slot).value = '';
-  document.getElementById('fotoCamInput' + slot).value = '';
-  // Hide subsequent slots and clear them up to current max
-  for (let i = slot + 1; i <= _maxFotoSlot; i++) {
-    _currentFotos[i] = null;
-    document.getElementById('fotoSlot' + i).style.display = 'none';
-    document.getElementById('fotoPreview' + i).style.display = 'none';
-    document.getElementById('fotoPlaceholder' + i).style.display = 'flex';
-    document.getElementById('fotoActions' + i).style.display = 'none';
+// V63: poblar la grilla del formulario Nuevo con un array de fotos (espejo de poblarEditFotos)
+function poblarFotoSlots(fotos) {
+  _currentFotos = Array(10).fill(null);
+  for (let i = 0; i <= 9; i++) {
+    const dato = fotos && fotos[i] ? fotos[i] : null;
+    _currentFotos[i] = dato;
+    const slot = document.getElementById('fotoSlot' + i);
+    const prev = document.getElementById('fotoPreview' + i);
+    const ph   = document.getElementById('fotoPlaceholder' + i);
+    const ac   = document.getElementById('fotoActions' + i);
+    const inp  = document.getElementById('fotoInput' + i);
+    const cam  = document.getElementById('fotoCamInput' + i);
+    if (inp) inp.value = '';
+    if (cam) cam.value = '';
+    if (dato) {
+      if (slot) slot.style.display = 'block';
+      if (prev) { prev.src = dato; prev.style.display = 'block'; }
+      if (ph)   ph.style.display = 'none';
+      if (ac)   ac.style.display = 'flex';
+    } else {
+      if (slot) slot.style.display = (i === 0 || (fotos && fotos[i - 1])) ? 'block' : 'none';
+      if (prev) prev.style.display = 'none';
+      if (ph)   ph.style.display = 'flex';
+      if (ac)   ac.style.display = 'none';
+    }
+    if (i > _maxFotoSlot && slot) slot.style.display = 'none';
   }
+}
+
+function removePhotoSlot(slot) {
+  // V63: compactar de verdad — antes este handler BORRABA todas las fotos posteriores
+  const restantes = [];
+  for (let i = 0; i <= 9; i++) {
+    if (i !== slot && _currentFotos[i]) restantes.push(_currentFotos[i]);
+  }
+  poblarFotoSlots(restantes);
 }
 
 // Reset foto slots after saving item
@@ -2170,25 +2191,23 @@ function resetFotoSlots() {
   }
 }
 
-function compressImage(file, maxWidth = 800, quality = 0.7) {
+function compressImage(file, maxSize = 800, quality = 0.7) {
+  // V63: recorte CUADRADO centrado — todas las fotos de ítem quedan 1:1,
+  // consistentes en UI, PDF y Word, sin cortes en los informes.
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
+        const side = Math.min(img.width, img.height);
+        const sx = Math.floor((img.width - side) / 2);
+        const sy = Math.floor((img.height - side) / 2);
+        const out = Math.min(side, maxSize);
         const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = out;
+        canvas.height = out;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, out, out);
         resolve(canvas.toDataURL('image/jpeg', quality));
       };
       img.src = e.target.result;
@@ -2238,25 +2257,15 @@ async function handleEditFotoSlot(event) {
 }
 
 function removeEditPhotoSlot(slot) {
-  _currentFotos[slot] = null;
-  document.getElementById('editFotoPreview' + slot).style.display = 'none';
-  document.getElementById('editFotoPlaceholder' + slot).style.display = 'flex';
-  document.getElementById('editFotoActions' + slot).style.display = 'none';
+  // V63: compactar de verdad — antes este handler BORRABA todas las fotos posteriores
+  const restantes = [];
+  for (let i = 0; i <= 9; i++) {
+    if (i !== slot && _currentFotos[i]) restantes.push(_currentFotos[i]);
+  }
   // Limpiar inputs compartidos
   document.getElementById('editFotoInput').value = '';
   document.getElementById('editFotoCamInput').value = '';
-  // Compactar: ocultar y limpiar slots posteriores
-  for (let i = slot + 1; i <= _maxFotoSlot; i++) {
-    _currentFotos[i] = null;
-    const sl = document.getElementById('editFotoSlot' + i);
-    if (sl) sl.style.display = 'none';
-    const pv = document.getElementById('editFotoPreview' + i);
-    if (pv) pv.style.display = 'none';
-    const ph = document.getElementById('editFotoPlaceholder' + i);
-    if (ph) ph.style.display = 'flex';
-    const ac = document.getElementById('editFotoActions' + i);
-    if (ac) ac.style.display = 'none';
-  }
+  poblarEditFotos(restantes);
 }
 
 // V53: poblar la grilla de edición con las fotos existentes del ítem
@@ -2296,19 +2305,10 @@ function poblarEditFotos(fotos) {
   }
 }
 
-// V53: actualizar título y máximo de la sección fotos del modal edit según prioridad
+// V63: máx 10 fotos para todas las prioridades — el título ya no depende de la prioridad
 function actualizarTituloFotosEdit() {
-  const prio = document.getElementById('edit_prioridad').value;
-  const esSO = prio === 'S/O';
-  _maxFotoSlot = esSO ? 9 : 2;
   const title = document.getElementById('editFotosSectionTitle');
-  if (title) title.textContent = esSO ? '📷 Fotos (Opcional — máx. 10)' : '📷 Fotos (Opcional — máx. 3)';
-  // Ocultar slots por encima del nuevo max
-  for (let i = _maxFotoSlot + 1; i <= 9; i++) {
-    const sl = document.getElementById('editFotoSlot' + i);
-    if (sl) sl.style.display = 'none';
-    _currentFotos[i] = null;
-  }
+  if (title) title.textContent = '📷 Fotos (Opcional — máx. 10)';
 }
 
 function showFullscreenImage(src) {
@@ -2383,7 +2383,7 @@ document.getElementById('itemForm').addEventListener('submit', async (e) => {
     actividad: '',
     itemActividad: '',
     foto: _currentFotos[0],        // legacy compat col 1
-    fotos: _currentFotos.filter(Boolean), // array hasta 3
+    fotos: _currentFotos.filter(Boolean), // array hasta 10 (V63)
     config: config,
     createdAt: new Date().toISOString()
   };
@@ -2555,17 +2555,8 @@ async function duplicarItem(id) {
 
   // Copiar fotos del ítem original
   const fotosOrig = item.fotos && item.fotos.length ? item.fotos : (item.foto ? [item.foto] : []);
-  resetFotoSlots();
-  fotosOrig.slice(0, 3).forEach((f, i) => {
-    if (f) {
-      _currentFotos[i] = f;
-      document.getElementById('fotoPreview' + i).src = f;
-      document.getElementById('fotoPreview' + i).style.display = 'block';
-      document.getElementById('fotoPlaceholder' + i).style.display = 'none';
-      document.getElementById('fotoActions' + i).style.display = 'flex';
-      if (i > 0) document.getElementById('fotoSlot' + i).style.display = 'block';
-    }
-  });
+  // V63: copiar hasta 10 fotos (antes 3) — poblarFotoSlots repinta y revela el siguiente slot vacío
+  poblarFotoSlots(fotosOrig.slice(0, 10).filter(Boolean));
 
   // Cambiar al tab Nuevo
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -2739,7 +2730,10 @@ async function loadConfig() {
   selEmp.value = savedEmpresa;
   
   if (savedSubsistemaId) {
-    const rec = DATOS.wbsData.find(r => r.ss_id === savedSubsistemaId);
+    // V63: restaurar por ss_id + empresa (los ss_id duplicados entre empresas son legítimos desde V62);
+    // fallback a primera ocurrencia si la combinación exacta no existe en el catálogo actual.
+    const rec = DATOS.wbsData.find(r => r.ss_id === savedSubsistemaId && r.empresa === savedEmpresa)
+             || DATOS.wbsData.find(r => r.ss_id === savedSubsistemaId);
     if (rec) applyWBSRecord(rec, false);
   }
   
@@ -2896,7 +2890,10 @@ async function onSinSSChange() {
     // Si había un SS guardado, lo restauramos (loadConfig lo hace al boot, acá solo en runtime)
     const ssGuardado = await getConfig('subsistema');
     if (ssGuardado) {
-      const rec = (window.DATOS?.wbsData || []).find(r => r.ss_id === ssGuardado);
+      // V63: restaurar por ss_id + empresa, con fallback a primera ocurrencia
+      const empGuardada = await getConfig('empresa') || '';
+      const rec = (window.DATOS?.wbsData || []).find(r => r.ss_id === ssGuardado && r.empresa === empGuardada)
+               || (window.DATOS?.wbsData || []).find(r => r.ss_id === ssGuardado);
       if (rec) applyWBSRecord(rec, false);
     }
   }
@@ -3406,30 +3403,7 @@ function onPrioridadChange(sel, groupId) {
     group.style.display = '';
     if (fc) fc.setAttribute('required', 'required');
   }
-  // Activar/desactivar slots extra solo para el formulario de nuevo ítem
-  if (groupId === 'fechaCompromisoGroup') {
-    const esSO = sel.value === 'S/O';
-    _maxFotoSlot = esSO ? 9 : 2;
-    const title = document.getElementById('fotosSectionTitle');
-    if (title) title.textContent = esSO ? '📷 Fotos (Opcional — máx. 10)' : '📷 Fotos (Opcional — máx. 3)';
-    // Ocultar y limpiar slots que quedan fuera del nuevo límite
-    const nuevoMax = esSO ? 9 : 2;
-    for (let i = nuevoMax + 1; i <= 9; i++) {
-      _currentFotos[i] = null;
-      const sl = document.getElementById('fotoSlot' + i);
-      if (sl) sl.style.display = 'none';
-      const prev = document.getElementById('fotoPreview' + i);
-      const ph = document.getElementById('fotoPlaceholder' + i);
-      const act = document.getElementById('fotoActions' + i);
-      if (prev) prev.style.display = 'none';
-      if (ph) ph.style.display = 'flex';
-      if (act) act.style.display = 'none';
-    }
-  }
-  // V53: mismo manejo para el modal de edición
-  if (groupId === 'edit_fechaCompromisoGroup') {
-    actualizarTituloFotosEdit();
-  }
+  // V63: el límite de fotos ya no depende de la prioridad (máx 10 siempre)
 }
 
 function toggleAllItems() {
@@ -3515,6 +3489,7 @@ function buildHTMLInspeccion(codigo, correlativo, fechaEmision, contratoDisplay,
     '*{box-sizing:border-box;margin:0;padding:0;}' +
     'body{font-family:Arial,sans-serif;font-size:10pt;color:#333;}' +
     'table{border-collapse:collapse;}td{vertical-align:middle;}' +
+    'tr{break-inside:avoid;page-break-inside:avoid;}thead{display:table-header-group;}' + // V63: filas no se parten + header repetido por página
     '.section{margin-bottom:8px;}.section-title{font-weight:bold;font-size:10pt;margin-bottom:3px;}' +
     '.section-content{font-size:9pt;line-height:1.5;white-space:pre-wrap;}' +
     '</style></head><body>' +
@@ -3576,6 +3551,7 @@ function buildHTMLCaminata(tituloPDF, codigo, correlativo, fechaEmision,
     '*{box-sizing:border-box;margin:0;padding:0;}' +
     'body{font-family:Arial,sans-serif;font-size:10pt;color:#333;}' +
     'table{border-collapse:collapse;}td{vertical-align:middle;}' +
+    'tr{break-inside:avoid;page-break-inside:avoid;}thead{display:table-header-group;}' + // V63: filas no se parten + header repetido por página
     '</style></head><body>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:8px;">' +
     '<tr>' +
@@ -3673,7 +3649,7 @@ async function generatePDF() {
   // V49: nombre ahora es input editable (con fallback a Config si está vacío)
   // V51: si flag sinRespConstr activo, no se renderiza el bloque
   const _sinRespConstr_pdf = await _getBool('sinRespConstr');
-  const firmaConstruccionNombre  = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '');
+  const firmaConstruccionNombre  = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || await getConfig('respConstruccion') || cfg.respConstruccion || '');
   const firmaConstruccionCargo   = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '');
   const firmaConstruccionEmpresa = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '');
   // V56: fecha de firma Responsable Construcción
@@ -3717,9 +3693,9 @@ async function generatePDF() {
     </table>
     <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
       ${fotosCeldas.map(f => `
-        <div style="width:46%;text-align:center;">
+        <div style="width:46%;text-align:center;break-inside:avoid;page-break-inside:avoid;">
           <div style="display:inline-block;background:#f5a623;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;font-weight:bold;font-size:10pt;text-align:center;margin-bottom:4px;">#${f.num}</div>
-          <img src="${f.src}" style="width:100%;max-height:180px;object-fit:cover;border:1px solid #ccc;display:block;">
+          <img src="${f.src}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border:1px solid #ccc;display:block;">
           <div style="font-size:8pt;margin-top:3px;color:#555;">${f.ubicacion}</div>
         </div>
       `).join('')}
@@ -3895,7 +3871,7 @@ async function exportarWord() {
   // Pasar todos los datos a la función de descarga SINCRONA
   // V56: pre-calcular variables async ANTES de abrir el modal
   // (el callback de promptNombreArchivo es sincrónico — no podemos hacer await ahí dentro)
-  const _w56_f2nombre = (document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || cfg.respConstruccion || await getConfig('respConstruccion') || '';
+  const _w56_f2nombre = (document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || await getConfig('respConstruccion') || cfg.respConstruccion || '';
   const _w56_f2cargo  = (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '';
   const _w56_f2empresa= (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '';
   const _w56_f2fecha  = (document.getElementById('ic_firma2_fecha')?.value) || await getConfig('icFirma2Fecha') || '';
@@ -4131,7 +4107,9 @@ function _dxTable(rows, opts) {
   // V56: cantSplit a nivel de fila evita que se parta entre páginas
   const cantSplitTag = opts.cantSplit ? '<w:cantSplit/>' : '';
   const trs = rows.map(r => {
-    const trPrInner = (r.height ? '<w:trHeight w:val="' + r.height + '" w:hRule="atLeast"/>' : '') + cantSplitTag;
+    // V63: r.header marca la fila como encabezado repetible en cada página
+    const headerTag = r.header ? '<w:tblHeader/>' : '';
+    const trPrInner = (r.height ? '<w:trHeight w:val="' + r.height + '" w:hRule="atLeast"/>' : '') + cantSplitTag + headerTag;
     const trPr = trPrInner ? '<w:trPr>' + trPrInner + '</w:trPr>' : '';
     return '<w:tr>' + trPr + r.cells + '</w:tr>';
   }).join('');
@@ -4379,7 +4357,7 @@ function _dxBuildBody(d) {
       if (g.length < 2) cellsXml += _dxCell(null, { w: colW });
       rows.push({ cells: cellsXml });
     }
-    fotosBlock += _dxTable(rows, { totalW: 9639, gridCols: [colW, 9639 - colW] });
+    fotosBlock += _dxTable(rows, { totalW: 9639, gridCols: [colW, 9639 - colW], cantSplit: true }); // V63: sin cortes de página
     fotosBlock += _dxPar('', { sz: 18 });
   }
 
@@ -4400,6 +4378,7 @@ function _dxBuildBody(d) {
     const headers = ['ID', 'UBICACIÓN', 'DISCIPLINA', 'DESCRIPCIÓN', 'FECHA COMPR. CIERRE', 'PRIORIDAD'];
     const rows = [];
     rows.push({
+      header: true, // V63: Word repite este encabezado en cada página
       cells: headers.map((h, idx) =>
         _dxCell(_dxPar(h, { align: 'center', bold: true, sz: 18 }), { w: gridCols[idx], shading: 'F0F0F0' })
       ).join('')
@@ -4414,7 +4393,7 @@ function _dxBuildBody(d) {
       cells.push(_dxCell(_dxPar(it.prioridad || '', { align: 'center', sz: 18 }), { w: gridCols[5] }));
       rows.push({ cells: cells.join('') });
     }
-    tablaHallazgos += _dxTable(rows, { totalW: 9639, gridCols });
+    tablaHallazgos += _dxTable(rows, { totalW: 9639, gridCols, cantSplit: true }); // V63: filas de hallazgos no se parten
     tablaHallazgos += _dxPar('', { sz: 18 });
   }
 
@@ -5115,7 +5094,9 @@ async function cargarBorrador(id) {
     // 6. Fallback derived_*: si el SS del borrador no existe en data.json actual,
     //    restaurar derived desde lo guardado en el cfg (FIX bug #5)
     if (cfg.subsistema) {
-      const rec = (window.DATOS?.wbsData || []).find(r => r.ss_id === cfg.subsistema);
+      // V63: la existencia se valida por ss_id + empresa; si el SS existe solo bajo otra empresa,
+      // se restaura el derived manualmente desde el cfg del borrador (evita mezclar empresas duplicadas).
+      const rec = (window.DATOS?.wbsData || []).find(r => r.ss_id === cfg.subsistema && (!cfg.empresa || r.empresa === cfg.empresa));
       if (!rec) {
         // SS no existe en catálogo actual → restaurar derived manualmente desde cfg
         const derivedMap = {
@@ -5178,6 +5159,18 @@ async function cargarBorrador(id) {
   }
 }
 
+// V63: confirmación antes de eliminar — reutiliza el modal estándar
+function confirmarEliminarBorrador(id) {
+  document.getElementById('modalTitle').textContent = 'Eliminar Inspección Guardada';
+  document.getElementById('modalMessage').textContent = '¿Está seguro de eliminar esta inspección guardada? Esta acción no se puede deshacer.';
+  document.getElementById('modalConfirm').textContent = 'Eliminar';
+  document.getElementById('modalConfirm').onclick = async () => {
+    closeModal();
+    await eliminarBorrador(id);
+  };
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
 async function eliminarBorrador(id) {
   try {
     await new Promise((res, rej) => {
@@ -5211,7 +5204,7 @@ async function renderBorradores() {
         '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">' + detalle + ' · ' + fecha + '</div>' +
         '<div style="display:flex;gap:8px;">' +
         '<button onclick="cargarBorrador(' + b.id + ')" style="flex:1;padding:6px;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;border-radius:6px;font-size:12px;cursor:pointer;">📂 Cargar</button>' +
-        '<button onclick="eliminarBorrador(' + b.id + ')" style="padding:6px 10px;background:rgba(239,68,68,0.15);border:1px solid var(--danger);color:var(--danger);border-radius:6px;font-size:12px;cursor:pointer;">🗑️</button>' +
+        '<button onclick="confirmarEliminarBorrador(' + b.id + ')" style="padding:6px 10px;background:rgba(239,68,68,0.15);border:1px solid var(--danger);color:var(--danger);border-radius:6px;font-size:12px;cursor:pointer;">🗑️</button>' +
         '</div></div>';
     }).join('');
   } catch(e) { console.warn('renderBorradores:', e); }
@@ -5259,8 +5252,10 @@ openDB().then(async () => {
   actualizarIndicadorWBS();
   const _fc = document.getElementById('fechaCompromiso');
   if (_fc && !_fc.value) {
+    // V63: fecha en hora LOCAL (toISOString es UTC y corría el default +1 día después de las ~20:00 en Chile)
     const _d = new Date(); _d.setDate(_d.getDate() + 30);
-    _fc.value = _d.toISOString().split('T')[0];
+    const _p2 = function(n) { return String(n).padStart(2, '0'); };
+    _fc.value = _d.getFullYear() + '-' + _p2(_d.getMonth() + 1) + '-' + _p2(_d.getDate());
   }
   setTimeout(sincronizarDatosBackground, 3000);
 });
