@@ -3649,7 +3649,7 @@ async function generatePDF() {
   // V49: nombre ahora es input editable (con fallback a Config si está vacío)
   // V51: si flag sinRespConstr activo, no se renderiza el bloque
   const _sinRespConstr_pdf = await _getBool('sinRespConstr');
-  const firmaConstruccionNombre  = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || await getConfig('respConstruccion') || cfg.respConstruccion || '');
+  const firmaConstruccionNombre  = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || await getConfig('respConstruccion') || '');
   const firmaConstruccionCargo   = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '');
   const firmaConstruccionEmpresa = _sinRespConstr_pdf ? '' : ((document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '');
   // V56: fecha de firma Responsable Construcción
@@ -3871,7 +3871,7 @@ async function exportarWord() {
   // Pasar todos los datos a la función de descarga SINCRONA
   // V56: pre-calcular variables async ANTES de abrir el modal
   // (el callback de promptNombreArchivo es sincrónico — no podemos hacer await ahí dentro)
-  const _w56_f2nombre = (document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || await getConfig('respConstruccion') || cfg.respConstruccion || '';
+  const _w56_f2nombre = (document.getElementById('ic_firma2_nombre')?.value?.trim()) || await getConfig('icFirma2Nombre') || await getConfig('respConstruccion') || '';
   const _w56_f2cargo  = (document.getElementById('ic_firma2_cargo')?.value?.trim()) || await getConfig('icFirma2Cargo') || '';
   const _w56_f2empresa= (document.getElementById('ic_firma2_empresa')?.value?.trim()) || await getConfig('icFirma2Empresa') || '';
   const _w56_f2fecha  = (document.getElementById('ic_firma2_fecha')?.value) || await getConfig('icFirma2Fecha') || '';
@@ -4647,6 +4647,7 @@ function _descargarWord(d) {
 
 
 // ==================== FIRMANTES ====================
+const MAX_FIRMANTES = 12; // V63: subido de 10 a 12 (caminatas con más asistentes)
 let _firmantes = []; // [{nombre, canvas}]
 
 function actualizarVisibilidadFirmantes() {
@@ -4714,7 +4715,7 @@ function guardarFirmantesSession() {
 }
 
 function agregarFirmante() {
-  if (_firmantes.length >= 10) { showToast('Máximo 10 firmantes', 'error'); return; }
+  if (_firmantes.length >= MAX_FIRMANTES) { showToast('Máximo ' + MAX_FIRMANTES + ' firmantes', 'error'); return; }
   const idx = _firmantes.length;
   _firmantes.push({ nombre: '', cargo: '', empresa: '', data: null });
   renderFirmantes();
@@ -4746,7 +4747,7 @@ function renderFirmantes() {
 
   // Mostrar/ocultar botón agregar
   document.getElementById('btnAgregarFirmante').style.display =
-    _firmantes.length >= 10 ? 'none' : 'block';
+    _firmantes.length >= MAX_FIRMANTES ? 'none' : 'block';
 
   // Inicializar canvas de firma para cada firmante
   _firmantes.forEach((f, idx) => {

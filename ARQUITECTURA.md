@@ -263,7 +263,7 @@ Estimación: 6-8 semanas distribuidas según urgencias.
 
 ### Nivel 2 — Modularización con módulos nativos (mediano plazo)
 
-**Estado código V63**: 5270 líneas — cerca del límite recomendado (6000).
+**Estado código V63 (vigente al V63)**: 5274 líneas — cerca del límite recomendado (6000).
 
 ```
 js/
@@ -409,7 +409,7 @@ Si solo cambia `data.json` (WBS, responsables, especialistas): **no bumpear CACH
 | **V60** | jul 2026 | Datos | 834 SS + 6 responsables · preservación manual de 157 SS (CC-117, CC-113) |
 | **V61** | jul 2026 | Datos | 845 SS + 3 pares empresa/contrato + 1 especialista · CC-117/CC-113 vuelven al origen |
 | **V62** | jul 2026 | Datos | 852 SS · nueva política: planilla completa sin deduplicar · roadmap desacoplado a R1–R5 |
-| **V63** | ago 2026 | Multi-fix | Confirmación al eliminar borradores · 10 fotos todas las prioridades · fotos cuadradas · tablas y fotos sin cortes de página (PDF `break-inside`/`thead` repetido, Word `cantSplit`/`tblHeader`) · fix eliminar foto borraba las posteriores · restauración WBS por `ss_id`+`empresa` · cierre patrón snapshot-antes-de-IDB (`respConstruccion`) |
+| **V63** | ago 2026 | Código | Máx. 12 firmantes en caminatas (`MAX_FIRMANTES`) · restauración WBS por `ss_id`+`empresa` · limpieza snapshot `respConstruccion` |
 
 ---
 
