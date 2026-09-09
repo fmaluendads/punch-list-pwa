@@ -30,15 +30,15 @@ PWA offline-first para inspectores de control de calidad en la Mina Chuquicamata
 
 ## 2. Estado actual
 
-**Código V63 · Datos V62.** No son el mismo número y eso es correcto.
+**Código V63 · Datos V64.** No son el mismo número y eso es correcto.
 
 | Archivo | Estado |
 |---|---|
-| `index.html` | ~5.274 líneas · 319 KB · `APP_VERSION = 'V58'` |
-| `sw.js` | `CACHE_NAME = 'punch-list-v58'` · 76 líneas |
-| `data.json` | 852 SS WBS · 36 empresas/contratos · 33 especialistas · 22 resp. construcción |
+| `index.html` | ~5.270 líneas · `APP_VERSION = 'V63'` |
+| `sw.js` | `CACHE_NAME = 'punch-list-v63'` |
+| `data.json` | 878 SS WBS · 37 empresas/contratos · 33 especialistas · 22 resp. construcción |
 
-V59–V62 fueron releases **solo datos**: no tocaron código, no bumpearon `CACHE_NAME`, y se propagaron solos vía Stale-While-Revalidate.
+V59–V62 y V64 fueron releases **solo datos**: no tocaron código, no bumpearon `CACHE_NAME`, y se propagaron solos vía Stale-While-Revalidate.
 
 > ⚠️ **Este cuadro se desactualiza.** La fuente de verdad del estado es el repo, y el historial completo está en `CHANGELOG.md`. **Nunca editar código sobre archivos de la base de conocimiento del proyecto: pedir siempre a Felipe que adjunte los archivos frescos del repo.**
 
@@ -98,7 +98,7 @@ Si aparece, evaluar si invertir el orden produce el comportamiento esperado.
 
 **Antes de aplicar un Excel nuevo, analizar siempre:** duplicados, SS nuevos, SS eliminados, cambios de empresa o contrato. Presentar el análisis a Felipe antes de generar el `data.json`.
 
-**Política de duplicados (desde V62): la planilla origen se carga completa, sin deduplicar.** Los `ss_id` repetidos entre empresas distintas son legítimos en terreno y ambos registros deben ser inspeccionables. Reemplaza la regla de "primera ocurrencia" vigente V54–V61, que dejaba invisible la segunda obra. Duplicados retenidos al V62: `222712F-02-06` (ZUBLIN/MDB), `223520F-01-05` (GARDILCIC/GEOVITA, mismo nombre — se distinguen por chip de empresa), `225310F-03-01` (GEOVITA/MDB). El caso borde de restauración por `ss_id` quedó **resuelto en V63**: `loadConfig` restaura por `ss_id`+`empresa` con fallback a primera ocurrencia. Regla histórica que reemplaza, aplicada V54–V61 por primera ocurrencia:
+**Política de duplicados (desde V62): la planilla origen se carga completa, sin deduplicar.** Los `ss_id` repetidos entre empresas distintas son legítimos en terreno y ambos registros deben ser inspeccionables. Reemplaza la regla de "primera ocurrencia" vigente V54–V61, que dejaba invisible la segunda obra. Duplicados retenidos al V62: `222712F-02-06` (ZUBLIN/MDB), `223520F-01-05` (GARDILCIC/GEOVITA, mismo nombre — se distinguen por chip de empresa), `225310F-03-01` (GEOVITA/MDB). El caso borde de restauración por `ss_id` quedó **resuelto en V63**: `loadConfig` restaura por `ss_id`+`empresa` con fallback a primera ocurrencia. **Nuevo caso borde desde V64**: `223140-02-01` GARDILCIC está cargado ×2 verbatim (mismo contrato GCC-004, obras distintas, probable typo de origen escalado a GOMS) — es la primera colisión `ss_id`+`empresa`, y `loadConfig` restaurará siempre la primera ocurrencia. Además hay 28 colisiones `ss_id`+`empresa` latentes entre AGD y los contratos legados CC-110/CC-111 de ND20S04 (no cargados): si se cargan, antes extender la clave de restauración a `ss_id`+`empresa`+`contrato`. Regla histórica que reemplaza, aplicada V54–V61 por primera ocurrencia:
 
 - `223520F-01-05` → GARDILCIC
 - `225310F-03-01` → GEOVITA
@@ -115,6 +115,7 @@ Si aparece, evaluar si invertir el orden produce el comportamiento esperado.
 |---|---|---|---|---|
 | `WBS_Semanal.xlsx` | antiguo | fila 0 | fila 1 | columnas simples |
 | `WBS_GOMS.xlsx` | nuevo (desde V60) | fila 3 | fila 6 | "Reporte Listado WBS"; columnas extra: Clasificación, Plano, CRP |
+| `reporte_listado_wbs*.xlsx` | por proyecto (desde V64) | fila 3 | fila 6 | mismo formato "Reporte Listado WBS", pero **un reporte por proyecto**: AGD_GOMS_DCH y ND20S04. El catálogo vigente = AGD completo + contratos CC-117/CC-113 dentro de ND20S04. Los archivos traen entidades HTML (`&Oacute;`) y corchetes residuales: **decodificar y limpiar al parsear** |
 
 **CSV de 20 columnas: nunca modificar el formato.** Regla 1 de `ARQUITECTURA.md` §8.
 

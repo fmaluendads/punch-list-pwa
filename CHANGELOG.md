@@ -8,6 +8,48 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V64] - 2026-09-09
+
+> **Solo datos** — Actualiza únicamente `data.json`. No requiere bump de `CACHE_NAME`; se propaga vía Stale-While-Revalidate.
+
+### Added
+- **26 registros nuevos en `wbsData`** (de 852 a 878), todos del reporte AGD_GOMS_DCH del 09-09-2026:
+  - **CODELCO GOMS (11)**: 10 ventiladores de extracción VSE-01/VSE-03 (`223440-05-07.` a `223440-05-37.`, `ss_id` con punto final cargado verbatim del origen, mismo precedente que `222440-01-10.`) + STM N°4 MB-S04 (`223480-10-01`). Todos Sistema Operable.
+  - **GARDILCIC GCC-004 (7)**: ventiladores 21420-VEN-02/03, vías portaconductores NP/EXT, extensiones salas eléctricas MB N01/S01 — incluye las **dos** ocurrencias de `223140-02-01` (ver Notas técnicas).
+  - **COMTECSA CS-612 (3)**: SDP, RISC y DAS/RTD MBs N01-S01 — **contratista nuevo**.
+  - **GEOVITA GCC-005 (3)**: pernos cables XCE-06 y taller de mantenimiento MB-S05.
+  - **ZUBLIN GCC-003 (2)**: intersecciones pernos cables.
+- **Par nuevo en `empresasContratos`** (de 36 a 37): COMTECSA — `4600030983/CS-612`.
+
+### Changed
+- **9 actualizaciones de contenido en registros existentes**, sincronizadas con los reportes del 09-09: 6 renombres vía reporte AGD_GOMS_DCH (ZUBLIN ×3, GEOVITA ×2, GARDILCIC ×1) y 3 cambios de MDB vía reporte ND20S04 (2 renombres + **cambio de jerarquía** de `225310F-03-01`: `si_id` pasa de `225310F-03` a `225313F-01` — GOMS le asignó sistema propio, ya no comparte `si_id` con el registro GEOVITA).
+
+### Fixed
+- **24 registros con entidades HTML sin decodificar** heredadas de importaciones anteriores (`SUBNIVEL DE EXTRACCI&Oacute;N` → `SUBNIVEL DE EXTRACCIÓN`, etc.) — salían literales en PDF/Word/CSV.
+- **7 nombres con corchetes residuales del origen** (`[MARTILLO PICAROCAS...`, `VIAS ESTE 223440-MG-004]`, `[CRUZADO DE INYECCIÓN]`, `[C-64-NH]`, etc.).
+
+### Notas técnicas
+- **Cambio de origen (desde 09-2026): GOMS partió el catálogo en dos reportes por proyecto** — AGD_GOMS_DCH (717 regs) y ND20S04 "AGD Preparación Primer Nivel Fase 1" (1.023 regs). El catálogo vigente queda 100% cubierto por AGD + los contratos CC-117 (GARDILCIC) y CC-113 (MDB) que ahora viven dentro del reporte ND20S04.
+- **Alcance decidido: solo nuevos de AGD.** Los 834 registros históricos de ND20S04 (CC-110 ACCIONA, CC-111 GEOVITA, ZUBLIN legado, CC-112 MDB, CODELCO VP, OSSA-PIZZAROTTI, TBD, ASTALDI, BUILDTEK, SIGDO KOPPERS sin S.A., CODELCO GOMS DCH) quedan fuera.
+- ⚠️ **Primera colisión `ss_id`+`empresa` del catálogo, cargada verbatim** (decisión operacional de Felipe): `223140-02-01` GARDILCIC ×2 en el mismo contrato GCC-004 — "Extensión sala eléctrica" (`si 223140-02`, coherente) y "Ventiladores extracción overhaul" (`si 223140-03`, probable typo de `223140-03-01` en origen). La clave de restauración V63 (`ss_id`+`empresa`) restaurará siempre la **primera** ocurrencia (sala eléctrica). Escalado a GOMS.
+- **28 colisiones `ss_id`+`empresa` adicionales detectadas** entre AGD y los contratos legados CC-110/CC-111 de ND20S04 (mismo ID y empresa, obras y contratos distintos). Si a futuro se cargan esos contratos, primero hay que extender la clave de restauración de `loadConfig` a `ss_id`+`empresa`+`contrato` (release de código).
+- **0 eliminados, 0 cambios de contrato** en los 852 registros de V62.
+- Distribución final: SIGDO KOPPERS S.A (218), GARDILCIC (188), ZUBLIN (148), ACCIONA-OSSA-PIZZAROTTI (95), GEOVITA (92), CODELCO GOMS (67), MASTER DRILLING - BESALCO (64), COMTECSA (3), SIGMA S.A (3).
+
+### Escalaciones a GOMS
+1. `223140-02-01` GARDILCIC duplicado en el mismo reporte y contrato con `si_id` distinto — el registro de ventiladores parece typo de `223140-03-01`.
+2. 10 `ss_id` nuevos de CODELCO GOMS con punto final (`223440-05-07.` a `-37.`), mismo patrón que el histórico `222440-01-10.`.
+3. Recordatorio: `si_id` inconsistente del registro MDB de `222712F-02-06` (`222710F-02`), solicitado el 29-07-2026, sigue pendiente.
+
+### Razones
+- **WBS**: ciclo regular de sincronización, primera vez con los reportes por proyecto del 09-09-2026.
+- **Alcance acotado**: las obras históricas de ND20S04 no están en inspección activa y cargar CC-110/CC-111 activaría las 28 colisiones sin fix de código previo.
+
+### Deploy
+Subir únicamente `data.json` (más `CHANGELOG.md`, `ARQUITECTURA.md` y `CONTEXTO_CLAUDE.md` como documentación). No tocar el Service Worker. Footer esperado: **"📦 878 subsistemas disponibles offline"**.
+
+---
+
 ## [V63] - 2026-08-04
 
 > **Release de código** — primero desde V58. Bump sincronizado: `APP_VERSION = 'V63'` · `appVersionLabel` V63 · `CACHE_NAME = 'punch-list-v63'`. Todo el equipo redescarga la app al recibir el SW nuevo.
