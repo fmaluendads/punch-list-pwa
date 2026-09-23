@@ -8,6 +8,48 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V65] - 2026-09-23
+
+> **Solo datos** — Actualiza únicamente `data.json`. No requiere bump de `CACHE_NAME`; se propaga vía Stale-While-Revalidate.
+
+### Added
+- **14 registros nuevos en `wbsData`** (de 878 a 892), reportes por proyecto del 23-09-2026:
+  - **CODELCO GOMS (9)**: puertas de ventilación V-5533 (`223420-01-01.`, `223420-01-02.`), 4 ventiladores de inyección tipo VSI-02 (`223430-01-07.` a `223430-01-10.`), sala eléctrica 223440-SEL-004 MB S04 (`223440-04-01.`), STM N°3 y STM N°2 MB-S04 (`223480-11-01`, `223480-12-01`). **7 de los 9 vienen con punto final en el `ss_id`**, cargados verbatim del origen (ver Escalaciones).
+  - **MDB CC-113 (2)**: CHE-REX-SUR-02 (`221820F-02-02`) y CHINS-PD S05-03 (`225313F-01-01`).
+  - **GARDILCIC CC-117 (1)**: OO.CC. losa estructural RAC-PD-PNC-02 (`221310F-01-09`).
+  - **ZUBLIN GCC-003 (1)**: intersecciones cables cabecera 01 N51 (`224211F-01-01`) — **nuevo duplicado legítimo entre empresas**: el mismo `ss_id` ya existía para ACCIONA-OSSA-PIZZAROTTI (GCC-002, "CAB-01 NP-N51"); obras y contratos distintos, ambos retenidos según política V62.
+  - **GEOVITA GCC-005 (1)**: SEU 2 GI-04 MB-S05 (`225312F-01-03`).
+
+### Changed
+- **3 renombres de SS**, todos GARDILCIC, sincronizados con los reportes del 23-09:
+  - `225116F-01-01C`: "C-48-NH, INCLUYE FR-HD-S05-03" → "C-48-NH MB S05 (TRAMO 2)"
+  - `225116F-02-01C`: "C-50-NH" → "C-50-NH MB-S05 (TRAMO 2)"
+  - `221610F-01-04`: agrega "Y FORTIFICACIÓN DE CABLES" al nombre
+
+### Fixed
+- Nada que corregir: el parseo salió limpio — 0 entidades HTML residuales, 0 corchetes, 0 nombres vacíos.
+
+### Notas técnicas
+- ⚠️ **Los archivos llegaron con los roles invertidos respecto al nombre esperado**: `reporte_listado_wbs.xlsx` (1.024 regs) era el de **ND20S04** y `reporte_listado_wbs (1).xlsx` (728 regs) era el de **AGD_GOMS_DCH**. Se identificaron por contenido (contratos), no por nombre de archivo. Regla a futuro: **siempre identificar cada reporte por sus contratos, nunca por el nombre del archivo**.
+- **0 eliminados, 0 cambios de contrato, 0 cambios de jerarquía, 0 pares empresa/contrato nuevos.** Alcance vigente sin cambios: AGD completo (728) + CC-117 GARDILCIC (98) + CC-113 MDB (66).
+- **Duplicados legítimos entre empresas ahora son 4**: `222712F-02-06` (ZUBLIN/MDB), `223520F-01-05` (GARDILCIC/GEOVITA), `225310F-03-01` (GEOVITA/MDB) y el nuevo `224211F-01-01` (ACCIONA-OSSA-PIZZAROTTI/ZUBLIN).
+- Colisiones `ss_id`+`empresa`: solo la conocida `223140-02-01` GARDILCIC ×2 (verbatim; GOMS no la corrigió en este reporte).
+- Distribución final: SIGDO KOPPERS S.A (218), GARDILCIC (189), ZUBLIN (149), ACCIONA-OSSA-PIZZAROTTI (95), GEOVITA (93), CODELCO GOMS (76), MASTER DRILLING - BESALCO (66), SIGMA S.A (3), COMTECSA (3).
+- `data.json`: 422.137 bytes (+6.424 vs V64). Orden de registros V64 preservado; los 14 nuevos van al final en orden de reporte.
+
+### Escalaciones a GOMS
+1. `223140-02-01` GARDILCIC ×2 **sigue sin corregir** en el reporte del 23-09 (el registro de ventiladores sigue siendo probable typo de `223140-03-01`).
+2. IDs con punto final: **se suman 7 nuevos de CODELCO GOMS** (`223420-01-01.`, `223420-01-02.`, `223430-01-07.` a `-10.`, `223440-04-01.`). El catálogo queda con 72 `ss_id` con punto, todos verbatim del origen.
+3. `si_id` inconsistente del registro MDB de `222712F-02-06` (`222710F-02`) **sigue pendiente** desde el 29-07-2026.
+
+### Razones
+- **WBS**: ciclo regular de sincronización con los reportes por proyecto de GOMS del 23-09-2026.
+
+### Deploy
+Subir únicamente `data.json` (más `CHANGELOG.md`, `ARQUITECTURA.md` y `CONTEXTO_CLAUDE.md` como documentación). No tocar el Service Worker. Footer esperado: **"📦 892 subsistemas disponibles offline"**.
+
+---
+
 ## [V64] - 2026-09-09
 
 > **Solo datos** — Actualiza únicamente `data.json`. No requiere bump de `CACHE_NAME`; se propaga vía Stale-While-Revalidate.
