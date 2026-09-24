@@ -8,6 +8,41 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V66] - 2026-09-24
+
+> **Solo datos** — Actualiza únicamente `data.json`. No requiere bump de `CACHE_NAME`; se propaga vía Stale-While-Revalidate.
+
+### Added
+- **7 registros nuevos en `wbsData`** (de 892 a 899), todos **CODELCO GOMS** y todos con punto final en el `ss_id` (verbatim del origen): ventiladores de inyección `222130-01-01.` a `222130-01-04.` (222132-VEN-001/002/003/007) y `223130-01-01.` a `223130-01-03.` (223132-VEN-001/002/003).
+  - ⚠️ **Probable duplicación de origen, no obras nuevas**: los 7 son copia exacta (mismo nombre de ventilador) de los registros **GARDILCIC GCC-004** cargados desde V59 con los mismos IDs **sin punto** (`222130-01-01` a `-04`, `223130-01-01` a `-03`). El reporte AGD del 24-09 lista los mismos ventiladores dos veces: sin punto bajo GARDILCIC y con punto bajo CODELCO GOMS. No es colisión técnica (`ss_id` y empresa distintos); se cargan verbatim según política y **se escala a GOMS**.
+
+### Preserved
+- **164 SS preservados desde V65**: el ciclo del 24-09 trajo **solo el reporte AGD_GOMS_DCH** (735 regs, sin reporte ND20S04), por lo que **CC-117 GARDILCIC (98 SS)** y **CC-113 MDB (66 SS)** se mantienen tal cual del `data.json` V65 (precedente V60; se habían sincronizado el 23-09).
+
+### Changed
+- Nada: 0 renombres, 0 cambios de contrato, 0 cambios de jerarquía en los contratos cubiertos por el reporte.
+
+### Notas técnicas
+- Reporte único `reporte_listado_wbs (2).xlsx`, identificado como **AGD_GOMS_DCH por contenido** (9 contratos AGD, cero de ND20S04) — regla V65 aplicada: nunca identificar por nombre de archivo.
+- Parseo limpio: 0 anomalías, 0 entidades HTML, 0 corchetes.
+- **0 eliminados, 0 pares empresa/contrato nuevos.** Colisión `ss_id`+`empresa`: solo la conocida `223140-02-01` GARDILCIC ×2. Duplicados legítimos entre empresas: los 4 de V65, sin cambios.
+- Distribución final: SIGDO KOPPERS S.A (218), GARDILCIC (189), ZUBLIN (149), ACCIONA-OSSA-PIZZAROTTI (95), GEOVITA (93), CODELCO GOMS (83), MASTER DRILLING - BESALCO (66), SIGMA S.A (3), COMTECSA (3).
+- `data.json`: 425.357 bytes (+3.220 vs V65). Orden V65 preservado; los 7 nuevos al final en orden de reporte.
+
+### Escalaciones a GOMS
+1. **Nueva**: los 7 ventiladores CODELCO GOMS con punto (`222130-01-0X.`, `223130-01-0X.`) duplican los registros GARDILCIC GCC-004 sin punto con el mismo nombre — confirmar si es traspaso de responsabilidad (y corresponde eliminar los de GARDILCIC) o duplicación errónea del reporte.
+2. `223140-02-01` GARDILCIC ×2 sigue sin corregir (probable typo de `223140-03-01`).
+3. IDs con punto final: el catálogo queda con **79** `ss_id` con punto, todos verbatim del origen.
+4. `si_id` inconsistente del registro MDB de `222712F-02-06` (`222710F-02`) sigue pendiente desde el 29-07-2026.
+
+### Razones
+- **WBS**: ciclo regular de sincronización con el reporte AGD del 24-09-2026.
+
+### Deploy
+Subir únicamente `data.json` (más `CHANGELOG.md`, `ARQUITECTURA.md` y `CONTEXTO_CLAUDE.md` como documentación). No tocar el Service Worker. Footer esperado: **"📦 899 subsistemas disponibles offline"**.
+
+---
+
 ## [V65] - 2026-09-23
 
 > **Solo datos** — Actualiza únicamente `data.json`. No requiere bump de `CACHE_NAME`; se propaga vía Stale-While-Revalidate.
