@@ -8,6 +8,46 @@ Cada release está identificado por su `CACHE_NAME` en `sw.js`, que sirve como i
 
 ---
 
+## [V67] - 2026-10-29
+
+> **Solo datos** — Actualiza únicamente `data.json`. No requiere bump de `CACHE_NAME`; se propaga vía Stale-While-Revalidate.
+
+### Added
+- **21 registros nuevos en `wbsData`**, reportes por proyecto del 29-10-2026:
+  - **CODELCO GOMS (10)**, todos con punto final en el `ss_id` (verbatim del origen): frontones TICA N°1/N°2 (`223120-01-01.`, `-02.`), fosos de drenaje FRF-05/FRF-03 (`223120-02-01.`, `-02.`), sala eléctrica 223150-SEU-001 (`223120-04-01.`), SDP/RISC/DAS MBs N01-S01 (`223120-05-01.` a `-03.`), puerta de ventilación V-5533 223421-PRT-004 (`223420-01-04.`), sala eléctrica 223440-SEL-002 (`223440-02-01.`).
+  - **ZUBLIN GCC-003 (5)**: refortificación y marcos metálicos rampa exploraciones (`221323F-01-02`, `-03`), accesos IIFF XC-PD Norte (`221340F-01-08`), calle 55 extensión NH-N06 (`222812F-02-07`), frontones FR-HD-N52 (`224122F-01-02`).
+  - **SIGMA S.A GCC-006 (4)** — **contrato nuevo** `4600032093/GCC-006`: canalizaciones/alumbrado, HVAC y presurizador, MT y equipos BT, detección y extinción — salas eléctricas 223420/223440 MB S04.
+  - **GARDILCIC GCC-004 (2)**: piping fosos FRF-05→FRF-03 y FRF-03→piscina 20574-PSC-001 (`223120-07-01`, `-02`).
+- **Par nuevo en `empresasContratos`** (de 37 a 38): SIGMA S.A — `4600032093/GCC-006`.
+
+### Removed
+- **12 SS de SIGDO KOPPERS S.A CC-101 eliminados** (218 → 206), siguiendo el reporte AGD del 29-10 (decisión operacional de Felipe: aplicar el diff completo). No es el caso V60 — el contrato sí viene en el reporte; GOMS lo recortó deliberadamente y parte es **reasignación**: los `223420-02-0X` reaparecen bajo SIGMA GCC-006 con nombres casi idénticos, y varios nuevos de CODELCO GOMS apuntan al mismo sector. Eliminados: `223420-02-01`, `223420-02-02`, `223420-03-01`, `223420-03-02`, `223420-04-01`, `223450-01-01`, `223480-05-02`, `223480-07-02`, `223480-07-03`, `223480-07-05`, `223480-07-06`, `223480F-02-02`. Las inspecciones históricas no se rompen: el export lee Config IDB y `loadConfig` tiene fallback.
+
+### Changed
+- **14 renombres de SS** sincronizados con los reportes: ZUBLIN ×9 (ajustes de alcance en continuidades C-41/C-53, frontones FR-INS N51/N52, RAC-A-01, XC-03 ex CAB-HD-N52-03), GARDILCIC ×2 (`225116F-03-01C`, `225213F-01-01B` — nomenclatura MB-S05), GEOVITA ×3 (`221366F-01-01B`, `225411F-01-05`, `225511F-01-06` — agregan cables/basculamiento).
+
+### Notas técnicas
+- Reportes `reporte_listado_wbs (5).xlsx` = **ND20S04** (1.024 regs) y `(6)` = **AGD** (744 regs), identificados por contenido. Parseo limpio: 0 anomalías, 0 entidades, 0 corchetes.
+- 0 cambios de jerarquía ni de contrato en registros que permanecen. CC-117 (98) y CC-113 (66) vienen en el reporte ND20S04 y se sincronizan normalmente.
+- Colisión `ss_id`+`empresa`: solo la conocida `223140-02-01` GARDILCIC ×2. Duplicados legítimos entre empresas: los 4 vigentes, sin cambios. Los 7 ventiladores duplicados GARDILCIC/CODELCO GOMS de V66 siguen ambos en el reporte (escalación pendiente).
+- Distribución final: SIGDO KOPPERS S.A (206), GARDILCIC (191), ZUBLIN (154), ACCIONA-OSSA-PIZZAROTTI (95), GEOVITA (93), CODELCO GOMS (93), MASTER DRILLING - BESALCO (66), SIGMA S.A (7), COMTECSA (3).
+- `data.json`: 429.741 bytes (+4.384 vs V66). Orden preservado; los 21 nuevos al final en orden de reporte.
+
+### Escalaciones a GOMS
+1. Confirmar la **reasignación CC-101 → GCC-006/CODELCO GOMS**: 12 SS de SIGDO KOPPERS salieron del reporte y obras equivalentes aparecen bajo SIGMA GCC-006 y CODELCO GOMS — validar que el recorte fue intencional y completo.
+2. Los 7 ventiladores CODELCO GOMS con punto (`222130-01-0X.`, `223130-01-0X.`) **siguen duplicando** los registros GARDILCIC GCC-004 sin punto (pendiente desde V66).
+3. IDs con punto final: **se suman 10 nuevos** de CODELCO GOMS; el catálogo queda con **89** `ss_id` con punto, todos verbatim del origen.
+4. `223140-02-01` GARDILCIC ×2 sigue sin corregir (probable typo de `223140-03-01`).
+5. `si_id` inconsistente del registro MDB de `222712F-02-06` (`222710F-02`) sigue pendiente desde el 29-07-2026.
+
+### Razones
+- **WBS**: ciclo regular de sincronización con los reportes por proyecto del 29-10-2026, primero con movimiento de alcance entre contratos (CC-101 → GCC-006).
+
+### Deploy
+Subir únicamente `data.json` (más `CHANGELOG.md`, `ARQUITECTURA.md` y `CONTEXTO_CLAUDE.md` como documentación). No tocar el Service Worker. Footer esperado: **"📦 908 subsistemas disponibles offline"**.
+
+---
+
 ## [V66] - 2026-09-24
 
 > **Solo datos** — Actualiza únicamente `data.json`. No requiere bump de `CACHE_NAME`; se propaga vía Stale-While-Revalidate.

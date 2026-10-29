@@ -2,7 +2,7 @@
 
 Documento técnico de referencia. Describe la arquitectura actual del proyecto, sus puntos críticos, las decisiones de diseño tomadas, y un roadmap evolutivo en 3 niveles.
 
-> **Última actualización**: V66 (septiembre 2026) — código V63 · datos V66
+> **Última actualización**: V67 (octubre 2026) — código V63 · datos V67
 > **Audiencia**: desarrolladores que mantengan o evolucionen la app
 > **Mantenedor**: Felipe Maluenda (GOMS — CODELCO Chuquicamata Subterránea)
 >
@@ -35,7 +35,7 @@ Documento técnico de referencia. Describe la arquitectura actual del proyecto, 
 | `items` | `id` (autoincrement) | Hallazgos/observaciones con fotos y snapshot de config |
 | `config` | `key` (string) | Configuración global: WBS, fechas, campos IC, flags |
 | `especialistas` | `id` (autoincrement) | Especialistas personalizados |
-| `datos_cache` | `key` (string) | Caché de `data.json` para uso offline (899 WBS al V66) |
+| `datos_cache` | `key` (string) | Caché de `data.json` para uso offline (908 WBS al V67) |
 | `borradores` | `id` (autoincrement) | Snapshots completos — máx 10 (V53+) |
 
 ### Claves importantes del store `config`
@@ -69,7 +69,7 @@ Cada release bumpea `CACHE_NAME` (`punch-list-vNN`). El `activate` borra caches 
 
 Hooks: `self.skipWaiting()` y `self.clients.claim()` para forzar activación inmediata.
 
-**Excepción — releases solo-datos** (V55, V59–V62, V64–V66): no requieren bump de `CACHE_NAME` porque solo cambia `data.json`, y la estrategia Stale-While-Revalidate lo actualiza automáticamente.
+**Excepción — releases solo-datos** (V55, V59–V62, V64–V67): no requieren bump de `CACHE_NAME` porque solo cambia `data.json`, y la estrategia Stale-While-Revalidate lo actualiza automáticamente.
 
 ---
 
@@ -342,7 +342,7 @@ Esta declaración simple desbloqueó la decisión arquitectónica de **Config ID
 2. **JS brace balance** = 0 (`node --check`)
 3. **`buildHTML*` / `buildWord*`**: string concatenation, nunca template literals
 4. **Análisis antes de ejecutar**: Felipe confirma explícitamente
-5. **Bumpear `CACHE_NAME`** en cada release que toque código (excepción: releases solo-datos — V55, V59–V62, V64–V66)
+5. **Bumpear `CACHE_NAME`** en cada release que toque código (excepción: releases solo-datos — V55, V59–V62, V64–V67)
 6. **Versionado secuencial** (V42, V43... sin V44.1)
 7. **Smoke test obligatorio** del Word con `python-docx` + LibreOffice
 8. **Documentar en CHANGELOG.md** cada release
@@ -413,7 +413,8 @@ Si solo cambia `data.json` (WBS, responsables, especialistas): **no bumpear CACH
 | **V63** | ago 2026 | Multi-fix | Confirmación al eliminar borradores · 10 fotos todas las prioridades · fotos cuadradas · tablas y fotos sin cortes de página (PDF `break-inside`/`thead` repetido, Word `cantSplit`/`tblHeader`) · fix eliminar foto borraba las posteriores · restauración WBS por `ss_id`+`empresa` · cierre patrón snapshot-antes-de-IDB (`respConstruccion`) |
 | **V65** | sep 2026 | Datos | 892 SS (+14: 9 CODELCO GOMS, 2 MDB, 1 GARDILCIC, 1 ZUBLIN, 1 GEOVITA) + 3 renombres · nuevo duplicado legítimo entre empresas `224211F-01-01` (AOP/ZUBLIN) · 7 IDs nuevos con punto final (escalado a GOMS) · reportes llegaron con nombres de archivo invertidos (identificar por contenido) |
 | **V66** | sep 2026 | Datos | 899 SS (+7 ventiladores CODELCO GOMS con punto, probable duplicación de origen vs GARDILCIC — escalado) · ciclo con solo reporte AGD: CC-117/CC-113 preservados de V65 (precedente V60) |
+| **V67** | oct 2026 | Datos | 908 SS (+21/−12) · contrato nuevo SIGMA GCC-006 (par 38) · primera reasignación entre contratos: 12 SS SIGDO CC-101 eliminados, obras reaparecen bajo SIGMA GCC-006 y CODELCO GOMS · 10 IDs nuevos con punto (89 totales) |
 
 ---
 
-*Documento mantenido por el equipo de desarrollo. Última revisión: V66 (septiembre 2026).*
+*Documento mantenido por el equipo de desarrollo. Última revisión: V67 (octubre 2026).*

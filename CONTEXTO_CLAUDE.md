@@ -4,7 +4,7 @@ Documento de traspaso. Contiene el **contexto de trabajo** del proyecto: cómo s
 
 > **Complementa, no reemplaza, a `ARQUITECTURA.md`** — ese documento describe *el sistema*; este describe *cómo se trabaja sobre el sistema*. Todo lo técnico (esquema IDB, flujos, estrategias SW, análisis de estado) vive allá y acá solo se referencia.
 
-> **Última actualización**: V66 (septiembre 2026)
+> **Última actualización**: V67 (octubre 2026)
 > **Mantenedor**: Felipe Maluenda — GOMS, CODELCO Chuquicamata Subterránea
 
 ---
@@ -30,15 +30,15 @@ PWA offline-first para inspectores de control de calidad en la Mina Chuquicamata
 
 ## 2. Estado actual
 
-**Código V63 · Datos V66.** No son el mismo número y eso es correcto.
+**Código V63 · Datos V67.** No son el mismo número y eso es correcto.
 
 | Archivo | Estado |
 |---|---|
 | `index.html` | ~5.270 líneas · `APP_VERSION = 'V63'` |
 | `sw.js` | `CACHE_NAME = 'punch-list-v63'` |
-| `data.json` | 899 SS WBS · 37 empresas/contratos · 33 especialistas · 22 resp. construcción |
+| `data.json` | 908 SS WBS · 38 empresas/contratos · 33 especialistas · 22 resp. construcción |
 
-V59–V62 y V64–V66 fueron releases **solo datos**: no tocaron código, no bumpearon `CACHE_NAME`, y se propagaron solos vía Stale-While-Revalidate.
+V59–V62 y V64–V67 fueron releases **solo datos**: no tocaron código, no bumpearon `CACHE_NAME`, y se propagaron solos vía Stale-While-Revalidate.
 
 > ⚠️ **Este cuadro se desactualiza.** La fuente de verdad del estado es el repo, y el historial completo está en `CHANGELOG.md`. **Nunca editar código sobre archivos de la base de conocimiento del proyecto: pedir siempre a Felipe que adjunte los archivos frescos del repo.**
 
@@ -98,7 +98,7 @@ Si aparece, evaluar si invertir el orden produce el comportamiento esperado.
 
 **Antes de aplicar un Excel nuevo, analizar siempre:** duplicados, SS nuevos, SS eliminados, cambios de empresa o contrato. Presentar el análisis a Felipe antes de generar el `data.json`.
 
-**Política de duplicados (desde V62): la planilla origen se carga completa, sin deduplicar.** Los `ss_id` repetidos entre empresas distintas son legítimos en terreno y ambos registros deben ser inspeccionables. Reemplaza la regla de "primera ocurrencia" vigente V54–V61, que dejaba invisible la segunda obra. Duplicados retenidos al V66: `222712F-02-06` (ZUBLIN/MDB), `223520F-01-05` (GARDILCIC/GEOVITA, mismo nombre — se distinguen por chip de empresa), `225310F-03-01` (GEOVITA/MDB) y `224211F-01-01` (ACCIONA-OSSA-PIZZAROTTI/ZUBLIN, desde V65). El caso borde de restauración por `ss_id` quedó **resuelto en V63**: `loadConfig` restaura por `ss_id`+`empresa` con fallback a primera ocurrencia. **Nuevo caso borde desde V64**: `223140-02-01` GARDILCIC está cargado ×2 verbatim (mismo contrato GCC-004, obras distintas, probable typo de origen escalado a GOMS) — es la primera colisión `ss_id`+`empresa`, y `loadConfig` restaurará siempre la primera ocurrencia. Además hay 28 colisiones `ss_id`+`empresa` latentes entre AGD y los contratos legados CC-110/CC-111 de ND20S04 (no cargados): si se cargan, antes extender la clave de restauración a `ss_id`+`empresa`+`contrato`. Regla histórica que reemplaza, aplicada V54–V61 por primera ocurrencia:
+**Política de duplicados (desde V62): la planilla origen se carga completa, sin deduplicar.** Los `ss_id` repetidos entre empresas distintas son legítimos en terreno y ambos registros deben ser inspeccionables. Reemplaza la regla de "primera ocurrencia" vigente V54–V61, que dejaba invisible la segunda obra. Duplicados retenidos al V67: `222712F-02-06` (ZUBLIN/MDB), `223520F-01-05` (GARDILCIC/GEOVITA, mismo nombre — se distinguen por chip de empresa), `225310F-03-01` (GEOVITA/MDB) y `224211F-01-01` (ACCIONA-OSSA-PIZZAROTTI/ZUBLIN, desde V65). El caso borde de restauración por `ss_id` quedó **resuelto en V63**: `loadConfig` restaura por `ss_id`+`empresa` con fallback a primera ocurrencia. **Nuevo caso borde desde V64**: `223140-02-01` GARDILCIC está cargado ×2 verbatim (mismo contrato GCC-004, obras distintas, probable typo de origen escalado a GOMS) — es la primera colisión `ss_id`+`empresa`, y `loadConfig` restaurará siempre la primera ocurrencia. Además hay 28 colisiones `ss_id`+`empresa` latentes entre AGD y los contratos legados CC-110/CC-111 de ND20S04 (no cargados): si se cargan, antes extender la clave de restauración a `ss_id`+`empresa`+`contrato`. Regla histórica que reemplaza, aplicada V54–V61 por primera ocurrencia:
 
 - `223520F-01-05` → GARDILCIC
 - `225310F-03-01` → GEOVITA
@@ -107,7 +107,7 @@ Si aparece, evaluar si invertir el orden produce el comportamiento esperado.
 
 **Duplicados sospechosos: no se parchean en la app, se escalan a GOMS.** Precedente V59: cinco ventiladores de sectores norte y sur compartían `ss_id`. En vez de un workaround en el catálogo, se escaló y GOMS corrigió la planilla origen (`222130-01-XX` norte vs `223130-01-XX` sur). El patrón correcto es corregir en origen.
 
-**Cuando el reporte oficial de GOMS omite contratos activos, preservar esos SS manualmente** filtrando el `data.json` anterior por sufijo de contrato. Precedente V60: se preservaron 157 SS de dos contratos vigentes confirmados operativos — CC-117 GARDILCIC (96 SS) y CC-113 Master Drilling–Besalco (61 SS). Reaplicado en V66: el ciclo trajo solo el reporte AGD y se preservaron los 164 SS de CC-117/CC-113 desde el `data.json` V65.
+**Cuando el reporte oficial de GOMS omite contratos activos, preservar esos SS manualmente** filtrando el `data.json` anterior por sufijo de contrato. Precedente V60: se preservaron 157 SS de dos contratos vigentes confirmados operativos — CC-117 GARDILCIC (96 SS) y CC-113 Master Drilling–Besalco (61 SS). Reaplicado en V66: el ciclo trajo solo el reporte AGD y se preservaron los 164 SS de CC-117/CC-113 desde el `data.json` V65. Distinto es el caso V67: cuando el contrato **sí viene** en el reporte y GOMS lo recorta deliberadamente (CC-101 → GCC-006), los eliminados se aplican — el diff completo manda, con confirmación de Felipe.
 
 **Formatos de Excel conocidos:**
 
